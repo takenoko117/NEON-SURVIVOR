@@ -3,93 +3,126 @@
 const DEFAULT_WEAPON_BALANCE = {
   MagicWand: {
     baseDamage: 12,
+    damageGrowth: 0.15,
+    baseCooldown: 1200,
+    cooldownGrowth: -0.078,
     levels: [
-      { "cooldown": 1200, "count": 1, "pierce": 1, "damageMult": 1.00 },
-      { "cooldown": 1000, "count": 2, "pierce": 1, "damageMult": 1.15 },
-      { "cooldown": 900,  "count": 3, "pierce": 1, "damageMult": 1.30 },
-      { "cooldown": 800,  "count": 3, "pierce": 2, "damageMult": 1.45 },
-      { "cooldown": 600,  "count": 5, "pierce": 2, "damageMult": 1.60 },
-      { "cooldown": 500,  "count": 6, "pierce": 2, "damageMult": 1.75 },
-      { "cooldown": 480,  "count": 7, "pierce": 3, "damageMult": 1.90 },
-      { "cooldown": 450,  "count": 8, "pierce": 3, "damageMult": 2.05 },
-      { "cooldown": 400,  "count": 8, "pierce": 3, "damageMult": 2.20 },
-      { "cooldown": 350,  "count": 18, "pierce": 4, "damageMult": 2.35 }
+      { "cooldownMult": 1.00, "count": 1, "pierce": 1, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 2, "pierce": 1, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 3, "pierce": 1, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 3, "pierce": 2, "damageMult": 1.00 },
+      { "cooldownMult": 0.60, "count": 5, "pierce": 2, "damageMult": 1.00 },
+      { "cooldownMult": 0.57, "count": 6, "pierce": 2, "damageMult": 1.00 },
+      { "cooldownMult": 0.62, "count": 7, "pierce": 3, "damageMult": 1.00 },
+      { "cooldownMult": 0.69, "count": 8, "pierce": 3, "damageMult": 1.00 },
+      { "cooldownMult": 0.70, "count": 8, "pierce": 3, "damageMult": 1.00 },
+      { "cooldownMult": 0.73, "count": 18, "pierce": 4, "damageMult": 1.00 }
     ]
   },
   GarlicAura: {
     baseDamage: 3,
+    damageGrowth: 0.77,
+    baseCooldown: 500,
+    cooldownGrowth: -0.066,
     baseRadius: 55,
+    radiusGrowth: 0.27,
     levels: [
-      { "cooldown": 500, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
-      { "cooldown": 500, "radiusMult": 1.20, "damageMult": 1.25, "slowRatio": 0.00 },
-      { "cooldown": 500, "radiusMult": 1.35, "damageMult": 1.50, "slowRatio": 0.00 },
-      { "cooldown": 500, "radiusMult": 1.50, "damageMult": 1.80, "slowRatio": 0.00 },
-      { "cooldown": 500, "radiusMult": 1.80, "damageMult": 2.50, "slowRatio": 0.65 },
-      { "cooldown": 500, "radiusMult": 2.10, "damageMult": 3.20, "slowRatio": 0.65 },
-      { "cooldown": 300, "radiusMult": 2.40, "damageMult": 4.00, "slowRatio": 0.65 },
-      { "cooldown": 300, "radiusMult": 2.70, "damageMult": 5.00, "slowRatio": 0.65 },
-      { "cooldown": 300, "radiusMult": 3.00, "damageMult": 6.20, "slowRatio": 0.55 },
-      { "cooldown": 200, "radiusMult": 3.50, "damageMult": 8.00, "slowRatio": 0.40 }
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
+      { "cooldownMult": 0.66, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
+      { "cooldownMult": 0.73, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
+      { "cooldownMult": 0.82, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.55 },
+      { "cooldownMult": 0.98, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.40 }
     ]
   },
   SpinningScythe: {
     baseDamage: 18,
+    damageGrowth: 0.15,
+    baseCooldown: 9999,
+    cooldownGrowth: 0.0,
+    baseDistance: 70,
+    distanceGrowth: 0.039,
+    baseSpeed: 0.03,
+    speedGrowth: 0.166,
     levels: [
-      { "cooldown": 9999, "count": 1, "distance": 70, "speed": 0.030, "damageMult": 1.00 },
-      { "cooldown": 9999, "count": 2, "distance": 70, "speed": 0.030, "damageMult": 1.15 },
-      { "cooldown": 9999, "count": 3, "distance": 80, "speed": 0.042, "damageMult": 1.30 },
-      { "cooldown": 9999, "count": 3, "distance": 80, "speed": 0.042, "damageMult": 1.45 },
-      { "cooldown": 9999, "count": 4, "distance": 80, "speed": 0.042, "damageMult": 1.60 },
-      { "cooldown": 9999, "count": 5, "distance": 80, "speed": 0.042, "damageMult": 1.75 },
-      { "cooldown": 9999, "count": 6, "distance": 85, "speed": 0.060, "damageMult": 1.90 },
-      { "cooldown": 9999, "count": 6, "distance": 85, "speed": 0.060, "damageMult": 2.05 },
-      { "cooldown": 9999, "count": 7, "distance": 85, "speed": 0.060, "damageMult": 2.20 },
-      { "cooldown": 9999, "count": 9, "distance": 95, "speed": 0.075, "damageMult": 2.35 }
+      { "cooldownMult": 1.00, "count": 1, "distanceMult": 1.00, "speedMult": 1.00, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 2, "distanceMult": 1.00, "speedMult": 1.00, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 3, "distanceMult": 1.06, "speedMult": 1.05, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 3, "distanceMult": 1.00, "speedMult": 0.90, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 4, "distanceMult": 0.94, "speedMult": 0.81, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 5, "distanceMult": 0.89, "speedMult": 0.74, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 6, "distanceMult": 0.88, "speedMult": 0.90, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 6, "distanceMult": 0.84, "speedMult": 0.82, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 7, "distanceMult": 0.80, "speedMult": 0.76, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "count": 9, "distanceMult": 0.82, "speedMult": 0.79, "damageMult": 1.00 }
     ]
   },
   BigSword: {
     baseDamage: 25,
+    damageGrowth: 0.61,
+    baseCooldown: 450,
+    cooldownGrowth: -0.024,
+    baseLength: 55,
+    lengthGrowth: 0.29,
+    baseWidth: 12,
+    widthGrowth: 0.22,
     levels: [
-      { "cooldown": 450, "count": 1, "length": 55, "width": 12, "damageMult": 1.00 },
-      { "cooldown": 450, "count": 2, "length": 65, "width": 14, "damageMult": 1.25 },
-      { "cooldown": 450, "count": 2, "length": 85, "width": 18, "damageMult": 1.50 },
-      { "cooldown": 450, "count": 3, "length": 95, "width": 20, "damageMult": 1.85 },
-      { "cooldown": 450, "count": 4, "length": 120, "width": 25, "damageMult": 2.40 },
-      { "cooldown": 450, "count": 5, "length": 135, "width": 27, "damageMult": 3.00 },
-      { "cooldown": 350, "count": 5, "length": 150, "width": 29, "damageMult": 3.60 },
-      { "cooldown": 350, "count": 6, "length": 165, "width": 31, "damageMult": 4.30 },
-      { "cooldown": 350, "count": 6, "length": 180, "width": 33, "damageMult": 5.20 },
-      { "cooldown": 350, "count": 8, "length": 200, "width": 36, "damageMult": 6.50 }
+      { "cooldownMult": 1.00, "count": 1, "lengthMult": 1.00, "widthMult": 1.00, "damageMult": 1.00 },
+      { "cooldownMult": 1.01, "count": 2, "lengthMult": 0.91, "widthMult": 0.96, "damageMult": 1.00 },
+      { "cooldownMult": 1.02, "count": 2, "lengthMult": 0.98, "widthMult": 1.04, "damageMult": 1.00 },
+      { "cooldownMult": 1.04, "count": 3, "lengthMult": 0.92, "widthMult": 0.99, "damageMult": 1.00 },
+      { "cooldownMult": 1.05, "count": 4, "lengthMult": 1.01, "widthMult": 1.06, "damageMult": 1.00 },
+      { "cooldownMult": 1.07, "count": 5, "lengthMult": 1.00, "widthMult": 1.01, "damageMult": 1.00 },
+      { "cooldownMult": 0.88, "count": 5, "lengthMult": 0.99, "widthMult": 0.99, "damageMult": 1.00 },
+      { "cooldownMult": 0.92, "count": 6, "lengthMult": 0.99, "widthMult": 0.99, "damageMult": 1.00 },
+      { "cooldownMult": 0.94, "count": 6, "lengthMult": 0.99, "widthMult": 0.99, "damageMult": 1.00 },
+      { "cooldownMult": 0.97, "count": 8, "lengthMult": 1.00, "widthMult": 1.00, "damageMult": 1.00 }
     ]
   },
   ThunderWave: {
-    baseDamage: 20,
+    baseDamage: 8,
+    damageGrowth: 3.22,
+    baseCooldown: 2400,
+    cooldownGrowth: -0.095,
+    baseRange: 650,
+    rangeGrowth: 0.018,
     levels: [
-      { "cooldown": 2400, "range": 650, "damageMult": 0.4, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 2000, "range": 660, "damageMult": 0.7, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 1700, "range": 670, "damageMult": 1.1, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 1400, "range": 680, "damageMult": 1.6, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 1100, "range": 690, "damageMult": 2.2, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 900, "range": 700, "damageMult": 3.0, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 750, "range": 710, "damageMult": 4.0, "waveCount": 1, "maxAge": 75 },
-      { "cooldown": 600, "range": 720, "damageMult": 5.5, "waveCount": 2, "maxAge": 75 },
-      { "cooldown": 480, "range": 730, "damageMult": 7.5, "waveCount": 2, "maxAge": 75 },
-      { "cooldown": 350, "range": 760, "damageMult": 12.0, "waveCount": 3, "maxAge": 75 }
+      { "cooldownMult": 1.00, "rangeMult": 1.00, "damageMult": 1.00, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.99, "rangeMult": 1.00, "damageMult": 0.52, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.98, "rangeMult": 1.00, "damageMult": 0.55, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.96, "rangeMult": 1.00, "damageMult": 0.60, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.94, "rangeMult": 1.00, "damageMult": 0.66, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.92, "rangeMult": 1.00, "damageMult": 0.72, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.90, "rangeMult": 1.00, "damageMult": 0.79, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.81, "rangeMult": 1.00, "damageMult": 0.86, "waveCount": 2, "maxAge": 75 },
+      { "cooldownMult": 0.74, "rangeMult": 1.00, "damageMult": 0.95, "waveCount": 2, "maxAge": 75 },
+      { "cooldownMult": 0.66, "rangeMult": 1.00, "damageMult": 1.00, "waveCount": 3, "maxAge": 75 }
     ]
   },
   FireRoad: {
     baseDamage: 8,
+    damageGrowth: 1.05,
+    baseCooldown: 220,
+    cooldownGrowth: -0.045,
+    baseLifetime: 1500,
+    lifetimeGrowth: 0.407,
+    baseRadius: 10,
+    radiusGrowth: 0.355,
     levels: [
-      { "cooldown": 220, "lifetime": 1500, "radius": 10, "damageMult": 1.00 },
-      { "cooldown": 220, "lifetime": 2000, "radius": 13, "damageMult": 1.40 },
-      { "cooldown": 220, "lifetime": 2500, "radius": 16, "damageMult": 1.80 },
-      { "cooldown": 220, "lifetime": 3000, "radius": 20, "damageMult": 2.40 },
-      { "cooldown": 220, "lifetime": 3800, "radius": 26, "damageMult": 3.40 },
-      { "cooldown": 220, "lifetime": 4400, "radius": 29, "damageMult": 4.30 },
-      { "cooldown": 180, "lifetime": 5000, "radius": 32, "damageMult": 5.30 },
-      { "cooldown": 180, "lifetime": 5600, "radius": 35, "damageMult": 6.50 },
-      { "cooldown": 180, "lifetime": 6200, "radius": 38, "damageMult": 7.80 },
-      { "cooldown": 130, "lifetime": 7000, "radius": 42, "damageMult": 9.50 }
+      { "cooldownMult": 1.00, "lifetimeMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "lifetimeMult": 0.95, "radiusMult": 0.96, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "lifetimeMult": 0.93, "radiusMult": 0.94, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "lifetimeMult": 0.90, "radiusMult": 0.97, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "lifetimeMult": 0.96, "radiusMult": 1.07, "damageMult": 1.00 },
+      { "cooldownMult": 1.00, "lifetimeMult": 0.97, "radiusMult": 1.04, "damageMult": 1.00 },
+      { "cooldownMult": 1.12, "lifetimeMult": 0.96, "radiusMult": 1.02, "damageMult": 1.00 },
+      { "cooldownMult": 1.22, "lifetimeMult": 0.96, "radiusMult": 1.00, "damageMult": 1.00 },
+      { "cooldownMult": 1.32, "lifetimeMult": 0.96, "radiusMult": 0.99, "damageMult": 1.00 },
+      { "cooldownMult": 1.10, "lifetimeMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00 }
     ]
   }
 };
@@ -408,8 +441,9 @@ class MagicWand extends Weapon {
   }
 
   getCooldown() {
-    const config = window.weaponBalance.MagicWand.levels[this.level - 1];
-    return config.cooldown;
+    const balance = window.weaponBalance.MagicWand;
+    const config = balance.levels[this.level - 1];
+    return balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
   }
 
   fire(player, enemies, projectiles) {
@@ -420,10 +454,11 @@ class MagicWand extends Weapon {
       return getDistance(player.x, player.y, a.x, a.y) - getDistance(player.x, player.y, b.x, b.y);
     });
 
-    const config = window.weaponBalance.MagicWand.levels[this.level - 1];
+    const balance = window.weaponBalance.MagicWand;
+    const config = balance.levels[this.level - 1];
     const projectileCount = config.count;
-    const baseDamage = window.weaponBalance.MagicWand.baseDamage * player.stats.damageMultiplier;
-    const damage = baseDamage * config.damageMult;
+    const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
+    const damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
     const speed = 7;
     const pierce = config.pierce;
 
@@ -485,8 +520,9 @@ class GarlicAura extends Weapon {
   }
 
   update(dt, player, enemies, projectiles) {
-    const config = window.weaponBalance.GarlicAura.levels[this.level - 1];
-    const interval = config.cooldown;
+    const balance = window.weaponBalance.GarlicAura;
+    const config = balance.levels[this.level - 1];
+    const interval = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
     this.tickTimer += dt;
     if (this.tickTimer >= interval) {
       this.tickTimer = 0;
@@ -495,15 +531,16 @@ class GarlicAura extends Weapon {
   }
 
   getRadius(player) {
-    const baseRadius = window.weaponBalance.GarlicAura.baseRadius;
-    const config = window.weaponBalance.GarlicAura.levels[this.level - 1];
-    return baseRadius * config.radiusMult;
+    const balance = window.weaponBalance.GarlicAura;
+    const config = balance.levels[this.level - 1];
+    return balance.baseRadius * (1 + balance.radiusGrowth * (this.level - 1)) * config.radiusMult;
   }
 
   getDamage(player) {
-    const baseDamage = window.weaponBalance.GarlicAura.baseDamage * player.stats.damageMultiplier;
-    const config = window.weaponBalance.GarlicAura.levels[this.level - 1];
-    return baseDamage * config.damageMult;
+    const balance = window.weaponBalance.GarlicAura;
+    const config = balance.levels[this.level - 1];
+    const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
+    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
   }
 
   triggerAura(player, enemies) {
@@ -663,12 +700,13 @@ class SpinningScythe extends Weapon {
 
   // Overriding standard update to handle orbital physics
   update(dt, player, enemies, projectiles) {
-    const config = window.weaponBalance.SpinningScythe.levels[this.level - 1];
+    const balance = window.weaponBalance.SpinningScythe;
+    const config = balance.levels[this.level - 1];
     const count = config.count;
-    const baseDamage = window.weaponBalance.SpinningScythe.baseDamage * player.stats.damageMultiplier;
-    const damage = baseDamage * config.damageMult;
-    const speed = config.speed;
-    const distance = config.distance;
+    const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
+    const damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    const speed = balance.baseSpeed * (1 + balance.speedGrowth * (this.level - 1)) * config.speedMult;
+    const distance = balance.baseDistance * (1 + balance.distanceGrowth * (this.level - 1)) * config.distanceMult;
     
     // Keep array size matching target count
     if (this.blades.length !== count) {
@@ -767,10 +805,11 @@ class BigSword extends Weapon {
       }
     }
 
-    const config = window.weaponBalance.BigSword.levels[this.level - 1];
+    const balance = window.weaponBalance.BigSword;
+    const config = balance.levels[this.level - 1];
     const count = config.count;
-    const length = config.length;
-    const width = config.width;
+    const length = this.getLength();
+    const width = this.getWidth();
     const damage = this.getDamage(player);
     const handleOffset = 25;
 
@@ -833,7 +872,7 @@ class BigSword extends Weapon {
             }
 
             gameAudio.playHit();
-            const cooldownVal = config.cooldown;
+            const cooldownVal = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
             this.hitCooldowns.set(hitKey, cooldownVal);
           }
         }
@@ -846,17 +885,22 @@ class BigSword extends Weapon {
   }
 
   getLength() {
-    return window.weaponBalance.BigSword.levels[this.level - 1].length;
+    const balance = window.weaponBalance.BigSword;
+    const config = balance.levels[this.level - 1];
+    return balance.baseLength * (1 + balance.lengthGrowth * (this.level - 1)) * config.lengthMult;
   }
 
   getWidth() {
-    return window.weaponBalance.BigSword.levels[this.level - 1].width;
+    const balance = window.weaponBalance.BigSword;
+    const config = balance.levels[this.level - 1];
+    return balance.baseWidth * (1 + balance.widthGrowth * (this.level - 1)) * config.widthMult;
   }
 
   getDamage(player) {
-    const baseDamage = window.weaponBalance.BigSword.baseDamage * player.stats.damageMultiplier;
-    const config = window.weaponBalance.BigSword.levels[this.level - 1];
-    return baseDamage * config.damageMult;
+    const balance = window.weaponBalance.BigSword;
+    const config = balance.levels[this.level - 1];
+    const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
+    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
   }
 
   drawSwords(ctx, player) {
@@ -943,17 +987,22 @@ class ThunderWave extends Weapon {
   }
 
   getCooldown() {
-    return window.weaponBalance.ThunderWave.levels[this.level - 1].cooldown;
+    const balance = window.weaponBalance.ThunderWave;
+    const config = balance.levels[this.level - 1];
+    return balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
   }
 
   getRange() {
-    return window.weaponBalance.ThunderWave.levels[this.level - 1].range;
+    const balance = window.weaponBalance.ThunderWave;
+    const config = balance.levels[this.level - 1];
+    return balance.baseRange * (1 + balance.rangeGrowth * (this.level - 1)) * config.rangeMult;
   }
 
   getDamage(player) {
-    const baseDamage = window.weaponBalance.ThunderWave.baseDamage * player.stats.damageMultiplier;
-    const config = window.weaponBalance.ThunderWave.levels[this.level - 1];
-    return baseDamage * config.damageMult;
+    const balance = window.weaponBalance.ThunderWave;
+    const config = balance.levels[this.level - 1];
+    const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
+    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
   }
 
   getKnockback() {
@@ -1127,17 +1176,22 @@ class FireRoad extends Weapon {
   }
 
   getLifetime() {
-    return window.weaponBalance.FireRoad.levels[this.level - 1].lifetime;
+    const balance = window.weaponBalance.FireRoad;
+    const config = balance.levels[this.level - 1];
+    return balance.baseLifetime * (1 + balance.lifetimeGrowth * (this.level - 1)) * config.lifetimeMult;
   }
 
   getRadius() {
-    return window.weaponBalance.FireRoad.levels[this.level - 1].radius;
+    const balance = window.weaponBalance.FireRoad;
+    const config = balance.levels[this.level - 1];
+    return balance.baseRadius * (1 + balance.radiusGrowth * (this.level - 1)) * config.radiusMult;
   }
 
   getDamage(player) {
-    const baseDamage = window.weaponBalance.FireRoad.baseDamage * player.stats.damageMultiplier;
-    const config = window.weaponBalance.FireRoad.levels[this.level - 1];
-    return baseDamage * config.damageMult;
+    const balance = window.weaponBalance.FireRoad;
+    const config = balance.levels[this.level - 1];
+    const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
+    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
   }
 
   update(dt, player, enemies, projectiles) {
@@ -1160,8 +1214,9 @@ class FireRoad extends Weapon {
         damage: this.getDamage(player),
         hitImmunity: new Map() // enemyId -> immunity duration
       });
-      const config = window.weaponBalance.FireRoad.levels[this.level - 1];
-      const cooldownVal = config.cooldown;
+      const balance = window.weaponBalance.FireRoad;
+      const config = balance.levels[this.level - 1];
+      const cooldownVal = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
       this.cooldownTimer = cooldownVal;
     }
 
