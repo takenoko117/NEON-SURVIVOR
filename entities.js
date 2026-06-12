@@ -1543,16 +1543,16 @@ class Player {
     const glowColor = this.hitTimer > 0 ? '#ff007f' : '#b026ff';
     const time = Date.now() / 1000;
 
-    // Draw waving organic tendrils/tentacles trailing downward (behind body)
-    const tendrilCount = 3;
+    // Draw waving organic tendrils/tentacles radiating 360 degrees (behind body)
+    const tendrilCount = 10;
     ctx.save();
     ctx.shadowBlur = 10;
     ctx.shadowColor = glowColor;
     ctx.strokeStyle = glowColor;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.0; // slightly thinner for multiple tendrils
     for (let tIdx = 0; tIdx < tendrilCount; tIdx++) {
-      // Position along bottom part of player (angles around Math.PI * 0.5)
-      const startAngle = Math.PI * 0.4 + (tIdx / Math.max(1, tendrilCount - 1)) * Math.PI * 0.2;
+      // Radiating 360 degrees
+      const startAngle = (tIdx / tendrilCount) * Math.PI * 2;
       const startR = this.radius * 0.8;
       const sx = Math.cos(startAngle) * startR;
       const sy = Math.sin(startAngle) * startR;
@@ -1561,12 +1561,16 @@ class Player {
       ctx.moveTo(sx, sy);
       
       const segmentCount = 6;
+      const segLen = (this.radius * 1.2) / segmentCount; // slightly shorter to avoid overwhelming clutter
       for (let seg = 1; seg <= segmentCount; seg++) {
-        const segLen = (this.radius * 1.5) / segmentCount;
-        const targetY = sy + seg * segLen;
-        // Waving sine wave offset
-        const waveOffset = Math.sin(time * 8.5 - seg * 0.9 + tIdx * 2.2) * (this.radius * 0.25);
-        const targetX = sx + waveOffset;
+        const dist = startR + seg * segLen;
+        const baseX = Math.cos(startAngle) * dist;
+        const baseY = Math.sin(startAngle) * dist;
+
+        // Waving sine wave offset (perpendicular to startAngle)
+        const waveOffset = Math.sin(time * 8.5 - seg * 0.9 + tIdx * 2.2) * (this.radius * 0.2);
+        const targetX = baseX + (-Math.sin(startAngle)) * waveOffset;
+        const targetY = baseY + Math.cos(startAngle) * waveOffset;
         
         ctx.lineTo(targetX, targetY);
       }
