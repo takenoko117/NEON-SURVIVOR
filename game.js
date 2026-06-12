@@ -385,6 +385,7 @@ class NeonGameEngine {
     this.playerIframeTimer = 0;
     this.shakeDuration = 0;
     this.shakeIntensity = 0;
+    this.bossSpawned = false;
 
     // Reset Developer Mode State
     this.godMode = false;
@@ -476,8 +477,8 @@ class NeonGameEngine {
     const currentSecs = Math.floor(this.elapsedTime / 1000);
 
     // End condition
-    if (currentSecs >= this.totalGameDuration && !this.enemies.some(e => e.type === 'boss')) {
-      // Spawn Boss Destroyer at 5:00
+    if (currentSecs >= this.totalGameDuration && !this.bossSpawned) {
+      this.bossSpawned = true;
       this.spawnBoss();
     }
 
