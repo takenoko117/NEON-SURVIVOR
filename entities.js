@@ -1474,6 +1474,8 @@ class Player {
     this.level = 1;
     this.exp = 0;
     this.nextLevelExp = 10;
+    this.revivesRemaining = 3;
+    this.reviveCount = 0;
     
     // Active weapons
     this.weapons = [new MagicWand()]; // Start with Magic Wand

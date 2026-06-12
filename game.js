@@ -565,7 +565,39 @@ class NeonGameEngine {
 
     // Check Defeat
     if (this.player.hp <= 0) {
-      this.state = 'GAME_OVER';
+      if (this.player.revivesRemaining > 0) {
+        this.player.revivesRemaining--;
+        this.player.reviveCount++;
+        this.player.hp = this.player.maxHp;
+        this.playerIframeTimer = 2000; // 2 seconds invulnerability
+        
+        if (this.damageNumbers) {
+          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y, "REVIVED!", false));
+        }
+
+        this.triggerScreenShake(30, 15.0);
+        gameAudio.playLevelUp(); // play level up sound for revival fanfare
+
+        // Spawn flashy revival particles
+        this.player.spawnParticles(this.player.x, this.player.y, '#fffb00', 1.5, 30);
+        this.player.spawnParticles(this.player.x, this.player.y, '#39ff14', 1.2, 20);
+
+        // Blow away nearby enemies for breathing room
+        this.enemies.forEach(enemy => {
+          const dist = getDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+          if (dist < 250) {
+            const dx = enemy.x - this.player.x;
+            const dy = enemy.y - this.player.y;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            if (len > 0) {
+              enemy.x += (dx / len) * 80;
+              enemy.y += (dy / len) * 80;
+            }
+          }
+        });
+      } else {
+        this.state = 'GAME_OVER';
+      }
     }
   }
 
@@ -1020,6 +1052,7 @@ class NeonGameEngine {
     document.getElementById('result-time').innerText = timeString;
     document.getElementById('result-level').innerText = this.player.level;
     document.getElementById('result-kills').innerText = this.player.kills;
+    document.getElementById('result-revives').innerText = `${this.player.reviveCount}回`;
 
     const titleEl = document.getElementById('end-title');
     const msgEl = document.getElementById('end-message');
