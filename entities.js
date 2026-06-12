@@ -805,6 +805,31 @@ class BigSword extends Weapon {
       ctx.lineTo(xStart + 8, halfW);
       ctx.lineTo(xStart, halfW * 0.4);
       ctx.closePath();
+
+      // Premium golden neon style rendering
+      const color = this.level >= 10 ? '#ffe600' : '#ffb700'; // ultimate is bright yellow, normal is gold/orange-yellow
+      const strokeColor = this.level >= 10 ? '#ffffff' : '#ffd700';
+
+      ctx.fillStyle = `rgba(${this.level >= 10 ? '255, 230, 0' : '255, 183, 0'}, 0.25)`;
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2.5;
+      ctx.shadowBlur = this.level >= 10 ? 20 : 10;
+      ctx.shadowColor = color;
+      
+      ctx.fill();
+      ctx.stroke();
+
+      // Inner glowing core line (laser blade style)
+      ctx.beginPath();
+      ctx.moveTo(xStart + 5, 0);
+      ctx.lineTo(xEnd - 5, 0);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = width * 0.15;
+      ctx.lineCap = 'round';
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = '#ffffff';
+      ctx.stroke();
+
       ctx.restore();
     }
   }
