@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON SURVIVOR - Weapon Balance Editor</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    /* Styling based on game color palette */
+    :root {
+      --bg-color: #06070d;
+      --bg-panel: rgba(13, 15, 30, 0.85);
+      --bg-card: rgba(20, 24, 45, 0.9);
+      --border-glow: rgba(0, 240, 255, 0.3);
+      --border-glow-active: rgba(255, 0, 127, 0.5);
+      
+      --neon-cyan: #00f0ff;
+      --neon-pink: #ff007f;
+      --neon-green: #39ff14;
+      --neon-purple: #b026ff;
+      --neon-yellow: #fffb00;
+      
+      --text-main: #f0f3ff;
+      --text-muted: #8a9fc4;
+      --font-retro: 'Press Start 2P', monospace;
+      --font-ui: 'Outfit', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 240, 255, 0.05) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(176, 38, 255, 0.08) 0px, transparent 50%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(0, 240, 255, 0.2);
+      padding-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .logo-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-family: var(--font-retro);
+      font-size: 24px;
+      color: var(--text-main);
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+      line-height: 1.2;
+    }
+
+    .logo-title span {
+      color: var(--neon-pink);
+      text-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--neon-cyan);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-top: 5px;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+    }
+
+    .global-actions {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--neon-cyan);
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: var(--font-ui);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+    }
+
+    .btn:hover {
+      background: var(--neon-cyan);
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-pink {
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 10px rgba(255, 0, 127, 0.1);
+    }
+
+    .btn-pink:hover {
+      background: var(--neon-pink);
+      color: var(--text-main);
+      box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+    }
+
+    .btn-secondary {
+      border-color: var(--text-muted);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-main);
+      box-shadow: none;
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    .editor-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 30px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .editor-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Tabs Panel */
+    .tabs-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-glow);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .tab-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px 15px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .tab-item.active {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(176, 38, 255, 0.1));
+      border-color: var(--neon-cyan);
+      color: var(--text-main);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+    }
+
+    .tab-icon {
+      font-size: 20px;
+    }
+
+    /* Content Area */
+    .content-area {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-glow);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .weapon-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 15px;
+    }
+
+    .weapon-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .weapon-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .weapon-key {
+      font-family: var(--font-retro);
+      font-size: 10px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Parameter group styling */
+    .base-settings-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--neon-cyan);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-left: 3px solid var(--neon-cyan);
+      padding-left: 10px;
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group label {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 15px;
+      width: 90px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--neon-cyan);
+    }
+
+    /* Sliders styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--neon-cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--neon-cyan);
+      transition: transform 0.1s, background-color 0.1s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      background: var(--neon-pink);
+      box-shadow: 0 0 10px var(--neon-pink);
+    }
+
+    /* Levels section */
+    .levels-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .level-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .level-card:hover {
+      border-color: rgba(0, 240, 255, 0.15);
+    }
+
+    .level-card-header {
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .level-number {
+      font-family: var(--font-retro);
+      font-size: 11px;
+      color: var(--neon-pink);
+      text-shadow: 0 0 8px rgba(255, 0, 127, 0.3);
+    }
+
+    .level-card-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* Notification message */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(13, 15, 30, 0.95);
+      border: 1px solid var(--neon-green);
+      color: var(--text-main);
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(57, 255, 20, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast-error {
+      border-color: var(--neon-pink);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 0, 127, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-container">
+        <h1 class="logo-title">NEON<span>SURVIVOR</span></h1>
+        <div class="subtitle">Weapon Balance Editor</div>
+      </div>
+      <div class="global-actions">
+        <button class="btn btn-secondary" id="btn-import-trigger">
+          📥 Import JSON
+        </button>
+        <input type="file" id="import-input" class="hidden-input" accept=".json">
+        
+        <button class="btn btn-pink" id="btn-export">
+          💾 Export JSON
+        </button>
+        
+        <button class="btn btn-secondary" id="btn-reset" style="border-color: var(--neon-yellow); color: var(--neon-yellow);">
+          🔄 Reset to Defaults
+        </button>
+      </div>
+    </header>
+
+    <div class="editor-layout">
+      <!-- Left Tab Selector -->
+      <div class="tabs-panel" id="weapon-tabs">
+        <!-- Dynamic Tabs populated by JS -->
+      </div>
+
+      <!-- Right Edit Dashboard -->
+      <div class="content-area" id="editor-content">
+        <!-- Dynamic form generated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <span id="toast-icon">✅</span>
+    <span id="toast-message">Success!</span>
+  </div>
+
+  <script>
+    // In-memory DEFAULT balance settings
+    const DEFAULT_WEAPON_BALANCE = {
+      MagicWand: {
+        baseDamage: 12,
+        levels: [
+          { "cooldown": 1200, "count": 1, "pierce": 1, "damageMult": 1.00 },
+          { "cooldown": 1000, "count": 2, "pierce": 1, "damageMult": 1.15 },
+          { "cooldown": 900,  "count": 3, "pierce": 1, "damageMult": 1.30 },
+          { "cooldown": 800,  "count": 3, "pierce": 2, "damageMult": 1.45 },
+          { "cooldown": 600,  "count": 5, "pierce": 2, "damageMult": 1.60 },
+          { "cooldown": 500,  "count": 6, "pierce": 2, "damageMult": 1.75 },
+          { "cooldown": 480,  "count": 7, "pierce": 3, "damageMult": 1.90 },
+          { "cooldown": 450,  "count": 8, "pierce": 3, "damageMult": 2.05 },
+          { "cooldown": 400,  "count": 8, "pierce": 3, "damageMult": 2.20 },
+          { "cooldown": 350,  "count": 18, "pierce": 4, "damageMult": 2.35 }
+        ]
+      },
+      GarlicAura: {
+        baseDamage: 3,
+        baseRadius: 55,
+        levels: [
+          { "cooldown": 500, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
+          { "cooldown": 500, "radiusMult": 1.20, "damageMult": 1.25, "slowRatio": 0.00 },
+          { "cooldown": 500, "radiusMult": 1.35, "damageMult": 1.50, "slowRatio": 0.00 },
+          { "cooldown": 500, "radiusMult": 1.50, "damageMult": 1.80, "slowRatio": 0.00 },
+          { "cooldown": 500, "radiusMult": 1.80, "damageMult": 2.50, "slowRatio": 0.65 },
+          { "cooldown": 500, "radiusMult": 2.10, "damageMult": 3.20, "slowRatio": 0.65 },
+          { "cooldown": 300, "radiusMult": 2.40, "damageMult": 4.00, "slowRatio": 0.65 },
+          { "cooldown": 300, "radiusMult": 2.70, "damageMult": 5.00, "slowRatio": 0.65 },
+          { "cooldown": 300, "radiusMult": 3.00, "damageMult": 6.20, "slowRatio": 0.55 },
+          { "cooldown": 200, "radiusMult": 3.50, "damageMult": 8.00, "slowRatio": 0.40 }
+        ]
+      },
+      SpinningScythe: {
+        baseDamage: 18,
+        levels: [
+          { "cooldown": 9999, "count": 1, "distance": 70, "speed": 0.030, "damageMult": 1.00 },
+          { "cooldown": 9999, "count": 2, "distance": 70, "speed": 0.030, "damageMult": 1.15 },
+          { "cooldown": 9999, "count": 3, "distance": 80, "speed": 0.042, "damageMult": 1.30 },
+          { "cooldown": 9999, "count": 3, "distance": 80, "speed": 0.042, "damageMult": 1.45 },
+          { "cooldown": 9999, "count": 4, "distance": 80, "speed": 0.042, "damageMult": 1.60 },
+          { "cooldown": 9999, "count": 5, "distance": 80, "speed": 0.042, "damageMult": 1.75 },
+          { "cooldown": 9999, "count": 6, "distance": 85, "speed": 0.060, "damageMult": 1.90 },
+          { "cooldown": 9999, "count": 6, "distance": 85, "speed": 0.060, "damageMult": 2.05 },
+          { "cooldown": 9999, "count": 7, "distance": 85, "speed": 0.060, "damageMult": 2.20 },
+          { "cooldown": 9999, "count": 9, "distance": 95, "speed": 0.075, "damageMult": 2.35 }
+        ]
+      },
+      BigSword: {
+        baseDamage: 25,
+        levels: [
+          { "cooldown": 450, "count": 1, "length": 55, "width": 12, "damageMult": 1.00 },
+          { "cooldown": 450, "count": 2, "length": 65, "width": 14, "damageMult": 1.25 },
+          { "cooldown": 450, "count": 2, "length": 85, "width": 18, "damageMult": 1.50 },
+          { "cooldown": 450, "count": 3, "length": 95, "width": 20, "damageMult": 1.85 },
+          { "cooldown": 450, "count": 4, "length": 120, "width": 25, "damageMult": 2.40 },
+          { "cooldown": 450, "count": 5, "length": 135, "width": 27, "damageMult": 3.00 },
+          { "cooldown": 350, "count": 5, "length": 150, "width": 29, "damageMult": 3.60 },
+          { "cooldown": 350, "count": 6, "length": 165, "width": 31, "damageMult": 4.30 },
+          { "cooldown": 350, "count": 6, "length": 180, "width": 33, "damageMult": 5.20 },
+          { "cooldown": 350, "count": 8, "length": 200, "width": 36, "damageMult": 6.50 }
+        ]
+      },
+      ThunderWave: {
+        baseDamage: 20,
+        levels: [
+          { "cooldown": 2400, "range": 650, "damageMult": 0.4, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 2000, "range": 660, "damageMult": 0.7, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 1700, "range": 670, "damageMult": 1.1, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 1400, "range": 680, "damageMult": 1.6, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 1100, "range": 690, "damageMult": 2.2, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 900, "range": 700, "damageMult": 3.0, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 750, "range": 710, "damageMult": 4.0, "waveCount": 1, "maxAge": 75 },
+          { "cooldown": 600, "range": 720, "damageMult": 5.5, "waveCount": 2, "maxAge": 75 },
+          { "cooldown": 480, "range": 730, "damageMult": 7.5, "waveCount": 2, "maxAge": 75 },
+          { "cooldown": 350, "range": 760, "damageMult": 12.0, "waveCount": 3, "maxAge": 75 }
+        ]
+      },
+      FireRoad: {
+        baseDamage: 8,
+        levels: [
+          { "cooldown": 220, "lifetime": 1500, "radius": 10, "damageMult": 1.00 },
+          { "cooldown": 220, "lifetime": 2000, "radius": 13, "damageMult": 1.40 },
+          { "cooldown": 220, "lifetime": 2500, "radius": 16, "damageMult": 1.80 },
+          { "cooldown": 220, "lifetime": 3000, "radius": 20, "damageMult": 2.40 },
+          { "cooldown": 220, "lifetime": 3800, "radius": 26, "damageMult": 3.40 },
+          { "cooldown": 220, "lifetime": 4400, "radius": 29, "damageMult": 4.30 },
+          { "cooldown": 180, "lifetime": 5000, "radius": 32, "damageMult": 5.30 },
+          { "cooldown": 180, "lifetime": 5600, "radius": 35, "damageMult": 6.50 },
+          { "cooldown": 180, "lifetime": 6200, "radius": 38, "damageMult": 7.80 },
+          { "cooldown": 130, "lifetime": 7000, "radius": 42, "damageMult": 9.50 }
+        ]
+      }
+    };
+
+    // Metadata for scaling parameters (friendly labels, sliders configuration)
+    const PARAM_META = {
+      cooldown: { label: "クールダウン (ms)", min: 10, max: 10000, step: 10 },
+      damageMult: { label: "ダメージ倍率", min: 0.0, max: 20.0, step: 0.05 },
+      count: { label: "同時発射/出現数", min: 1, max: 30, step: 1 },
+      pierce: { label: "貫通回数", min: 1, max: 20, step: 1 },
+      radiusMult: { label: "範囲倍率", min: 0.5, max: 5.0, step: 0.05 },
+      slowRatio: { label: "移動速度低下率", min: 0.0, max: 1.0, step: 0.05 },
+      distance: { label: "軌道半径 (px)", min: 20, max: 300, step: 5 },
+      speed: { label: "軌道回転速度", min: 0.005, max: 0.2, step: 0.001 },
+      length: { label: "剣の長さ (px)", min: 20, max: 400, step: 5 },
+      width: { label: "剣の幅 (px)", min: 2, max: 100, step: 1 },
+      range: { label: "電撃波及射程 (px)", min: 100, max: 1500, step: 10 },
+      waveCount: { label: "連続電撃回数", min: 1, max: 5, step: 1 },
+      maxAge: { label: "電撃持続フレーム", min: 10, max: 300, step: 5 },
+      lifetime: { label: "炎持続時間 (ms)", min: 100, max: 15000, step: 50 },
+      radius: { label: "炎判定半径 (px)", min: 2, max: 100, step: 1 }
+    };
+
+    const BASE_PARAM_META = {
+      baseDamage: { label: "基本ダメージ", min: 1, max: 200, step: 1 },
+      baseRadius: { label: "基本半径 (px)", min: 10, max: 200, step: 1 }
+    };
+
+    const WEAPON_INFO = {
+      MagicWand: { name: "魔法の杖", icon: "🪄" },
+      GarlicAura: { name: "ガーリックオーラ", icon: "🧄" },
+      SpinningScythe: { name: "回転鎌", icon: "🪓" },
+      BigSword: { name: "ビッグソード", icon: "🗡️" },
+      ThunderWave: { name: "サンダーウェーブ", icon: "⚡" },
+      FireRoad: { name: "ファイアーロード", icon: "🔥" }
+    };
+
+    // Current active data & UI state
+    let activeWeapon = "MagicWand";
+    let weaponConfig = JSON.parse(JSON.stringify(DEFAULT_WEAPON_BALANCE));
+
+    // Initialize Page
+    window.addEventListener('DOMContentLoaded', () => {
+      loadInitialConfig();
+      setupGlobalActions();
+    });
+
+    // Attempt to fetch local weapon_balance.json on page load
+    async function loadInitialConfig() {
+      try {
+        const response = await fetch('weapon_balance.json');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && typeof data === 'object') {
+            weaponConfig = data;
+            showToast("✅ weapon_balance.json loaded successfully!", false);
+          }
+        }
+      } catch (e) {
+        console.info("Could not load weapon_balance.json dynamically via fetch (likely file:// protocol CORS limit). Using built-in defaults.", e);
+      }
+      renderTabs();
+      renderActiveWeapon();
+    }
+
+    function renderTabs() {
+      const container = document.getElementById('weapon-tabs');
+      container.innerHTML = '';
+
+      Object.keys(WEAPON_INFO).forEach(key => {
+        const info = WEAPON_INFO[key];
+        const tab = document.createElement('div');
+        tab.className = `tab-item ${key === activeWeapon ? 'active' : ''}`;
+        tab.innerHTML = `
+          <span class="tab-icon">${info.icon}</span>
+          <span>${info.name}</span>
+        `;
+        tab.addEventListener('click', () => {
+          activeWeapon = key;
+          renderTabs();
+          renderActiveWeapon();
+        });
+        container.appendChild(tab);
+      });
+    }
+
+    function renderActiveWeapon() {
+      const container = document.getElementById('editor-content');
+      const info = WEAPON_INFO[activeWeapon];
+      const data = weaponConfig[activeWeapon];
+
+      if (!data) return;
+
+      let html = `
+        <div class="weapon-header">
+          <div class="weapon-title-group">
+            <span style="font-size: 32px;">${info.icon}</span>
+            <div>
+              <h2 class="weapon-title">${info.name}</h2>
+              <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">キー: ${activeWeapon}</div>
+            </div>
+          </div>
+          <span class="weapon-key">${activeWeapon} Configuration</span>
+        </div>
+      `;
+
+      // Render Base Settings Card
+      html += `
+        <div class="base-settings-card">
+          <h3 class="card-title">基本ステータス設定</h3>
+          <div class="grid-2col">
+      `;
+
+      Object.keys(data).forEach(key => {
+        if (key !== 'levels') {
+          const meta = BASE_PARAM_META[key] || { label: key, min: 1, max: 1000, step: 1 };
+          html += `
+            <div class="form-group">
+              <label>${meta.label}</label>
+              <div class="input-wrapper">
+                <input type="range" id="base-slider-${key}" min="${meta.min}" max="${meta.max}" step="${meta.step}" value="${data[key]}">
+                <input type="number" id="base-num-${key}" min="${meta.min}" max="${meta.max}" step="${meta.step}" value="${data[key]}">
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+
+      // Render Level Up Scales
+      html += `
+        <div class="levels-container">
+          <h3 class="card-title" style="margin-bottom: 5px;">レベル毎のステータススケーリング</h3>
+      `;
+
+      data.levels.forEach((lvlData, idx) => {
+        html += `
+          <div class="level-card">
+            <div class="level-card-header">
+              <span class="level-number">LEVEL ${idx + 1}</span>
+            </div>
+            <div class="level-card-body grid-2col">
+        `;
+
+        Object.keys(lvlData).forEach(param => {
+          const meta = PARAM_META[param] || { label: param, min: 0, max: 10000, step: 1 };
+          const value = lvlData[param];
+          html += `
+            <div class="form-group">
+              <label>${meta.label}</label>
+              <div class="input-wrapper">
+                <input type="range" id="lvl-slider-${idx}-${param}" min="${meta.min}" max="${meta.max}" step="${meta.step}" value="${value}">
+                <input type="number" id="lvl-num-${idx}-${param}" min="${meta.min}" max="${meta.max}" step="${meta.step}" value="${value}">
+              </div>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+
+      container.innerHTML = html;
+
+      // Bind dynamic inputs to sync sliders & numbers and save back to weaponConfig
+      bindInputs(data);
+    }
+
+    function bindInputs(data) {
+      // 1. Bind Base Settings
+      Object.keys(data).forEach(key => {
+        if (key !== 'levels') {
+          const slider = document.getElementById(`base-slider-${key}`);
+          const num = document.getElementById(`base-num-${key}`);
+
+          const sync = (val) => {
+            const parsed = parseFloat(val);
+            slider.value = parsed;
+            num.value = parsed;
+            data[key] = parsed;
+          };
+
+          slider.addEventListener('input', (e) => sync(e.target.value));
+          num.addEventListener('input', (e) => sync(e.target.value));
+        }
+      });
+
+      // 2. Bind Level Specific Settings
+      data.levels.forEach((lvlData, idx) => {
+        Object.keys(lvlData).forEach(param => {
+          const slider = document.getElementById(`lvl-slider-${idx}-${param}`);
+          const num = document.getElementById(`lvl-num-${idx}-${param}`);
+
+          const sync = (val) => {
+            const parsed = parseFloat(val);
+            slider.value = parsed;
+            num.value = parsed;
+            lvlData[param] = parsed;
+          };
+
+          slider.addEventListener('input', (e) => sync(e.target.value));
+          num.addEventListener('input', (e) => sync(e.target.value));
+        }
+      )});
+    }
+
+    function setupGlobalActions() {
+      // Export Functionality
+      document.getElementById('btn-export').addEventListener('click', () => {
+        try {
+          const jsonString = JSON.stringify(weaponConfig, null, 2);
+          const blob = new Blob([jsonString], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'weapon_balance.json';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          showToast("💾 Configuration exported successfully! Put it in the game's directory as 'weapon_balance.json'", false);
+        } catch (err) {
+          showToast("❌ Export failed: " + err.message, true);
+        }
+      });
+
+      // Import Trigger & Process
+      const importTrigger = document.getElementById('btn-import-trigger');
+      const importInput = document.getElementById('import-input');
+
+      importTrigger.addEventListener('click', () => {
+        importInput.click();
+      });
+
+      importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            // Verify structure lightly
+            const keys = Object.keys(DEFAULT_WEAPON_BALANCE);
+            const valid = keys.every(key => data[key] && Array.isArray(data[key].levels) && data[key].levels.length === 10);
+            
+            if (!valid) {
+              throw new Error("Invalid schema structure. Must contain levels 1-10 configs for: " + keys.join(', '));
+            }
+
+            weaponConfig = data;
+            renderTabs();
+            renderActiveWeapon();
+            showToast("📥 Configuration imported and applied!", false);
+          } catch (err) {
+            showToast("❌ Import failed: " + err.message, true);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Reset to default
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        if (confirm("デフォルト設定にリセットしますか？ (未エクスポートの変更は失われます)")) {
+          weaponConfig = JSON.parse(JSON.stringify(DEFAULT_WEAPON_BALANCE));
+          renderTabs();
+          renderActiveWeapon();
+          showToast("🔄 Reset to default parameters successfully!", false);
+        }
+      });
+    }
+
+    function showToast(message, isError) {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const msg = document.getElementById('toast-message');
+
+      icon.textContent = isError ? "⚠️" : "✅";
+      msg.textContent = message;
+      
+      if (isError) {
+        toast.classList.add('toast-error');
+      } else {
+        toast.classList.remove('toast-error');
+      }
+
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
