@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEON SURVIVOR - Retro Neon Hack & Slash</title>
+  <!-- Google Fonts for Sleek & Retro Aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="game-container">
+    <!-- The HTML5 Canvas where the action is rendered -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD Overlay (visible during active gameplay) -->
+    <div id="hud" class="overlay hidden">
+      <div class="hud-top">
+        <div class="hud-level-container">
+          <span class="hud-label">LV</span>
+          <span id="hud-level-value">1</span>
+        </div>
+        <div class="hud-exp-bar-container">
+          <div id="hud-exp-bar-fill"></div>
+        </div>
+        <div id="hud-timer">00:00</div>
+      </div>
+      
+      <div class="hud-stats-overlay">
+        <div class="stat-item">
+          <span class="stat-icon">❤️</span>
+          <div class="hud-hp-bar-container">
+            <div id="hud-hp-bar-fill"></div>
+          </div>
+          <span id="hud-hp-text">100/100</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-icon">💀</span>
+          <span id="hud-kills">0</span>
+        </div>
+      </div>
+
+      <!-- Active Weapons List (rendered in bottom left) -->
+      <div id="hud-weapons" class="hud-weapons-list"></div>
+    </div>
+
+    <!-- Start Screen Overlay -->
+    <div id="start-screen" class="overlay menu-screen">
+      <div class="menu-content glow-panel">
+        <h1 class="neon-title">NEON<br><span class="highlight">SURVIVOR</span></h1>
+        <p class="tagline">5分間を生き延びろ！迫り来る敵を撃破し、ネオンの力を進化させよ。</p>
+        
+        <div class="instructions-panel">
+          <h3>操作方法</h3>
+          <div class="control-hints">
+            <div class="control-hint">
+              <span class="key-cap">W</span>
+              <span class="key-cap">A</span>
+              <span class="key-cap">S</span>
+              <span class="key-cap">D</span> / <span class="key-cap">←</span><span class="key-cap">↑</span><span class="key-cap">↓</span><span class="key-cap">→</span>
+              <span class="control-desc">移動 (キーボード)</span>
+            </div>
+            <div class="control-hint-divider">または</div>
+            <div class="control-hint">
+              <span class="mouse-icon">🖱️</span>
+              <span class="control-desc">ドラッグ / クリックした方向に移動</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="start-btn" class="neon-button">GAME START</button>
+      </div>
+    </div>
+
+    <!-- Level Up Choice Overlay (pauses game) -->
+    <div id="level-up-screen" class="overlay menu-screen hidden">
+      <div class="menu-content">
+        <h2 class="neon-subtitle">LEVEL UP!</h2>
+        <p class="level-up-desc">アップグレードを選択してください</p>
+        <div id="upgrade-options" class="options-container">
+          <!-- Dynamically populated choices will go here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over / Victory Overlay -->
+    <div id="game-over-screen" class="overlay menu-screen hidden">
+      <div class="menu-content glow-panel">
+        <h2 id="end-title" class="neon-title">GAME OVER</h2>
+        <p id="end-message" class="end-msg">ネオンの灯火が消えてしまった...</p>
+        
+        <div class="results-panel">
+          <div class="result-row">
+            <span>生存時間:</span>
+            <span id="result-time" class="result-val">00:00</span>
+          </div>
+          <div class="result-row">
+            <span>到達レベル:</span>
+            <span id="result-level" class="result-val">1</span>
+          </div>
+          <div class="result-row">
+            <span>撃破数:</span>
+            <span id="result-kills" class="result-val">0</span>
+          </div>
+        </div>
+
+        <button id="restart-btn" class="neon-button">RETRY</button>
+      </div>
+    </div>
+
+    <!-- Developer Mode Panel Toggle -->
+    <button id="dev-toggle" class="dev-toggle-btn">⚙️ DEV</button>
+
+    <!-- Developer Mode Panel Sidebar -->
+    <div id="dev-panel" class="dev-panel-collapsed">
+      <h3 class="dev-title">DEVELOPER CONSOLE</h3>
+      
+      <div class="dev-section">
+        <h4>PLAYER TWEAKS</h4>
+        <div class="dev-control-row">
+          <label for="dev-god-mode">GOD MODE (無敵)</label>
+          <input type="checkbox" id="dev-god-mode">
+        </div>
+        <div class="dev-btn-group">
+          <button id="dev-heal-btn" class="dev-btn">MAX HEAL</button>
+          <button id="dev-lvl-up-btn" class="dev-btn">LEVEL UP</button>
+        </div>
+      </div>
+
+      <div class="dev-section">
+        <h4>ENEMY CONTROLS</h4>
+        <div class="dev-control-row">
+          <label for="dev-freeze-spawn">FREEZE SPAWN (出現停止)</label>
+          <input type="checkbox" id="dev-freeze-spawn">
+        </div>
+        <div class="dev-control-row">
+          <label>SPAWN RATE (出現速度)</label>
+          <span id="dev-spawn-rate-val">1.5s</span>
+        </div>
+        <input type="range" id="dev-spawn-rate" min="50" max="5000" step="50" value="1500" class="dev-slider">
+        
+        <div class="dev-control-row">
+          <label>ENEMY SPEED (移動速度)</label>
+          <span id="dev-enemy-speed-val">1.0x</span>
+        </div>
+        <input type="range" id="dev-enemy-speed" min="0.2" max="3" step="0.1" value="1.0" class="dev-slider">
+
+        <div class="dev-control-row">
+          <label>ENEMY HP (最大HP)</label>
+          <span id="dev-enemy-hp-val">1.0x</span>
+        </div>
+        <input type="range" id="dev-enemy-hp" min="0.2" max="5" step="0.1" value="1.0" class="dev-slider">
+
+        <div class="dev-btn-group">
+          <button id="dev-clear-enemies" class="dev-btn">CLEAR ENEMIES</button>
+          <button id="dev-spawn-boss" class="dev-btn">SPAWN BOSS</button>
+        </div>
+      </div>
+
+      <div class="dev-section">
+        <h4>WEAPON LEVELS</h4>
+        <div class="dev-control-row">
+          <label>🔮 マナ・ボルト (Wand)</label>
+          <input type="range" id="dev-wpn-magic" min="0" max="10" step="1" value="1" class="dev-slider small-slider">
+          <span id="dev-wpn-magic-val" class="dev-lv-badge">Lv1</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🧄 ネオン・ハロー (Garlic)</label>
+          <input type="range" id="dev-wpn-garlic" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-wpn-garlic-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🪓 サイバー・エッジ (Scythe)</label>
+          <input type="range" id="dev-wpn-scythe" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-wpn-scythe-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🗡️ ビッグソード (Sword)</label>
+          <input type="range" id="dev-wpn-sword" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-wpn-sword-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>⚡ サンダーウェーブ (Thunder)</label>
+          <input type="range" id="dev-wpn-thunder" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-wpn-thunder-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🔥 ファイアーロード (Fire)</label>
+          <input type="range" id="dev-wpn-fire" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-wpn-fire-val" class="dev-lv-badge">Lv0</span>
+        </div>
+      </div>
+
+      <div class="dev-section">
+        <h4>PASSIVE LEVELS</h4>
+        <div class="dev-control-row">
+          <label>❤️ ホロウ・ハート (Max HP)</label>
+          <input type="range" id="dev-pass-hp" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-hp-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🥓 プマローラ (HP Regen)</label>
+          <input type="range" id="dev-pass-regen" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-regen-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🥬 ホウレンソウ (Damage)</label>
+          <input type="range" id="dev-pass-damage" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-damage-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🪶 ウィング (Speed)</label>
+          <input type="range" id="dev-pass-speed" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-speed-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🧲 アトラクターブ (Magnet)</label>
+          <input type="range" id="dev-pass-magnet" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-magnet-val" class="dev-lv-badge">Lv0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Scripts -->
+  <script src="audio.js"></script>
+  <script src="entities.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
