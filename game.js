@@ -189,6 +189,24 @@ class NeonGameEngine {
       }
     });
 
+    // Skip time 30s
+    this.devSkip30sBtn = document.getElementById('dev-skip-30s-btn');
+    this.devSkip30sBtn.addEventListener('click', () => {
+      if (this.state === 'PLAYING') {
+        this.elapsedTime += 30000;
+        this.updateHUD(Math.floor(this.elapsedTime / 1000));
+      }
+    });
+
+    // Skip time 1m
+    this.devSkip1mBtn = document.getElementById('dev-skip-1m-btn');
+    this.devSkip1mBtn.addEventListener('click', () => {
+      if (this.state === 'PLAYING') {
+        this.elapsedTime += 60000;
+        this.updateHUD(Math.floor(this.elapsedTime / 1000));
+      }
+    });
+
     // Freeze spawn
     this.devFreezeSpawn = document.getElementById('dev-freeze-spawn');
     this.devFreezeSpawn.addEventListener('change', () => {
