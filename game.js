@@ -51,6 +51,7 @@ class NeonGameEngine {
     // Bind DOM events
     this.setupDOM();
     this.setupInput();
+    this.loadWeaponBalance();
   }
 
   setupDOM() {
@@ -130,6 +131,23 @@ class NeonGameEngine {
       onPointerMove(e);
     }, { passive: true });
     window.addEventListener('touchend', onPointerUp);
+  }
+
+  loadWeaponBalance() {
+    fetch('weapon_balance.json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        window.weaponBalance = data;
+        console.log('Weapon balance configuration loaded successfully:', data);
+      })
+      .catch(error => {
+        console.warn('Failed to load weapon_balance.json. Falling back to default configuration:', error);
+      });
   }
 
   toggleDevPanel() {

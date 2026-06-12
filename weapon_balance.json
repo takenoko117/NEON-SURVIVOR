@@ -1,0 +1,93 @@
+{
+  "MagicWand": {
+    "baseDamage": 12,
+    "levels": [
+      { "cooldown": 1200, "count": 1, "pierce": 1, "damageMult": 1.00 },
+      { "cooldown": 1000, "count": 2, "pierce": 1, "damageMult": 1.15 },
+      { "cooldown": 900,  "count": 3, "pierce": 1, "damageMult": 1.30 },
+      { "cooldown": 800,  "count": 3, "pierce": 2, "damageMult": 1.45 },
+      { "cooldown": 600,  "count": 5, "pierce": 2, "damageMult": 1.60 },
+      { "cooldown": 500,  "count": 6, "pierce": 2, "damageMult": 1.75 },
+      { "cooldown": 480,  "count": 7, "pierce": 3, "damageMult": 1.90 },
+      { "cooldown": 450,  "count": 8, "pierce": 3, "damageMult": 2.05 },
+      { "cooldown": 400,  "count": 8, "pierce": 3, "damageMult": 2.20 },
+      { "cooldown": 350,  "count": 18, "pierce": 4, "damageMult": 2.35 }
+    ]
+  },
+  "GarlicAura": {
+    "baseDamage": 3,
+    "baseRadius": 55,
+    "levels": [
+      { "cooldown": 500, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
+      { "cooldown": 500, "radiusMult": 1.20, "damageMult": 1.25, "slowRatio": 0.00 },
+      { "cooldown": 500, "radiusMult": 1.35, "damageMult": 1.50, "slowRatio": 0.00 },
+      { "cooldown": 500, "radiusMult": 1.50, "damageMult": 1.80, "slowRatio": 0.00 },
+      { "cooldown": 500, "radiusMult": 1.80, "damageMult": 2.50, "slowRatio": 0.65 },
+      { "cooldown": 500, "radiusMult": 2.10, "damageMult": 3.20, "slowRatio": 0.65 },
+      { "cooldown": 300, "radiusMult": 2.40, "damageMult": 4.00, "slowRatio": 0.65 },
+      { "cooldown": 300, "radiusMult": 2.70, "damageMult": 5.00, "slowRatio": 0.65 },
+      { "cooldown": 300, "radiusMult": 3.00, "damageMult": 6.20, "slowRatio": 0.55 },
+      { "cooldown": 200, "radiusMult": 3.50, "damageMult": 8.00, "slowRatio": 0.40 }
+    ]
+  },
+  "SpinningScythe": {
+    "baseDamage": 18,
+    "levels": [
+      { "cooldown": 9999, "count": 1, "distance": 70, "speed": 0.030, "damageMult": 1.00 },
+      { "cooldown": 9999, "count": 2, "distance": 70, "speed": 0.030, "damageMult": 1.15 },
+      { "cooldown": 9999, "count": 3, "distance": 80, "speed": 0.042, "damageMult": 1.30 },
+      { "cooldown": 9999, "count": 3, "distance": 80, "speed": 0.042, "damageMult": 1.45 },
+      { "cooldown": 9999, "count": 4, "distance": 80, "speed": 0.042, "damageMult": 1.60 },
+      { "cooldown": 9999, "count": 5, "distance": 80, "speed": 0.042, "damageMult": 1.75 },
+      { "cooldown": 9999, "count": 6, "distance": 85, "speed": 0.060, "damageMult": 1.90 },
+      { "cooldown": 9999, "count": 6, "distance": 85, "speed": 0.060, "damageMult": 2.05 },
+      { "cooldown": 9999, "count": 7, "distance": 85, "speed": 0.060, "damageMult": 2.20 },
+      { "cooldown": 9999, "count": 9, "distance": 95, "speed": 0.075, "damageMult": 2.35 }
+    ]
+  },
+  "BigSword": {
+    "baseDamage": 25,
+    "levels": [
+      { "cooldown": 450, "count": 1, "length": 55, "width": 12, "damageMult": 1.00 },
+      { "cooldown": 450, "count": 2, "length": 65, "width": 14, "damageMult": 1.25 },
+      { "cooldown": 450, "count": 2, "length": 85, "width": 18, "damageMult": 1.50 },
+      { "cooldown": 450, "count": 3, "length": 95, "width": 20, "damageMult": 1.85 },
+      { "cooldown": 450, "count": 4, "length": 120, "width": 25, "damageMult": 2.40 },
+      { "cooldown": 450, "count": 5, "length": 135, "width": 27, "damageMult": 3.00 },
+      { "cooldown": 350, "count": 5, "length": 150, "width": 29, "damageMult": 3.60 },
+      { "cooldown": 350, "count": 6, "length": 165, "width": 31, "damageMult": 4.30 },
+      { "cooldown": 350, "count": 6, "length": 180, "width": 33, "damageMult": 5.20 },
+      { "cooldown": 350, "count": 8, "length": 200, "width": 36, "damageMult": 6.50 }
+    ]
+  },
+  "ThunderWave": {
+    "baseDamage": 20,
+    "levels": [
+      { "cooldown": 2400, "range": 650, "damageMult": 0.4, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 2000, "range": 660, "damageMult": 0.7, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 1700, "range": 670, "damageMult": 1.1, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 1400, "range": 680, "damageMult": 1.6, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 1100, "range": 690, "damageMult": 2.2, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 900, "range": 700, "damageMult": 3.0, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 750, "range": 710, "damageMult": 4.0, "waveCount": 1, "maxAge": 75 },
+      { "cooldown": 600, "range": 720, "damageMult": 5.5, "waveCount": 2, "maxAge": 75 },
+      { "cooldown": 480, "range": 730, "damageMult": 7.5, "waveCount": 2, "maxAge": 75 },
+      { "cooldown": 350, "range": 760, "damageMult": 12.0, "waveCount": 3, "maxAge": 75 }
+    ]
+  },
+  "FireRoad": {
+    "baseDamage": 8,
+    "levels": [
+      { "cooldown": 220, "lifetime": 1500, "radius": 10, "damageMult": 1.0 },
+      { "cooldown": 220, "lifetime": 2000, "radius": 13, "damageMult": 1.4 },
+      { "cooldown": 220, "lifetime": 2500, "radius": 16, "damageMult": 1.8 },
+      { "cooldown": 220, "lifetime": 3000, "radius": 20, "damageMult": 2.4 },
+      { "cooldown": 220, "lifetime": 3800, "radius": 26, "damageMult": 3.4 },
+      { "cooldown": 220, "lifetime": 4400, "radius": 29, "damageMult": 4.3 },
+      { "cooldown": 180, "lifetime": 5000, "radius": 32, "damageMult": 5.3 },
+      { "cooldown": 180, "lifetime": 5600, "radius": 35, "damageMult": 6.5 },
+      { "cooldown": 180, "lifetime": 6200, "radius": 38, "damageMult": 7.8 },
+      { "cooldown": 130, "lifetime": 7000, "radius": 42, "damageMult": 9.5 }
+    ]
+  }
+}
