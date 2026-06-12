@@ -862,18 +862,19 @@ class ThunderWave extends Weapon {
   }
 
   getCooldown() {
-    const cooldowns = [2500, 2100, 1800, 1500, 1100, 950, 800, 700, 600, 450];
+    const cooldowns = [2400, 2000, 1700, 1400, 1100, 900, 750, 600, 480, 350];
     return cooldowns[this.level - 1];
   }
 
   getRange() {
-    const ranges = [95, 125, 155, 185, 230, 260, 290, 320, 350, 400];
+    // Large range covering screen edges
+    const ranges = [650, 660, 670, 680, 690, 700, 710, 720, 730, 760];
     return ranges[this.level - 1];
   }
 
   getDamage(player) {
     const baseDamage = 20 * player.stats.damageMultiplier;
-    const multipliers = [1.0, 1.3, 1.7, 2.2, 3.25, 4.0, 4.8, 5.8, 7.0, 8.5];
+    const multipliers = [1.0, 1.4, 1.9, 2.5, 3.5, 4.6, 5.8, 7.2, 9.0, 12.0];
     return baseDamage * multipliers[this.level - 1];
   }
 
@@ -885,9 +886,9 @@ class ThunderWave extends Weapon {
     const waveCount = this.level >= 10 ? 3 : (this.level >= 8 ? 2 : 1);
     for (let w = 0; w < waveCount; w++) {
       this.activeWaves.push({
-        delay: w * 150, // 150ms delay between consecutive waves
+        delay: w * 250, // 250ms delay between consecutive waves
         age: 0,
-        maxAge: 20, // 20 frames active
+        maxAge: 75, // 75 frames active (slow propagation)
         maxRange: this.getRange(),
         damage: this.getDamage(player),
         knockback: this.getKnockback(),
@@ -1022,16 +1023,16 @@ class ThunderWave extends Weapon {
     if (lvl > 10) return "最大レベルです";
 
     const desc = [
-      "自機から放射状に広がる電撃ショックウェーブを放ち、周囲の敵をノックバックさせてダメージを与えます。",
-      "電撃の最大射程が拡張され（射程125px）、威力が上昇します。",
-      "電撃によるノックバック距離が大幅に向上（1.6倍）し、再装填速度が上がります。",
-      "最大射程がさらに拡大（射程185px）し、威力が大幅に上昇します。",
-      "極限電磁界！最大射程が極大化し（射程230px）、再装填速度が最速になります。",
-      "最大射程が拡張され（射程260px）、威力が上昇します。",
-      "再装填速度がさらに上がります（再装填800ms）。",
+      "自機から放射状にゆっくりと画面端まで広がる電撃ショックウェーブを放ち、周囲の敵をノックバックさせてダメージを与えます。",
+      "電撃の威力が上昇し、再装填速度（クールダウン）が短縮されます。",
+      "威力が上昇し、再装填速度が上がります。ノックバック距離が向上します。",
+      "威力が大幅に上昇し、再装填速度がさらに向上します。",
+      "電磁波過給！威力が極大化し、再装填速度が大幅に向上します。",
+      "威力が上昇し、再装填速度が向上します。",
+      "再装填速度がさらに向上します（再装填750ms）。",
       "過充電！1回のアクションで2連続の電撃ショックウェーブを放つようになります。",
-      "最大射程がさらに拡大（射程350px）し、ノックバック距離が極大化します。",
-      "【究極】ジャッジメント・ストーム！射程400pxの電撃を3連続で放ち、ヒットしたすべての敵に落雷が発生します！"
+      "威力が大幅に上昇し、ノックバック距離が極大化します。",
+      "【究極】ジャッジメント・ストーム！威力極大の電撃を3連続で放ち、ヒットしたすべての敵に強力な落雷を発生させます！"
     ];
     return desc[lvl - 1];
   }
