@@ -565,7 +565,7 @@ class NeonGameEngine {
   }
 
   loop(timestamp) {
-    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING' || this.state === 'ROULETTE') {
+    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING') {
       // pause loop, wait for choice/confirmation
       return;
     }
@@ -580,8 +580,15 @@ class NeonGameEngine {
     // Cap dt to prevent huge skips during background tab freeze
     const cappedDt = Math.min(dt, 100);
 
-    this.update(cappedDt);
-    this.draw();
+    if (this.state === 'ROULETTE') {
+      // Update only time and HUD during roulette!
+      this.elapsedTime += cappedDt;
+      this.updateHUD(Math.floor(this.elapsedTime / 1000));
+      this.draw();
+    } else {
+      this.update(cappedDt);
+      this.draw();
+    }
 
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1493,7 +1500,6 @@ class NeonGameEngine {
     this.state = 'PLAYING';
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
-    requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
   toggleTheme() {
