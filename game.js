@@ -46,6 +46,7 @@ class NeonGameEngine {
     this.devPanelOpen = false;
     this.godMode = false;
     this.freezeSpawns = false;
+    this.autoRun = false;
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
@@ -64,6 +65,7 @@ class NeonGameEngine {
     this.startScreen = document.getElementById('start-screen');
     this.hud = document.getElementById('hud');
     this.hudDifficulty = document.getElementById('hud-difficulty');
+    this.hudAutoRun = document.getElementById('hud-auto-run');
     this.levelUpScreen = document.getElementById('level-up-screen');
     this.gameOverScreen = document.getElementById('game-over-screen');
     
@@ -97,6 +99,14 @@ class NeonGameEngine {
       // Dev mode hotkeys: Backquote (`) or @
       if (e.code === 'Backquote' || e.key === '`' || e.key === '@') {
         this.toggleDevPanel();
+      }
+
+      // Auto Run hotkey: R
+      if (e.key && e.key.toLowerCase() === 'r' && this.state === 'PLAYING') {
+        this.autoRun = !this.autoRun;
+        if (this.devAutoRun) {
+          this.devAutoRun.checked = this.autoRun;
+        }
       }
     });
 
@@ -187,6 +197,12 @@ class NeonGameEngine {
     this.devGodMode = document.getElementById('dev-god-mode');
     this.devGodMode.addEventListener('change', () => {
       this.godMode = this.devGodMode.checked;
+    });
+
+    // Auto Run
+    this.devAutoRun = document.getElementById('dev-auto-run');
+    this.devAutoRun.addEventListener('change', () => {
+      this.autoRun = this.devAutoRun.checked;
     });
 
     // Heal
@@ -404,6 +420,10 @@ class NeonGameEngine {
     syncPass('damage', 'dev-pass-damage', 'dev-pass-damage-val');
     syncPass('speed', 'dev-pass-speed', 'dev-pass-speed-val');
     syncPass('magnet', 'dev-pass-magnet', 'dev-pass-magnet-val');
+
+    if (this.devAutoRun) {
+      this.devAutoRun.checked = this.autoRun;
+    }
   }
 
   triggerScreenShake(duration, intensity) {
@@ -437,6 +457,7 @@ class NeonGameEngine {
     // Reset Developer Mode State
     this.godMode = false;
     this.freezeSpawns = false;
+    this.autoRun = false;
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
@@ -444,6 +465,7 @@ class NeonGameEngine {
     // Reset Dev Panel elements inputs
     if (this.devGodMode) this.devGodMode.checked = false;
     if (this.devFreezeSpawn) this.devFreezeSpawn.checked = false;
+    if (this.devAutoRun) this.devAutoRun.checked = false;
     if (this.devSpawnRate) {
       this.devSpawnRate.value = 1500;
       this.devSpawnRateVal.innerText = '1.5s';
@@ -536,22 +558,108 @@ class NeonGameEngine {
     let dx = 0;
     let dy = 0;
 
-    // 1. Keyboard controls
-    if (this.keys['w'] || this.keys['arrowup']) dy = -1;
-    if (this.keys['s'] || this.keys['arrowdown']) dy = 1;
-    if (this.keys['a'] || this.keys['arrowleft']) dx = -1;
-    if (this.keys['d'] || this.keys['arrowright']) dx = 1;
+    // Toggle HUD Auto Run Badge visibility
+    if (this.hudAutoRun) {
+      if (this.autoRun) {
+        this.hudAutoRun.classList.remove('hidden');
+      } else {
+        this.hudAutoRun.classList.add('hidden');
+      }
+    }
 
-    // 2. Mouse/Touch control overrides if active or dragging
-    if (this.mouse.isDown) {
-      const mDx = this.mouse.x - this.player.x;
-      const mDy = this.mouse.y - this.player.y;
-      const mDist = Math.sqrt(mDx * mDx + mDy * mDy);
+    if (this.autoRun && this.player) {
+      // Auto run logic: evade enemies & walls, attract to experience gems / jewels.
       
-      // If mouse is far enough from player, move player towards it
-      if (mDist > 10) {
-        dx = mDx;
-        dy = mDy;
+      // 1. Evade enemies within threshold
+      const evasionThreshold = 250;
+      for (const enemy of this.enemies) {
+        const diffX = this.player.x - enemy.x;
+        const diffY = this.player.y - enemy.y;
+        const dist = Math.sqrt(diffX * diffX + diffY * diffY);
+        if (dist > 0 && dist < evasionThreshold) {
+          // Weight increases rapidly as distance decreases
+          const weight = 6000 / (dist * dist + 10);
+          dx += (diffX / dist) * weight;
+          dy += (diffY / dist) * weight;
+        }
+      }
+
+      // 2. Evade walls
+      const wallThreshold = 80;
+      // Left wall
+      if (this.player.x < wallThreshold) {
+        const d = Math.max(5, this.player.x);
+        dx += 2500 / (d * d);
+      }
+      // Right wall
+      if (this.player.x > this.logicalWidth - wallThreshold) {
+        const d = Math.max(5, this.logicalWidth - this.player.x);
+        dx -= 2500 / (d * d);
+      }
+      // Top wall
+      if (this.player.y < wallThreshold) {
+        const d = Math.max(5, this.player.y);
+        dy += 2500 / (d * d);
+      }
+      // Bottom wall
+      if (this.player.y > this.logicalHeight - wallThreshold) {
+        const d = Math.max(5, this.logicalHeight - this.player.y);
+        dy -= 2500 / (d * d);
+      }
+
+      // 3. Attract to closest Gem or Jewel
+      let closestItem = null;
+      let minItemDist = Infinity;
+      
+      // Prioritize jewels
+      for (const jewel of this.jewels) {
+        const d = Math.sqrt((jewel.x - this.player.x) ** 2 + (jewel.y - this.player.y) ** 2);
+        if (d < minItemDist) {
+          minItemDist = d;
+          closestItem = jewel;
+        }
+      }
+      // Check gems
+      for (const gem of this.gems) {
+        const d = Math.sqrt((gem.x - this.player.x) ** 2 + (gem.y - this.player.y) ** 2);
+        if (d < minItemDist) {
+          minItemDist = d;
+          closestItem = gem;
+        }
+      }
+
+      if (closestItem && minItemDist > 0) {
+        const attractX = closestItem.x - this.player.x;
+        const attractY = closestItem.y - this.player.y;
+        
+        // Attraction force scale (tuned to be lower than close enemies)
+        const attractionWeight = 1.8;
+        dx += (attractX / minItemDist) * attractionWeight;
+        dy += (attractY / minItemDist) * attractionWeight;
+      }
+
+      // 4. Add small jitter/noise to prevent getting stuck in deadlocks / vibration
+      dx += (Math.random() - 0.5) * 0.15;
+      dy += (Math.random() - 0.5) * 0.15;
+
+    } else {
+      // 1. Keyboard controls
+      if (this.keys['w'] || this.keys['arrowup']) dy = -1;
+      if (this.keys['s'] || this.keys['arrowdown']) dy = 1;
+      if (this.keys['a'] || this.keys['arrowleft']) dx = -1;
+      if (this.keys['d'] || this.keys['arrowright']) dx = 1;
+
+      // 2. Mouse/Touch control overrides if active or dragging
+      if (this.mouse.isDown) {
+        const mDx = this.mouse.x - this.player.x;
+        const mDy = this.mouse.y - this.player.y;
+        const mDist = Math.sqrt(mDx * mDx + mDy * mDy);
+        
+        // If mouse is far enough from player, move player towards it
+        if (mDist > 10) {
+          dx = mDx;
+          dy = mDy;
+        }
       }
     }
 

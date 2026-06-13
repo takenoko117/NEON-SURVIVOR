@@ -430,6 +430,19 @@ body {
   vertical-align: middle;
 }
 
+.hud-auto-run-badge {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--neon-green);
+  margin-left: 15px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* --- Level Up Overlay options --- */
 
 #level-up-screen .menu-content {
