@@ -632,8 +632,9 @@ class GarlicAura extends Weapon {
           const len = Math.sqrt(dx * dx + dy * dy);
           if (len > 0) {
             const pushForce = this.level >= 8 ? 24 : 12;
-            enemy.x += (dx / len) * pushForce; // Knockback push
-            enemy.y += (dy / len) * pushForce;
+            const kbMult = enemy.getKnockbackMultiplier();
+            enemy.x += (dx / len) * pushForce * kbMult; // Knockback push
+            enemy.y += (dy / len) * pushForce * kbMult;
           }
         }
         
@@ -924,8 +925,9 @@ class BigSword extends Weapon {
             const kLen = Math.sqrt(kDx * kDx + kDy * kDy);
             if (kLen > 0) {
               const force = isCrit ? 36 : 18;
-              enemy.x += (kDx / kLen) * force;
-              enemy.y += (kDy / kLen) * force;
+              const kbMult = enemy.getKnockbackMultiplier();
+              enemy.x += (kDx / kLen) * force * kbMult;
+              enemy.y += (kDy / kLen) * force * kbMult;
             }
 
             gameAudio.playHit();
@@ -1138,8 +1140,9 @@ class ThunderWave extends Weapon {
           const kLen = Math.sqrt(kDx * kDx + kDy * kDy);
           if (kLen > 0) {
             const force = isCrit ? wave.knockback * 2.2 : wave.knockback;
-            enemy.x += (kDx / kLen) * force;
-            enemy.y += (kDy / kLen) * force;
+            const kbMult = enemy.getKnockbackMultiplier();
+            enemy.x += (kDx / kLen) * force * kbMult;
+            enemy.y += (kDy / kLen) * force * kbMult;
           }
 
           gameAudio.playHit();
@@ -1964,6 +1967,14 @@ class Enemy {
       this.active = false;
     }
     return amount;
+  }
+
+  getKnockbackMultiplier() {
+    if (!window.gameEngine || !window.gameEngine.hellMode) {
+      return 1.0;
+    }
+    const hellTimeSecs = (window.gameEngine.elapsedTime - window.gameEngine.hellModeStartTime) / 1000;
+    return 0.8 * Math.exp(-hellTimeSecs * 0.02);
   }
 
   update(player, enemies, width = 900, height = 600) {

@@ -982,8 +982,9 @@ class NeonGameEngine {
           if (kLen > 0) {
             const baseForce = (proj.constructor.name === 'ScytheProjectile' || proj.radius >= 7) ? 15 : 7;
             const force = isCrit ? baseForce * 2.2 : baseForce;
-            enemy.x += (kDx / kLen) * force;
-            enemy.y += (kDy / kLen) * force;
+            const kbMult = enemy.getKnockbackMultiplier();
+            enemy.x += (kDx / kLen) * force * kbMult;
+            enemy.y += (kDy / kLen) * force * kbMult;
           }
 
           // Trigger screen shake on crits
