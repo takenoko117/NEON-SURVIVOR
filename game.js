@@ -18,9 +18,12 @@ class NeonGameEngine {
     this.totalGameDuration = 300; // 5 minutes in seconds
     this.difficulty = 'NORMAL';
     this.flashOpacity = 0;
+    this.flashColorOverride = null;
     this.shockwaveRadius = 0;
     this.shockwaveMaxRadius = 650;
     this.shockwaveSpeed = 0.9;
+    this.hellMode = false;
+    this.hellModeStartTime = 0;
     
     // Inputs
     this.keys = {};
@@ -461,7 +464,10 @@ class NeonGameEngine {
     this.shakeIntensity = 0;
     this.bossSpawned = false;
     this.flashOpacity = 0;
+    this.flashColorOverride = null;
     this.shockwaveRadius = 0;
+    this.hellMode = false;
+    this.hellModeStartTime = 0;
 
     // Clear active menu intervals
     if (this.levelUpTimer) {
@@ -725,7 +731,10 @@ class NeonGameEngine {
     // Fade screen flash
     if (this.flashOpacity > 0) {
       this.flashOpacity -= dt / 600; // fade out over 600ms
-      if (this.flashOpacity < 0) this.flashOpacity = 0;
+      if (this.flashOpacity <= 0) {
+        this.flashOpacity = 0;
+        this.flashColorOverride = null;
+      }
     }
 
     // Expand shockwave
@@ -742,9 +751,9 @@ class NeonGameEngine {
     this.spawnTimer += dt;
     const spawnRate = this.spawnIntervalOverride !== null ? this.spawnIntervalOverride : this.getSpawnInterval(currentSecs);
     
-    // Freeze normal spawns if a boss is alive
+    // Freeze normal spawns if a boss is alive (only if not in Hell Mode)
     const bossAlive = this.enemies.some(e => e.type === 'boss' || e.type === 'boss2');
-    if (this.freezeSpawns || bossAlive) {
+    if (this.freezeSpawns || (bossAlive && !this.hellMode)) {
       this.spawnTimer = 0;
     } else if (this.spawnTimer >= spawnRate) {
       this.spawnTimer = 0;
@@ -823,26 +832,50 @@ class NeonGameEngine {
 
     this.enemyScaleMultiplier = 1.0 + (secs / 60) * 0.35;
 
-    // Wave spawning logic based on time elapsed
-    if (secs >= 240) {
-      // 4-5 minutes (Ultimate Swarm)
-      type = roll < 0.3 ? 'bat' : (roll < 0.55 ? 'phantom' : (roll < 0.75 ? 'slime' : (roll < 0.9 ? 'skeleton' : 'golem')));
-    } else if (secs >= 180) {
-      // 3-4 minutes (All types mixed)
-      type = roll < 0.25 ? 'bat' : (roll < 0.45 ? 'phantom' : (roll < 0.65 ? 'slime' : (roll < 0.85 ? 'skeleton' : 'golem')));
-    } else if (secs >= 120) {
-      // 2-3 minutes (Introduce Golem & Slimes)
-      type = roll < 0.25 ? 'slime' : (roll < 0.5 ? 'phantom' : (roll < 0.75 ? 'skeleton' : (roll < 0.9 ? 'bat' : 'golem')));
-    } else if (secs >= 60) {
-      // 1-2 minutes (Introduce Skeleton & Phantom)
-      type = roll < 0.35 ? 'skeleton' : (roll < 0.7 ? 'phantom' : (roll < 0.85 ? 'bat' : 'spider'));
+    let scaleMultiplier = this.enemyScaleMultiplier * this.enemyHpMultiplierOverride * (this.difficulty === 'HARD' ? 2.0 : 1.0);
+    let speedMult = this.enemySpeedMultiplierOverride;
+    let damageMult = 1.0;
+
+    if (this.hellMode) {
+      const hellTimeSecs = (this.elapsedTime - this.hellModeStartTime) / 1000;
+      const hellMultiplier = Math.exp(hellTimeSecs * 0.04);
+      scaleMultiplier *= hellMultiplier;
+      damageMult *= hellMultiplier;
+      speedMult *= Math.min(2.5, 1 + hellTimeSecs * 0.005);
+
+      // 5% Destroyer (boss), 3% Neo Nemesis (boss2), 92% Swarm
+      if (roll < 0.03) {
+        type = 'boss2';
+      } else if (roll < 0.08) {
+        type = 'boss';
+      } else {
+        // Standard high-level swarm mix
+        const swarmRoll = Math.random();
+        type = swarmRoll < 0.3 ? 'bat' : (swarmRoll < 0.55 ? 'phantom' : (swarmRoll < 0.75 ? 'slime' : (swarmRoll < 0.9 ? 'skeleton' : 'golem')));
+      }
     } else {
-      // 0-1 minute (Spiders & Bats)
-      type = roll < 0.6 ? 'spider' : 'bat';
+      // Wave spawning logic based on time elapsed
+      if (secs >= 240) {
+        // 4-5 minutes (Ultimate Swarm)
+        type = roll < 0.3 ? 'bat' : (roll < 0.55 ? 'phantom' : (roll < 0.75 ? 'slime' : (roll < 0.9 ? 'skeleton' : 'golem')));
+      } else if (secs >= 180) {
+        // 3-4 minutes (All types mixed)
+        type = roll < 0.25 ? 'bat' : (roll < 0.45 ? 'phantom' : (roll < 0.65 ? 'slime' : (roll < 0.85 ? 'skeleton' : 'golem')));
+      } else if (secs >= 120) {
+        // 2-3 minutes (Introduce Golem & Slimes)
+        type = roll < 0.25 ? 'slime' : (roll < 0.5 ? 'phantom' : (roll < 0.75 ? 'skeleton' : (roll < 0.9 ? 'bat' : 'golem')));
+      } else if (secs >= 60) {
+        // 1-2 minutes (Introduce Skeleton & Phantom)
+        type = roll < 0.35 ? 'skeleton' : (roll < 0.7 ? 'phantom' : (roll < 0.85 ? 'bat' : 'spider'));
+      } else {
+        // 0-1 minute (Spiders & Bats)
+        type = roll < 0.6 ? 'spider' : 'bat';
+      }
     }
 
-    const enemy = new Enemy(x, y, type, this.enemyScaleMultiplier * this.enemyHpMultiplierOverride * (this.difficulty === 'HARD' ? 2.0 : 1.0));
-    enemy.speed *= this.enemySpeedMultiplierOverride;
+    const enemy = new Enemy(x, y, type, scaleMultiplier);
+    enemy.speed *= speedMult;
+    enemy.damage *= damageMult;
     this.enemies.push(enemy);
   }
 
@@ -873,6 +906,25 @@ class NeonGameEngine {
     
     // Return boss2 instead of pushing to this.enemies directly to avoid the filter overwrite bug
     return boss2;
+  }
+
+  enterHellMode() {
+    this.hellMode = true;
+    this.hellModeStartTime = this.elapsedTime;
+    
+    // Shocking visual/shake effects
+    this.triggerScreenShake(55, 16.0);
+    this.flashOpacity = 1.0;
+    this.flashColorOverride = 'rgba(255, 0, 0, ';
+    
+    // Audio trigger
+    gameAudio.playHellMode();
+    
+    // On-screen message notices
+    const px = this.player.x;
+    const py = this.player.y;
+    this.damageNumbers.push(new DamageNumber(px, py - 60, "★ HELL MODE ACTIVATED ★", true, "#ff0000", 22));
+    this.damageNumbers.push(new DamageNumber(px, py - 35, "敵が指数関数的に無限に強化される...", false, "#ff5555", 14));
   }
 
   getMaxEnemyCount(secs) {
@@ -967,15 +1019,15 @@ class NeonGameEngine {
         }
 
         // Check if boss defeated -> spawn boss2
-        if (enemy.type === 'boss') {
+        if (enemy.type === 'boss' && !this.hellMode) {
           const boss2 = this.spawnBoss2();
           newSpawns.push(boss2);
         }
-        // Check if boss2 defeated -> Win!
+        // Check if boss2 defeated -> Win! Or enter Hell Mode!
         if (enemy.type === 'boss2') {
-          this.state = 'VICTORY';
-          this.triggerScreenShake(60, 16.0); // massive victory shake
-          gameAudio.playVictory();
+          if (!this.hellMode) {
+            this.enterHellMode();
+          }
         }
         return false;
       }
@@ -1574,6 +1626,16 @@ class NeonGameEngine {
         weaponsContainer.appendChild(pEl);
       }
     });
+
+    // Toggle HUD Hell Badge visibility
+    const hellBadge = document.getElementById('hud-hell');
+    if (hellBadge) {
+      if (this.hellMode) {
+        hellBadge.classList.remove('hidden');
+      } else {
+        hellBadge.classList.add('hidden');
+      }
+    }
   }
 
   showEndScreen() {
@@ -1603,6 +1665,11 @@ class NeonGameEngine {
       titleEl.style.color = '#fffb00';
       titleEl.style.textShadow = '0 0 15px #fffb00, 0 0 30px rgba(255, 251, 0, 0.5)';
       msgEl.innerText = "ネオ・ネメシスを撃破した！世界はまばゆい光に満たされた！";
+    } else if (this.hellMode) {
+      titleEl.innerText = "HELL VANQUISHED";
+      titleEl.style.color = '#ff3300';
+      titleEl.style.textShadow = '0 0 15px #ff3300, 0 0 30px rgba(255, 51, 0, 0.5)';
+      msgEl.innerText = "地獄モードの果てに散った... あなたの闘志は永遠に語り継がれる！";
     } else {
       titleEl.innerText = "GAME OVER";
       titleEl.style.color = '#ff007f';
@@ -1694,7 +1761,8 @@ class NeonGameEngine {
     // Draw Screen Flash
     if (this.flashOpacity > 0) {
       this.ctx.save();
-      this.ctx.fillStyle = `rgba(255, 255, 255, ${this.flashOpacity})`;
+      const color = this.flashColorOverride ? `${this.flashColorOverride}${this.flashOpacity})` : `rgba(255, 255, 255, ${this.flashOpacity})`;
+      this.ctx.fillStyle = color;
       this.ctx.fillRect(0, 0, this.logicalWidth, this.logicalHeight);
       this.ctx.restore();
     }

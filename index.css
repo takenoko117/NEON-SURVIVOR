@@ -443,6 +443,31 @@ body {
   vertical-align: middle;
 }
 
+.hud-hell-badge {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: #ff0000;
+  border: 1px solid #ff0000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px #ff0000, inset 0 0 4px #ff0000;
+  margin-left: 15px;
+  display: inline-block;
+  vertical-align: middle;
+  animation: hell-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes hell-glow {
+  from {
+    box-shadow: 0 0 8px #ff0000, inset 0 0 3px #ff0000;
+    text-shadow: 0 0 3px #ff0000;
+  }
+  to {
+    box-shadow: 0 0 16px #ff0000, inset 0 0 6px #ff0000;
+    text-shadow: 0 0 8px #ff0000;
+  }
+}
+
 /* --- Level Up Overlay options --- */
 
 #level-up-screen .menu-content {

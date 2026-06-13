@@ -177,14 +177,14 @@ class Particle {
 
 // Floating Damage Numbers
 class DamageNumber {
-  constructor(x, y, amount, isCrit = false) {
+  constructor(x, y, amount, isCrit = false, customColor = null, customFontSize = null) {
     this.x = x + (Math.random() * 20 - 10);
     this.y = y - 10;
     this.text = typeof amount === 'string' ? amount : Math.round(amount).toString();
     this.vy = -1.5 - Math.random() * 1.5;
     this.vx = Math.random() * 1 - 0.5;
-    this.color = isCrit ? '#fffb00' : '#ff007f'; // Critical strikes are yellow, regular pink
-    this.fontSize = isCrit ? 16 : 11;
+    this.color = customColor || (isCrit ? '#fffb00' : '#ff007f'); // Critical strikes are yellow, regular pink
+    this.fontSize = customFontSize || (isCrit ? 16 : 11);
     this.alpha = 1.0;
     this.maxLife = 40;
     this.life = this.maxLife;

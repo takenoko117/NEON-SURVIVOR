@@ -225,6 +225,37 @@ class AudioSynthManager {
     osc.start(t);
     osc.stop(t + 0.06);
   }
+
+  playHellMode() {
+    this.init();
+    if (!this.ctx || this.muted) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, t);
+    osc.frequency.exponentialRampToValueAtTime(800, t + 0.5);
+    osc.frequency.exponentialRampToValueAtTime(80, t + 1.2);
+
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.linearRampToValueAtTime(0.3, t + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1200, t);
+    filter.frequency.exponentialRampToValueAtTime(200, t + 1.5);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 1.5);
+  }
 }
 
 // Global audio player instance
