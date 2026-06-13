@@ -248,13 +248,16 @@ class NeonGameEngine {
     // Clear enemies
     this.devClearEnemies = document.getElementById('dev-clear-enemies');
     this.devClearEnemies.addEventListener('click', () => {
-      this.enemies = [];
+      this.enemies.forEach(enemy => {
+        enemy.takeDamage(Infinity);
+      });
     });
 
     // Spawn boss
     this.devSpawnBoss = document.getElementById('dev-spawn-boss');
     this.devSpawnBoss.addEventListener('click', () => {
       if (this.state === 'PLAYING') {
+        this.bossSpawned = true;
         this.spawnBoss();
       }
     });
@@ -546,7 +549,10 @@ class NeonGameEngine {
     // Spawning Logic
     this.spawnTimer += dt;
     const spawnRate = this.spawnIntervalOverride !== null ? this.spawnIntervalOverride : this.getSpawnInterval(currentSecs);
-    if (this.freezeSpawns) {
+    
+    // Freeze normal spawns if a boss is alive
+    const bossAlive = this.enemies.some(e => e.type === 'boss' || e.type === 'boss2');
+    if (this.freezeSpawns || bossAlive) {
       this.spawnTimer = 0;
     } else if (this.spawnTimer >= spawnRate) {
       this.spawnTimer = 0;
@@ -669,9 +675,12 @@ class NeonGameEngine {
     // Screen shake when boss spawns
     this.triggerScreenShake(35, 12);
     
+    // Clear all normal enemies so player can face the BOSS in a clean field
+    this.enemies = this.enemies.filter(e => e.type === 'boss' || e.type === 'boss2');
+    
     const angle = Math.random() * Math.PI * 2;
-    const x = this.player.x + Math.cos(angle) * 450;
-    const y = this.player.y + Math.sin(angle) * 450;
+    const x = this.player.x + Math.cos(angle) * 200; // spawn closer (200px) so it's instantly visible
+    const y = this.player.y + Math.sin(angle) * 200;
     const boss = new Enemy(x, y, 'boss', this.enemyScaleMultiplier * 1.5 * this.enemyHpMultiplierOverride);
     boss.speed *= this.enemySpeedMultiplierOverride;
     this.enemies.push(boss);
@@ -682,11 +691,13 @@ class NeonGameEngine {
     this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, "+BOSS v2 ENTERS+", true));
     
     const angle = Math.random() * Math.PI * 2;
-    const x = this.player.x + Math.cos(angle) * 450;
-    const y = this.player.y + Math.sin(angle) * 450;
+    const x = this.player.x + Math.cos(angle) * 200; // spawn closer (200px) so it's instantly visible
+    const y = this.player.y + Math.sin(angle) * 200;
     const boss2 = new Enemy(x, y, 'boss2', this.enemyScaleMultiplier * 1.5 * this.enemyHpMultiplierOverride);
     boss2.speed *= this.enemySpeedMultiplierOverride;
-    this.enemies.push(boss2);
+    
+    // Return boss2 instead of pushing to this.enemies directly to avoid the filter overwrite bug
+    return boss2;
   }
 
   getMaxEnemyCount(secs) {
@@ -777,7 +788,8 @@ class NeonGameEngine {
 
         // Check if boss defeated -> spawn boss2
         if (enemy.type === 'boss') {
-          this.spawnBoss2();
+          const boss2 = this.spawnBoss2();
+          newSpawns.push(boss2);
         }
         // Check if boss2 defeated -> Win!
         if (enemy.type === 'boss2') {
