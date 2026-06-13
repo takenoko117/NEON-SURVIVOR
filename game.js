@@ -53,7 +53,7 @@ class NeonGameEngine {
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
-    this.chestDropChance = 0.05;
+    this.chestDropChance = 0.01;
     this.expGrowthRate = 1.3;
 
     // Theme state
