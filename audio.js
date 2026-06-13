@@ -25,6 +25,10 @@ class AudioSynthManager {
       this.bgmGainNode = this.ctx.createGain();
       this.bgmGainNode.gain.value = this.muted ? 0 : this.bgmVolume;
       this.bgmGainNode.connect(this.ctx.destination);
+      
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
     } catch (e) {
       console.warn("Web Audio API is not supported in this browser:", e);
     }
@@ -279,6 +283,9 @@ class AudioSynthManager {
     try {
       this.init();
       if (!this.ctx) return;
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
       if (this.bgmPlaying) return;
       
       this.bgmPlaying = true;
@@ -326,6 +333,11 @@ class AudioSynthManager {
     try {
       const secondsPerBeat = 60.0 / this.tempo;
       const stepDuration = secondsPerBeat / 4; // 16th notes
+      
+      // Prevent scheduling overload if tab was suspended/lagged
+      if (this.nextNoteTime < this.ctx.currentTime) {
+        this.nextNoteTime = this.ctx.currentTime + 0.02;
+      }
       
       while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
         this.scheduleNote(this.currentNoteIndex, this.nextNoteTime);
