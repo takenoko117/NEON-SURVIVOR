@@ -1127,8 +1127,8 @@ class NeonGameEngine {
         spinner.innerText = randItem.emoji;
         itemName.innerText = randItem.name;
         
-        if (gameAudio.ctx && !gameAudio.muted && s % 2 === 0) {
-          gameAudio.playHit();
+        if (gameAudio.playRouletteTick && s % 2 === 0) {
+          gameAudio.playRouletteTick();
         }
         
         if (s > 10) {
@@ -1143,6 +1143,25 @@ class NeonGameEngine {
       
       gameAudio.playLevelUp();
       this.applyUpgrade(targetUpgrade);
+
+      // Flashy Upgrade VFX
+      // 1. Cyan neon overlay flash behind the roulette card
+      this.rouletteScreen.style.transition = 'none';
+      this.rouletteScreen.style.backgroundColor = 'rgba(0, 240, 255, 0.35)'; // cyan flash
+      this.rouletteScreen.offsetHeight; // force reflow
+      this.rouletteScreen.style.transition = 'background-color 0.8s ease';
+      this.rouletteScreen.style.backgroundColor = 'rgba(6, 7, 13, 0.9)';
+
+      // 2. Explode HTML particles from center of the roulette spinner
+      const box = document.getElementById('roulette-box');
+      if (box) {
+        const rect = box.getBoundingClientRect();
+        const pColors = ['#00f0ff', '#ff00ff', '#fffb00', '#39ff14', '#ffffff'];
+        const centerX = rect.left + rect.width / 2 + window.scrollX;
+        const centerY = rect.top + rect.height / 2 + window.scrollY;
+        
+        this.spawnHTMLParticles(document.body, centerX, centerY, pColors, 40);
+      }
 
       // Add to results list
       resultsBox.style.display = 'block';
@@ -1189,6 +1208,51 @@ class NeonGameEngine {
     this.state = 'PLAYING';
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
+  spawnHTMLParticles(parentEl, x, y, colors, count) {
+    for (let i = 0; i < count; i++) {
+      const particle = document.createElement('div');
+      particle.style.position = 'absolute';
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+      particle.style.width = `${Math.random() * 10 + 6}px`;
+      particle.style.height = particle.style.width;
+      particle.style.borderRadius = '50%';
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      particle.style.backgroundColor = color;
+      particle.style.boxShadow = `0 0 12px ${color}, 0 0 20px ${color}`;
+      particle.style.pointerEvents = 'none';
+      particle.style.zIndex = '99999';
+      
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = Math.random() * 10 + 5;
+      const vx = Math.cos(angle) * velocity;
+      const vy = Math.sin(angle) * velocity;
+      
+      parentEl.appendChild(particle);
+      
+      let px = x;
+      let py = y;
+      let opacity = 1.0;
+      
+      const updateParticle = () => {
+        px += vx;
+        py += vy;
+        opacity -= 0.022;
+        
+        particle.style.left = `${px}px`;
+        particle.style.top = `${py}px`;
+        particle.style.opacity = opacity;
+        
+        if (opacity > 0) {
+          requestAnimationFrame(updateParticle);
+        } else {
+          particle.remove();
+        }
+      };
+      requestAnimationFrame(updateParticle);
+    }
   }
 
   triggerRevivalScreen() {

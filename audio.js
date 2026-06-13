@@ -202,6 +202,29 @@ class AudioSynthManager {
     playNote(783.99, 0.3, 0.8, 0.05); // G5
     playNote(659.25, 0.3, 0.8, 0.05); // E5
   }
+
+  playRouletteTick() {
+    this.init();
+    if (!this.ctx || this.muted) return;
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(850, t); // high click frequency
+    osc.frequency.exponentialRampToValueAtTime(150, t + 0.05); // quick slide down
+
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05); // short decay
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.06);
+  }
 }
 
 // Global audio player instance
