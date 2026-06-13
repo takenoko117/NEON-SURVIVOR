@@ -856,7 +856,7 @@ body {
 /* --- Theme Toggle Button Styling --- */
 .theme-toggle-btn {
   position: absolute;
-  top: 20px;
+  top: 120px;
   right: 20px;
   background: var(--bg-panel);
   border: 1px solid var(--neon-cyan);
@@ -883,10 +883,10 @@ body {
   transform: scale(0.95);
 }
 
-.bgm-toggle-btn {
+.bgm-volume-container {
   position: absolute;
-  top: 20px;
-  right: 120px;
+  top: 165px;
+  right: 20px;
   background: var(--bg-panel);
   border: 1px solid var(--neon-cyan);
   color: var(--neon-cyan);
@@ -894,22 +894,50 @@ body {
   font-size: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  cursor: pointer;
   z-index: 100;
   box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s ease;
   outline: none;
 }
 
-.bgm-toggle-btn:hover {
-  background: var(--neon-cyan);
-  color: #000;
-  box-shadow: 0 0 15px var(--neon-cyan);
-  text-shadow: none;
+.bgm-volume-label {
+  white-space: nowrap;
 }
 
-.bgm-toggle-btn:active {
-  transform: scale(0.95);
+.bgm-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 70px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 240, 255, 0.25);
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s ease-in-out;
+}
+
+.bgm-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  cursor: pointer;
+}
+
+.bgm-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  cursor: pointer;
+  border: none;
 }
 
 /* --- Light Mode CSS Variables & Selector Overrides --- */

@@ -83,12 +83,19 @@ class NeonGameEngine {
     this.startHardBtn = document.getElementById('start-hard-btn');
     this.restartBtn = document.getElementById('restart-btn');
     this.themeToggle = document.getElementById('theme-toggle');
-    this.bgmToggle = document.getElementById('bgm-toggle');
+    this.bgmVolumeSlider = document.getElementById('bgm-volume-slider');
+    this.bgmVolumeLabel = document.getElementById('bgm-volume-label');
+    this.lastNonZeroVolume = 22;
     
     this.startNormalBtn.addEventListener('click', () => this.startGame('NORMAL'));
     this.startHardBtn.addEventListener('click', () => this.startGame('HARD'));
     this.themeToggle.addEventListener('click', () => this.toggleTheme());
-    this.bgmToggle.addEventListener('click', () => this.toggleBGM());
+    if (this.bgmVolumeSlider) {
+      this.bgmVolumeSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        this.updateVolumeFromSlider(val);
+      });
+    }
     this.restartBtn.addEventListener('click', () => this.startGame(this.difficulty || 'NORMAL'));
 
     this.reviveScreen = document.getElementById('revive-screen');
@@ -454,7 +461,7 @@ class NeonGameEngine {
     // Start synth context and BGM
     gameAudio.init();
     gameAudio.setBGMTempo(difficulty === 'HARD' ? 138 : 130);
-    gameAudio.setBGMVolume(0.22);
+    gameAudio.setBGMVolume(this.getBGMPlayVolume());
     gameAudio.startBGM();
     
     this.difficulty = difficulty;
@@ -1087,7 +1094,7 @@ class NeonGameEngine {
     }
 
     this.state = 'LEVEL_UP';
-    gameAudio.setBGMVolume(0.05);
+    gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     gameAudio.playLevelUp();
     
     // Choose 3 random upgrade options
@@ -1302,14 +1309,14 @@ class NeonGameEngine {
     }
     this.levelUpScreen.classList.add('hidden');
     this.state = 'PLAYING';
-    gameAudio.setBGMVolume(0.22);
+    gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
   async triggerJewelLottery() {
     this.state = 'ROULETTE';
-    gameAudio.setBGMVolume(0.05);
+    gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     
     // Reset UI
     const spinner = document.getElementById('roulette-spinner');
@@ -1484,7 +1491,7 @@ class NeonGameEngine {
     }
     this.rouletteScreen.classList.add('hidden');
     this.state = 'PLAYING';
-    gameAudio.setBGMVolume(0.22);
+    gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1505,13 +1512,39 @@ class NeonGameEngine {
     }
   }
 
-  toggleBGM() {
-    gameAudio.muted = !gameAudio.muted;
-    const btn = document.getElementById('bgm-toggle');
-    if (btn) {
-      btn.innerText = gameAudio.muted ? '🔇 BGM OFF' : '🔊 BGM ON';
+  getBGMPlayVolume() {
+    if (gameAudio.muted) return 0;
+    const sliderVal = this.bgmVolumeSlider ? parseInt(this.bgmVolumeSlider.value) : 22;
+    return sliderVal / 100;
+  }
+
+  updateVolumeFromSlider(val) {
+    if (val === 0) {
+      gameAudio.muted = true;
+      if (this.bgmVolumeLabel) this.bgmVolumeLabel.innerText = '🔇 BGM';
+      gameAudio.setBGMVolume(0);
+    } else {
+      gameAudio.muted = false;
+      this.lastNonZeroVolume = val;
+      if (this.bgmVolumeLabel) this.bgmVolumeLabel.innerText = '🔊 BGM';
+      const isDimmedState = this.state === 'LEVEL_UP' || this.state === 'ROULETTE' || this.state === 'REVIVING';
+      const volume = isDimmedState ? Math.min(0.05, val / 100) : (val / 100);
+      gameAudio.setBGMVolume(volume);
     }
-    gameAudio.setBGMVolume(gameAudio.bgmVolume);
+  }
+
+  toggleBGM() {
+    if (!this.bgmVolumeSlider) return;
+    const currentVal = parseInt(this.bgmVolumeSlider.value);
+    if (currentVal > 0) {
+      this.lastNonZeroVolume = currentVal;
+      this.bgmVolumeSlider.value = 0;
+      this.updateVolumeFromSlider(0);
+    } else {
+      const targetVal = this.lastNonZeroVolume || 22;
+      this.bgmVolumeSlider.value = targetVal;
+      this.updateVolumeFromSlider(targetVal);
+    }
   }
 
   spawnHTMLParticles(parentEl, x, y, colors, count) {
@@ -1561,7 +1594,7 @@ class NeonGameEngine {
 
   triggerRevivalScreen() {
     this.state = 'REVIVING';
-    gameAudio.setBGMVolume(0.05);
+    gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     document.getElementById('revive-remaining-val').innerText = this.player.revivesRemaining;
     this.reviveScreen.classList.remove('hidden');
   }
@@ -1606,7 +1639,7 @@ class NeonGameEngine {
 
     // Resume game loop
     this.state = 'PLAYING';
-    gameAudio.setBGMVolume(0.22);
+    gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
