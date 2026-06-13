@@ -54,6 +54,10 @@ class NeonGameEngine {
     // Screen Shake State
     this.shakeDuration = 0;
     this.shakeIntensity = 0;
+
+    // Countdown Timers for Auto-Close
+    this.levelUpTimer = null;
+    this.rouletteTimer = null;
     
     // Bind DOM events
     this.setupDOM();
@@ -453,6 +457,16 @@ class NeonGameEngine {
     this.bossSpawned = false;
     this.flashOpacity = 0;
     this.shockwaveRadius = 0;
+
+    // Clear active menu intervals
+    if (this.levelUpTimer) {
+      clearInterval(this.levelUpTimer);
+      this.levelUpTimer = null;
+    }
+    if (this.rouletteTimer) {
+      clearInterval(this.rouletteTimer);
+      this.rouletteTimer = null;
+    }
 
     // Reset Developer Mode State
     this.godMode = false;
@@ -1017,6 +1031,10 @@ class NeonGameEngine {
       `;
       
       card.addEventListener('click', () => {
+        if (this.levelUpTimer) {
+          clearInterval(this.levelUpTimer);
+          this.levelUpTimer = null;
+        }
         this.applyUpgrade(opt);
         this.resumeGame();
       });
@@ -1025,6 +1043,31 @@ class NeonGameEngine {
     });
 
     this.levelUpScreen.classList.remove('hidden');
+
+    // Start 3-second auto-select countdown
+    let timeLeft = 3;
+    const descText = document.getElementById('level-up-desc-text');
+    if (descText) {
+      descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
+    }
+
+    if (this.levelUpTimer) clearInterval(this.levelUpTimer);
+    this.levelUpTimer = setInterval(() => {
+      timeLeft--;
+      if (descText) {
+        descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
+      }
+      if (timeLeft <= 0) {
+        clearInterval(this.levelUpTimer);
+        this.levelUpTimer = null;
+        
+        // Auto-select the middle option
+        const middleIndex = Math.floor(upgrades.length / 2);
+        const selectedOpt = upgrades[middleIndex];
+        this.applyUpgrade(selectedOpt);
+        this.resumeGame();
+      }
+    }, 1000);
   }
 
   triggerMaxExpBlast() {
@@ -1175,6 +1218,10 @@ class NeonGameEngine {
   }
 
   resumeGame() {
+    if (this.levelUpTimer) {
+      clearInterval(this.levelUpTimer);
+      this.levelUpTimer = null;
+    }
     this.levelUpScreen.classList.add('hidden');
     this.state = 'PLAYING';
     this.lastTime = performance.now();
@@ -1333,10 +1380,28 @@ class NeonGameEngine {
     claimBtn.style.borderColor = 'var(--neon-green)';
     claimBtn.style.color = 'var(--neon-green)';
     claimBtn.style.boxShadow = '0 0 15px rgba(57, 255, 20, 0.3)';
-    claimBtn.innerText = '閉じる';
+    
+    // Start 3-second auto-close countdown
+    let rouletteTimeLeft = 3;
+    claimBtn.innerText = `閉じる (自動クローズまで ${rouletteTimeLeft}秒)`;
+
+    if (this.rouletteTimer) clearInterval(this.rouletteTimer);
+    this.rouletteTimer = setInterval(() => {
+      rouletteTimeLeft--;
+      claimBtn.innerText = `閉じる (自動クローズまで ${rouletteTimeLeft}秒)`;
+      if (rouletteTimeLeft <= 0) {
+        clearInterval(this.rouletteTimer);
+        this.rouletteTimer = null;
+        this.resumeRoulette();
+      }
+    }, 1000);
   }
 
   resumeRoulette() {
+    if (this.rouletteTimer) {
+      clearInterval(this.rouletteTimer);
+      this.rouletteTimer = null;
+    }
     this.rouletteScreen.classList.add('hidden');
     this.state = 'PLAYING';
     this.lastTime = performance.now();
