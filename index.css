@@ -401,6 +401,35 @@ body {
   transform: scale(0.95);
 }
 
+.neon-button.hard-mode {
+  border-color: var(--neon-pink);
+  color: var(--neon-pink);
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.2);
+}
+
+.neon-button.hard-mode::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 0, 127, 0.2), transparent);
+}
+
+.neon-button.hard-mode:hover {
+  background: var(--neon-pink);
+  color: var(--bg-color);
+  box-shadow: 0 0 25px var(--neon-pink);
+}
+
+.hud-difficulty-badge {
+  font-family: var(--font-retro);
+  font-size: 10px;
+  color: var(--neon-pink);
+  border: 1px solid var(--neon-pink);
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--neon-pink);
+  margin-left: 15px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* --- Level Up Overlay options --- */
 
 #level-up-screen .menu-content {

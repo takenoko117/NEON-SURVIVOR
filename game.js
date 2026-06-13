@@ -16,6 +16,7 @@ class NeonGameEngine {
     this.lastTime = 0;
     this.elapsedTime = 0; // ms
     this.totalGameDuration = 300; // 5 minutes in seconds
+    this.difficulty = 'NORMAL';
     
     // Inputs
     this.keys = {};
@@ -57,14 +58,17 @@ class NeonGameEngine {
   setupDOM() {
     this.startScreen = document.getElementById('start-screen');
     this.hud = document.getElementById('hud');
+    this.hudDifficulty = document.getElementById('hud-difficulty');
     this.levelUpScreen = document.getElementById('level-up-screen');
     this.gameOverScreen = document.getElementById('game-over-screen');
     
-    this.startBtn = document.getElementById('start-btn');
+    this.startNormalBtn = document.getElementById('start-normal-btn');
+    this.startHardBtn = document.getElementById('start-hard-btn');
     this.restartBtn = document.getElementById('restart-btn');
     
-    this.startBtn.addEventListener('click', () => this.startGame());
-    this.restartBtn.addEventListener('click', () => this.startGame());
+    this.startNormalBtn.addEventListener('click', () => this.startGame('NORMAL'));
+    this.startHardBtn.addEventListener('click', () => this.startGame('HARD'));
+    this.restartBtn.addEventListener('click', () => this.startGame(this.difficulty || 'NORMAL'));
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -394,9 +398,16 @@ class NeonGameEngine {
     this.shakeIntensity = intensity;
   }
 
-  startGame() {
+  startGame(difficulty = 'NORMAL') {
     // Start synth context
     gameAudio.init();
+    
+    this.difficulty = difficulty;
+    if (this.difficulty === 'HARD') {
+      this.hudDifficulty.classList.remove('hidden');
+    } else {
+      this.hudDifficulty.classList.add('hidden');
+    }
 
     // Reset Game State variables
     this.state = 'PLAYING';
@@ -666,7 +677,7 @@ class NeonGameEngine {
       type = roll < 0.6 ? 'spider' : 'bat';
     }
 
-    const enemy = new Enemy(x, y, type, this.enemyScaleMultiplier * this.enemyHpMultiplierOverride);
+    const enemy = new Enemy(x, y, type, this.enemyScaleMultiplier * this.enemyHpMultiplierOverride * (this.difficulty === 'HARD' ? 2.0 : 1.0));
     enemy.speed *= this.enemySpeedMultiplierOverride;
     this.enemies.push(enemy);
   }
@@ -681,7 +692,7 @@ class NeonGameEngine {
     const angle = Math.random() * Math.PI * 2;
     const x = this.player.x + Math.cos(angle) * 200; // spawn closer (200px) so it's instantly visible
     const y = this.player.y + Math.sin(angle) * 200;
-    const boss = new Enemy(x, y, 'boss', this.enemyScaleMultiplier * 1.5 * this.enemyHpMultiplierOverride);
+    const boss = new Enemy(x, y, 'boss', this.enemyScaleMultiplier * 1.5 * this.enemyHpMultiplierOverride * (this.difficulty === 'HARD' ? 2.0 : 1.0));
     boss.speed *= this.enemySpeedMultiplierOverride;
     this.enemies.push(boss);
   }
@@ -693,7 +704,7 @@ class NeonGameEngine {
     const angle = Math.random() * Math.PI * 2;
     const x = this.player.x + Math.cos(angle) * 200; // spawn closer (200px) so it's instantly visible
     const y = this.player.y + Math.sin(angle) * 200;
-    const boss2 = new Enemy(x, y, 'boss2', this.enemyScaleMultiplier * 1.5 * this.enemyHpMultiplierOverride);
+    const boss2 = new Enemy(x, y, 'boss2', this.enemyScaleMultiplier * 1.5 * this.enemyHpMultiplierOverride * (this.difficulty === 'HARD' ? 2.0 : 1.0));
     boss2.speed *= this.enemySpeedMultiplierOverride;
     
     // Return boss2 instead of pushing to this.enemies directly to avoid the filter overwrite bug
@@ -776,7 +787,7 @@ class NeonGameEngine {
             const mx = enemy.x + Math.cos(parentAngle + angleOffset) * splitOffset;
             const my = enemy.y + Math.sin(parentAngle + angleOffset) * splitOffset;
             
-            const mini = new Enemy(mx, my, 'mini-slime', this.enemyScaleMultiplier * this.enemyHpMultiplierOverride * 0.5); // mini slime has less HP
+            const mini = new Enemy(mx, my, 'mini-slime', this.enemyScaleMultiplier * this.enemyHpMultiplierOverride * 0.5 * (this.difficulty === 'HARD' ? 2.0 : 1.0)); // mini slime has less HP
             mini.speed *= this.enemySpeedMultiplierOverride;
             newSpawns.push(mini);
           }
@@ -1084,6 +1095,12 @@ class NeonGameEngine {
     document.getElementById('result-level').innerText = this.player.level;
     document.getElementById('result-kills').innerText = this.player.kills;
     document.getElementById('result-revives').innerText = `${this.player.reviveCount}回`;
+
+    const difficultyEl = document.getElementById('result-difficulty');
+    if (difficultyEl) {
+      difficultyEl.innerText = this.difficulty === 'HARD' ? 'HARD' : 'NORMAL';
+      difficultyEl.style.color = this.difficulty === 'HARD' ? 'var(--neon-pink)' : 'var(--neon-cyan)';
+    }
 
     const titleEl = document.getElementById('end-title');
     const msgEl = document.getElementById('end-message');

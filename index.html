@@ -26,6 +26,7 @@
           <div id="hud-exp-bar-fill"></div>
         </div>
         <div id="hud-timer">00:00</div>
+        <div id="hud-difficulty" class="hud-difficulty-badge hidden">HARD</div>
       </div>
       
       <div class="hud-stats-overlay">
@@ -70,7 +71,10 @@
           </div>
         </div>
 
-        <button id="start-btn" class="neon-button">GAME START</button>
+        <div class="start-actions" style="display: flex; gap: 20px; justify-content: center; margin-top: 25px; width: 100%;">
+          <button id="start-normal-btn" class="neon-button">NORMAL START</button>
+          <button id="start-hard-btn" class="neon-button hard-mode">HARD START</button>
+        </div>
       </div>
     </div>
 
@@ -92,6 +96,10 @@
         <p id="end-message" class="end-msg">ネオンの灯火が消えてしまった...</p>
         
         <div class="results-panel">
+          <div class="result-row">
+            <span>難易度:</span>
+            <span id="result-difficulty" class="result-val">NORMAL</span>
+          </div>
           <div class="result-row">
             <span>生存時間:</span>
             <span id="result-time" class="result-val">00:00</span>
