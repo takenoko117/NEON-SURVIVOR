@@ -1619,7 +1619,8 @@ class Player {
     while (this.exp >= this.nextLevelExp) {
       this.exp -= this.nextLevelExp;
       this.level++;
-      this.nextLevelExp = Math.round(this.nextLevelExp * 1.3 + 12);
+      const growth = (window.gameEngine && window.gameEngine.expGrowthRate !== undefined) ? window.gameEngine.expGrowthRate : 1.3;
+      this.nextLevelExp = Math.round(this.nextLevelExp * growth + 12);
       leveledUp = true;
     }
     return leveledUp;

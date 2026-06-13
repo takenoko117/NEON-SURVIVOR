@@ -53,6 +53,8 @@ class NeonGameEngine {
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
+    this.chestDropChance = 0.05;
+    this.expGrowthRate = 1.3;
 
     // Theme state
     this.theme = 'light';
@@ -321,6 +323,27 @@ class NeonGameEngine {
       }
     });
 
+    // Balance Controls
+    this.devChestDrop = document.getElementById('dev-chest-drop');
+    this.devChestDropVal = document.getElementById('dev-chest-drop-val');
+    if (this.devChestDrop) {
+      this.devChestDrop.addEventListener('input', () => {
+        const val = parseInt(this.devChestDrop.value);
+        this.chestDropChance = val / 100;
+        this.devChestDropVal.innerText = `${val}%`;
+      });
+    }
+
+    this.devExpGrowth = document.getElementById('dev-exp-growth');
+    this.devExpGrowthVal = document.getElementById('dev-exp-growth-val');
+    if (this.devExpGrowth) {
+      this.devExpGrowth.addEventListener('input', () => {
+        const val = parseFloat(this.devExpGrowth.value);
+        this.expGrowthRate = val;
+        this.devExpGrowthVal.innerText = `${val.toFixed(2)}x`;
+      });
+    }
+
     // Weapon Level Sliders
     this.devWpnMagic = document.getElementById('dev-wpn-magic');
     this.devWpnMagicVal = document.getElementById('dev-wpn-magic-val');
@@ -449,6 +472,15 @@ class NeonGameEngine {
 
     if (this.devAutoRun) {
       this.devAutoRun.checked = this.autoRun;
+    }
+
+    if (this.devChestDrop && this.devChestDropVal) {
+      this.devChestDrop.value = Math.round(this.chestDropChance * 100);
+      this.devChestDropVal.innerText = `${Math.round(this.chestDropChance * 100)}%`;
+    }
+    if (this.devExpGrowth && this.devExpGrowthVal) {
+      this.devExpGrowth.value = this.expGrowthRate;
+      this.devExpGrowthVal.innerText = `${this.expGrowthRate.toFixed(2)}x`;
     }
   }
 
@@ -1047,8 +1079,8 @@ class NeonGameEngine {
         // Spawn experience gem
         this.gems.push(new Gem(enemy.x, enemy.y, enemy.expValue));
 
-        // 5% chance to drop a special upgrade jewel
-        if (Math.random() < 0.05) {
+        // Configurable chance to drop a special upgrade jewel (chest)
+        if (Math.random() < this.chestDropChance) {
           this.jewels.push(new Jewel(enemy.x, enemy.y));
         }
 
