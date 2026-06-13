@@ -1777,6 +1777,9 @@ class Enemy {
     this.slowTimer = 0;
     this.hitTimer = 0;
     this.phantomTime = Math.random() * 100;
+    
+    // 20% chance to spawn with custom image for minor enemies (non-bosses)
+    this.useImage = (type !== 'boss' && type !== 'boss2') && (Math.random() < 0.20);
 
     // Configure properties based on enemy type
     switch (type) {
@@ -2067,55 +2070,75 @@ class Enemy {
       this.color = strokeStyle;
     }
     
-    // Draw hexagram shape for BOSS v2, standard polygons for others
-    if (this.type === 'boss2') {
-      ctx.beginPath();
-      // Triangle 1
-      for (let i = 0; i < 3; i++) {
-        const angle = -Math.PI / 2 + (i * Math.PI * 2 / 3);
-        const px = Math.cos(angle) * this.radius;
-        const py = Math.sin(angle) * this.radius;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = 4;
-      ctx.shadowBlur = 20;
-      ctx.shadowColor = strokeStyle;
-      ctx.stroke();
-
-      // Triangle 2 (Inverted)
-      ctx.beginPath();
-      for (let i = 0; i < 3; i++) {
-        const angle = -Math.PI / 2 + (i * Math.PI * 2 / 3) + Math.PI;
-        const px = Math.cos(angle) * this.radius;
-        const py = Math.sin(angle) * this.radius;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      const angleStep = (Math.PI * 2) / this.sides;
-      ctx.moveTo(0, -this.radius);
+    // Draw custom image for minor enemies if active, otherwise fallback to polygon shapes
+    if (this.useImage && Enemy.huttyImg && Enemy.huttyImg.complete) {
+      const size = this.radius * 2.5;
       
-      for (let i = 1; i < this.sides; i++) {
-        const angle = -Math.PI / 2 + i * angleStep;
-        ctx.lineTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = strokeStyle;
-      ctx.lineWidth = this.type === 'boss' ? 4 : 2;
-      ctx.shadowBlur = this.type === 'boss' ? 18 : 8;
+      // Draw neon shadow/glow for the image
+      ctx.shadowBlur = 8;
       ctx.shadowColor = this.color;
-      ctx.stroke();
-    }
+      
+      ctx.drawImage(Enemy.huttyImg, -size / 2, -size / 2, size, size);
+      
+      // If hit, draw a white glowing border
+      if (this.hitTimer > 0) {
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#ffffff';
+        ctx.strokeRect(-size / 2, -size / 2, size, size);
+      }
+    } else {
+      // Draw hexagram shape for BOSS v2, standard polygons for others
+      if (this.type === 'boss2') {
+        ctx.beginPath();
+        // Triangle 1
+        for (let i = 0; i < 3; i++) {
+          const angle = -Math.PI / 2 + (i * Math.PI * 2 / 3);
+          const px = Math.cos(angle) * this.radius;
+          const py = Math.sin(angle) * this.radius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = strokeStyle;
+        ctx.stroke();
 
-    // Dark semi-transparent fill
-    ctx.fillStyle = 'rgba(6, 7, 13, 0.7)';
-    ctx.fill();
+        // Triangle 2 (Inverted)
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const angle = -Math.PI / 2 + (i * Math.PI * 2 / 3) + Math.PI;
+          const px = Math.cos(angle) * this.radius;
+          const py = Math.sin(angle) * this.radius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        const angleStep = (Math.PI * 2) / this.sides;
+        ctx.moveTo(0, -this.radius);
+        
+        for (let i = 1; i < this.sides; i++) {
+          const angle = -Math.PI / 2 + i * angleStep;
+          ctx.lineTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = this.type === 'boss' ? 4 : 2;
+        ctx.shadowBlur = this.type === 'boss' ? 18 : 8;
+        ctx.shadowColor = this.color;
+        ctx.stroke();
+      }
+
+      // Dark semi-transparent fill
+      ctx.fillStyle = 'rgba(6, 7, 13, 0.7)';
+      ctx.fill();
+    }
 
     // Draw health bar for boss or damaged elites
     if (this.hp < this.maxHp) {
@@ -2133,3 +2156,7 @@ class Enemy {
     ctx.restore();
   }
 }
+
+// Load image resource for minor enemies (20% chance spawn)
+Enemy.huttyImg = new Image();
+Enemy.huttyImg.src = 'img/hutty.png';
