@@ -51,6 +51,9 @@ class NeonGameEngine {
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
 
+    // Theme state
+    this.theme = 'light';
+
     // Screen Shake State
     this.shakeDuration = 0;
     this.shakeIntensity = 0;
@@ -76,9 +79,11 @@ class NeonGameEngine {
     this.startNormalBtn = document.getElementById('start-normal-btn');
     this.startHardBtn = document.getElementById('start-hard-btn');
     this.restartBtn = document.getElementById('restart-btn');
+    this.themeToggle = document.getElementById('theme-toggle');
     
     this.startNormalBtn.addEventListener('click', () => this.startGame('NORMAL'));
     this.startHardBtn.addEventListener('click', () => this.startGame('HARD'));
+    this.themeToggle.addEventListener('click', () => this.toggleTheme());
     this.restartBtn.addEventListener('click', () => this.startGame(this.difficulty || 'NORMAL'));
 
     this.reviveScreen = document.getElementById('revive-screen');
@@ -1408,6 +1413,22 @@ class NeonGameEngine {
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
+  toggleTheme() {
+    if (this.theme === 'light') {
+      this.theme = 'dark';
+      document.body.classList.remove('light-mode');
+      if (this.themeToggle) {
+        this.themeToggle.innerText = '🌙 DARK';
+      }
+    } else {
+      this.theme = 'light';
+      document.body.classList.add('light-mode');
+      if (this.themeToggle) {
+        this.themeToggle.innerText = '☀️ LIGHT';
+      }
+    }
+  }
+
   spawnHTMLParticles(parentEl, x, y, colors, count) {
     for (let i = 0; i < count; i++) {
       const particle = document.createElement('div');
@@ -1602,7 +1623,7 @@ class NeonGameEngine {
     }
 
     // Clear screen with neon trails (small opacity fill for visual speed trails)
-    this.ctx.fillStyle = 'rgba(6, 7, 13, 0.25)';
+    this.ctx.fillStyle = this.theme === 'light' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(6, 7, 13, 0.25)';
     this.ctx.fillRect(0, 0, this.logicalWidth, this.logicalHeight);
 
     // Draw background grid lines for techno/retro aesthetic
@@ -1684,7 +1705,7 @@ class NeonGameEngine {
   drawGrid() {
     const gridSize = 40;
     this.ctx.save();
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+    this.ctx.strokeStyle = this.theme === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.025)';
     this.ctx.lineWidth = 1;
 
     // Draw vertical lines

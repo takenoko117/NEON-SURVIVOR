@@ -827,3 +827,128 @@ body {
     height: auto;
   }
 }
+
+/* --- Theme Toggle Button Styling --- */
+.theme-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-panel);
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: var(--font-retro);
+  font-size: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--neon-cyan);
+  color: #000;
+  box-shadow: 0 0 15px var(--neon-cyan);
+  text-shadow: none;
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+/* --- Light Mode CSS Variables & Selector Overrides --- */
+body.light-mode {
+  --bg-color: #f4f6fc;
+  --bg-panel: rgba(255, 255, 255, 0.94);
+  --border-glow: rgba(0, 180, 255, 0.3);
+  
+  /* Adjusted high-contrast neon equivalents for light mode */
+  --neon-cyan: #0088cc;
+  --neon-pink: #d80064;
+  --neon-green: #1ba00a;
+  --neon-purple: #861fd4;
+  --neon-yellow: #a67f00;
+  
+  --text-main: #141724;
+  --text-muted: #5e6d8a;
+}
+
+body.light-mode .menu-screen {
+  background: rgba(240, 243, 255, 0.85);
+}
+
+body.light-mode #game-container {
+  background-color: #ffffff;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.1), 0 0 20px rgba(0, 180, 255, 0.2);
+  border: 2px solid rgba(0, 180, 255, 0.25);
+}
+
+body.light-mode .instructions-panel {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.light-mode #roulette-box {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid var(--neon-yellow) !important;
+  box-shadow: 0 0 20px rgba(166, 127, 0, 0.15) !important;
+}
+
+body.light-mode #roulette-results {
+  background: rgba(240, 243, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+body.light-mode .upgrade-card:hover {
+  background: rgba(220, 225, 255, 0.9) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12) !important;
+}
+
+body.light-mode #dev-panel {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border-left: 2px solid var(--neon-orange) !important;
+  box-shadow: -5px 0 25px rgba(255, 94, 0, 0.12) !important;
+}
+
+body.light-mode .dev-title {
+  color: var(--neon-orange) !important;
+}
+
+body.light-mode .dev-section {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-mode .dev-control-row label {
+  color: #141724 !important;
+}
+
+body.light-mode .dev-slider {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-mode .dev-btn {
+  background: #ffffff !important;
+  color: #141724 !important;
+  border: 1px solid var(--neon-orange) !important;
+}
+
+body.light-mode .dev-btn:hover {
+  background: var(--neon-orange) !important;
+  color: #ffffff !important;
+}
+
+body.light-mode .hud-top {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(0, 180, 255, 0.15) !important;
+}
+
+body.light-mode .hud-stats-overlay {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(0, 180, 255, 0.15) !important;
+}
+
+body.light-mode #roulette-results-list li span[style*="color: #ffffff"] {
+  color: #141724 !important;
+}
