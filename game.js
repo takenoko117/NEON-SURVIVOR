@@ -454,7 +454,7 @@ class NeonGameEngine {
     // Start synth context and BGM
     gameAudio.init();
     gameAudio.setBGMTempo(difficulty === 'HARD' ? 138 : 130);
-    gameAudio.setBGMVolume(0.08);
+    gameAudio.setBGMVolume(0.22);
     gameAudio.startBGM();
     
     this.difficulty = difficulty;
@@ -1086,7 +1086,7 @@ class NeonGameEngine {
     }
 
     this.state = 'LEVEL_UP';
-    gameAudio.setBGMVolume(0.02);
+    gameAudio.setBGMVolume(0.05);
     gameAudio.playLevelUp();
     
     // Choose 3 random upgrade options
@@ -1301,14 +1301,14 @@ class NeonGameEngine {
     }
     this.levelUpScreen.classList.add('hidden');
     this.state = 'PLAYING';
-    gameAudio.setBGMVolume(0.08);
+    gameAudio.setBGMVolume(0.22);
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
   async triggerJewelLottery() {
     this.state = 'ROULETTE';
-    gameAudio.setBGMVolume(0.02);
+    gameAudio.setBGMVolume(0.05);
     
     // Reset UI
     const spinner = document.getElementById('roulette-spinner');
@@ -1483,7 +1483,7 @@ class NeonGameEngine {
     }
     this.rouletteScreen.classList.add('hidden');
     this.state = 'PLAYING';
-    gameAudio.setBGMVolume(0.08);
+    gameAudio.setBGMVolume(0.22);
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1560,7 +1560,7 @@ class NeonGameEngine {
 
   triggerRevivalScreen() {
     this.state = 'REVIVING';
-    gameAudio.setBGMVolume(0.02);
+    gameAudio.setBGMVolume(0.05);
     document.getElementById('revive-remaining-val').innerText = this.player.revivesRemaining;
     this.reviveScreen.classList.remove('hidden');
   }
@@ -1605,7 +1605,7 @@ class NeonGameEngine {
 
     // Resume game loop
     this.state = 'PLAYING';
-    gameAudio.setBGMVolume(0.08);
+    gameAudio.setBGMVolume(0.22);
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }

@@ -11,7 +11,7 @@ class AudioSynthManager {
     this.currentNoteIndex = 0;
     this.tempo = 130.0; // BPM
     this.bgmGainNode = null;
-    this.bgmVolume = 0.08; // default volume
+    this.bgmVolume = 0.22; // default volume
   }
 
   // Initialize context on user interaction
