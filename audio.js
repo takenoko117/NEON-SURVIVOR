@@ -4,14 +4,23 @@ class AudioSynthManager {
     this.ctx = null;
     this.muted = false;
     
-    // BGM sequencer states
+    // BGM states
     this.bgmPlaying = false;
-    this.bgmTimerId = null;
-    this.nextNoteTime = 0.0;
-    this.currentNoteIndex = 0;
+    this.bgmIntervalId = null;
     this.tempo = 130.0; // BPM
     this.bgmGainNode = null;
     this.bgmVolume = 0.22; // default volume
+    
+    this.bgmAudio = null;
+    this.bgmSource = null;
+    this.bgmFiles = [
+      'bgm/ashika006-edm-512189.mp3',
+      'bgm/diogodasilvasimoes-forever-edm-trance-vibes-489439.mp3',
+      'bgm/diogodasilvasimoes-unity-mainstage-dark-edm-489435.mp3',
+      'bgm/the_mountain-energy-edm-155588.mp3',
+      'bgm/vjgalaxy-edm-celtic-music-01-482037.mp3'
+    ];
+    this.currentBgmIndex = -1;
   }
 
   // Initialize context on user interaction
@@ -29,6 +38,13 @@ class AudioSynthManager {
       if (this.ctx.state === 'suspended') {
         this.ctx.resume();
       }
+
+      // Initialize HTML5 Audio element and source node for MP3 BGM
+      this.bgmAudio = new Audio();
+      this.bgmAudio.crossOrigin = "anonymous";
+      this.bgmAudio.loop = true;
+      this.bgmSource = this.ctx.createMediaElementSource(this.bgmAudio);
+      this.bgmSource.connect(this.bgmGainNode);
     } catch (e) {
       console.warn("Web Audio API is not supported in this browser:", e);
     }
@@ -279,6 +295,38 @@ class AudioSynthManager {
     }
   }
 
+  playRandomBGMFile() {
+    if (!this.bgmFiles || this.bgmFiles.length === 0) return;
+    
+    let nextIndex = Math.floor(Math.random() * this.bgmFiles.length);
+    if (this.bgmFiles.length > 1 && nextIndex === this.currentBgmIndex) {
+      nextIndex = (nextIndex + 1) % this.bgmFiles.length;
+    }
+    
+    this.currentBgmIndex = nextIndex;
+    const selectedFile = this.bgmFiles[this.currentBgmIndex];
+    console.log("Playing BGM:", selectedFile);
+
+    if (this.bgmAudio) {
+      try {
+        this.bgmAudio.pause();
+        this.bgmAudio.src = selectedFile;
+        this.bgmAudio.load();
+        
+        // Reset playback rate based on current tempo
+        const baseBpm = 130.0;
+        const playbackRate = this.tempo / baseBpm;
+        this.bgmAudio.playbackRate = playbackRate;
+        
+        this.bgmAudio.play().catch(err => {
+          console.warn("Audio play failed / deferred:", err);
+        });
+      } catch (err) {
+        console.warn("Error changing BGM source:", err);
+      }
+    }
+  }
+
   startBGM() {
     try {
       this.init();
@@ -289,21 +337,23 @@ class AudioSynthManager {
       if (this.bgmPlaying) return;
       
       this.bgmPlaying = true;
-      this.currentNoteIndex = 0;
-      this.nextNoteTime = this.ctx.currentTime + 0.05;
       
       // Update BGM Volume to reflect active state
       if (this.bgmGainNode) {
         this.bgmGainNode.gain.setValueAtTime(this.muted ? 0 : this.bgmVolume, this.ctx.currentTime);
       }
 
-      // Schedule next beats
-      const scheduler = () => {
-        if (!this.bgmPlaying) return;
-        this.scheduleNextBeats();
-        this.bgmTimerId = setTimeout(scheduler, 35);
-      };
-      scheduler();
+      // Play the first random BGM file
+      this.playRandomBGMFile();
+
+      // Switch to another random BGM every 60 seconds (1 minute)
+      if (this.bgmIntervalId) clearInterval(this.bgmIntervalId);
+      this.bgmIntervalId = setInterval(() => {
+        if (this.bgmPlaying) {
+          this.playRandomBGMFile();
+        }
+      }, 60000);
+      
     } catch (e) {
       console.warn("Failed to start BGM:", e);
     }
@@ -311,9 +361,12 @@ class AudioSynthManager {
 
   stopBGM() {
     this.bgmPlaying = false;
-    if (this.bgmTimerId) {
-      clearTimeout(this.bgmTimerId);
-      this.bgmTimerId = null;
+    if (this.bgmIntervalId) {
+      clearInterval(this.bgmIntervalId);
+      this.bgmIntervalId = null;
+    }
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
     }
   }
 
@@ -327,162 +380,10 @@ class AudioSynthManager {
 
   setBGMTempo(bpm) {
     this.tempo = bpm;
-  }
-
-  scheduleNextBeats() {
-    try {
-      const secondsPerBeat = 60.0 / this.tempo;
-      const stepDuration = secondsPerBeat / 4; // 16th notes
-      
-      // Prevent scheduling overload if tab was suspended/lagged
-      if (this.nextNoteTime < this.ctx.currentTime) {
-        this.nextNoteTime = this.ctx.currentTime + 0.02;
-      }
-      
-      while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
-        this.scheduleNote(this.currentNoteIndex, this.nextNoteTime);
-        this.nextNoteTime += stepDuration;
-        this.currentNoteIndex = (this.currentNoteIndex + 1) % 16;
-      }
-    } catch (e) {
-      console.warn("Error scheduling BGM beats:", e);
-    }
-  }
-
-  scheduleNote(stepIndex, time) {
-    // 1. Kick Drum (Steps 0, 4, 8, 12)
-    if (stepIndex % 4 === 0) {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.connect(gain);
-      gain.connect(this.bgmGainNode);
-      
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(150, time);
-      osc.frequency.linearRampToValueAtTime(45, time + 0.12);
-      
-      gain.gain.setValueAtTime(0.22, time);
-      gain.gain.linearRampToValueAtTime(0.001, time + 0.12);
-      
-      osc.start(time);
-      osc.stop(time + 0.13);
-    }
-
-    // 2. Snare Drum / Noise (Steps 4, 12)
-    if (stepIndex === 4 || stepIndex === 12) {
-      const bufferSize = this.ctx.sampleRate * 0.08;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-      
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 1000;
-      
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.12, time);
-      gain.gain.linearRampToValueAtTime(0.001, time + 0.08);
-      
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.bgmGainNode);
-      
-      noise.start(time);
-      noise.stop(time + 0.08);
-    }
-
-    // 3. Hi-Hat / Off-beat tick (Steps 2, 6, 10, 14)
-    if (stepIndex % 4 === 2) {
-      const bufferSize = this.ctx.sampleRate * 0.02;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-      
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'highpass';
-      filter.frequency.value = 6000;
-      
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.04, time);
-      gain.gain.linearRampToValueAtTime(0.001, time + 0.02);
-      
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(this.bgmGainNode);
-      
-      noise.start(time);
-      noise.stop(time + 0.02);
-    }
-
-    // 4. Bassline (Sawtooth + Lowpass sweep on every step)
-    const bassNotes = [
-      82.41, 164.81, 82.41, 164.81, // E2, E3, E2, E3
-      98.00, 196.00, 98.00, 196.00, // G2, G3, G2, G3
-      110.00, 220.00, 123.47, 246.94, // A2, A3, B2, B3
-      82.41, 164.81, 73.42, 146.83   // E2, E3, D2, D3
-    ];
-    const bassFreq = bassNotes[stepIndex];
-    
-    const bassOsc = this.ctx.createOscillator();
-    const bassFilter = this.ctx.createBiquadFilter();
-    const bassGain = this.ctx.createGain();
-    
-    bassOsc.connect(bassFilter);
-    bassFilter.connect(bassGain);
-    bassGain.connect(this.bgmGainNode);
-    
-    bassOsc.type = 'sawtooth';
-    bassOsc.frequency.setValueAtTime(bassFreq, time);
-    
-    bassFilter.type = 'lowpass';
-    bassFilter.frequency.setValueAtTime(600, time);
-    bassFilter.frequency.linearRampToValueAtTime(200, time + 0.1);
-    
-    bassGain.gain.setValueAtTime(0.07, time);
-    bassGain.gain.linearRampToValueAtTime(0.001, time + 0.1);
-    
-    bassOsc.start(time);
-    bassOsc.stop(time + 0.1);
-
-    // 5. Melody Lead (Square wave in E minor)
-    const melodyNotes = [
-      329.63, 0, 0, 392.00, // E4, rest, rest, G4
-      0, 493.88, 0, 440.00, // rest, B4, rest, A4
-      0, 493.88, 0, 587.33, // rest, B4, rest, D5
-      0, 493.88, 0, 0       // rest, B4, rest, rest
-    ];
-    const melodyFreq = melodyNotes[stepIndex];
-    if (melodyFreq > 0) {
-      const leadOsc = this.ctx.createOscillator();
-      const leadFilter = this.ctx.createBiquadFilter();
-      const leadGain = this.ctx.createGain();
-      
-      leadOsc.connect(leadFilter);
-      leadFilter.connect(leadGain);
-      leadGain.connect(this.bgmGainNode);
-      
-      leadOsc.type = 'square';
-      leadOsc.frequency.setValueAtTime(melodyFreq, time);
-      
-      leadFilter.type = 'lowpass';
-      leadFilter.frequency.setValueAtTime(2000, time);
-      leadFilter.frequency.linearRampToValueAtTime(800, time + 0.22);
-      
-      leadGain.gain.setValueAtTime(0.04, time);
-      leadGain.gain.linearRampToValueAtTime(0.001, time + 0.22);
-      
-      leadOsc.start(time);
-      leadOsc.stop(time + 0.23);
+    if (this.bgmAudio) {
+      const baseBpm = 130.0;
+      const playbackRate = bpm / baseBpm;
+      this.bgmAudio.playbackRate = playbackRate;
     }
   }
 }
