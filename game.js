@@ -17,6 +17,10 @@ class NeonGameEngine {
     this.elapsedTime = 0; // ms
     this.totalGameDuration = 300; // 5 minutes in seconds
     this.difficulty = 'NORMAL';
+    this.flashOpacity = 0;
+    this.shockwaveRadius = 0;
+    this.shockwaveMaxRadius = 650;
+    this.shockwaveSpeed = 0.9;
     
     // Inputs
     this.keys = {};
@@ -69,6 +73,10 @@ class NeonGameEngine {
     this.startNormalBtn.addEventListener('click', () => this.startGame('NORMAL'));
     this.startHardBtn.addEventListener('click', () => this.startGame('HARD'));
     this.restartBtn.addEventListener('click', () => this.startGame(this.difficulty || 'NORMAL'));
+
+    this.reviveScreen = document.getElementById('revive-screen');
+    this.reviveConfirmBtn = document.getElementById('revive-confirm-btn');
+    this.reviveConfirmBtn.addEventListener('click', () => this.confirmRevival());
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -418,6 +426,8 @@ class NeonGameEngine {
     this.shakeDuration = 0;
     this.shakeIntensity = 0;
     this.bossSpawned = false;
+    this.flashOpacity = 0;
+    this.shockwaveRadius = 0;
 
     // Reset Developer Mode State
     this.godMode = false;
@@ -471,6 +481,7 @@ class NeonGameEngine {
     this.startScreen.classList.add('hidden');
     this.levelUpScreen.classList.add('hidden');
     this.gameOverScreen.classList.add('hidden');
+    if (this.reviveScreen) this.reviveScreen.classList.add('hidden');
     this.hud.classList.remove('hidden');
 
     // Reset keys
@@ -483,8 +494,8 @@ class NeonGameEngine {
   }
 
   loop(timestamp) {
-    if (this.state === 'LEVEL_UP') {
-      // pause loop, wait for choice
+    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING') {
+      // pause loop, wait for choice/confirmation
       return;
     }
     if (this.state === 'GAME_OVER' || this.state === 'VICTORY') {
@@ -552,6 +563,17 @@ class NeonGameEngine {
     // Update Enemies
     this.enemies.forEach(enemy => enemy.update(this.player, this.enemies));
     
+    // Fade screen flash
+    if (this.flashOpacity > 0) {
+      this.flashOpacity -= dt / 600; // fade out over 600ms
+      if (this.flashOpacity < 0) this.flashOpacity = 0;
+    }
+
+    // Expand shockwave
+    if (this.shockwaveRadius > 0 && this.shockwaveRadius < this.shockwaveMaxRadius) {
+      this.shockwaveRadius += this.shockwaveSpeed * dt;
+    }
+
     // Handle player invulnerability frame tick
     if (this.playerIframeTimer > 0) {
       this.playerIframeTimer -= dt;
@@ -602,35 +624,7 @@ class NeonGameEngine {
     // Check Defeat
     if (this.player.hp <= 0) {
       if (this.player.revivesRemaining > 0) {
-        this.player.revivesRemaining--;
-        this.player.reviveCount++;
-        this.player.hp = this.player.maxHp;
-        this.playerIframeTimer = 2000; // 2 seconds invulnerability
-        
-        if (this.damageNumbers) {
-          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y, "REVIVED!", false));
-        }
-
-        this.triggerScreenShake(30, 15.0);
-        gameAudio.playLevelUp(); // play level up sound for revival fanfare
-
-        // Spawn flashy revival particles
-        this.player.spawnParticles(this.player.x, this.player.y, '#fffb00', 1.5, 30);
-        this.player.spawnParticles(this.player.x, this.player.y, '#39ff14', 1.2, 20);
-
-        // Blow away nearby enemies for breathing room
-        this.enemies.forEach(enemy => {
-          const dist = getDistance(this.player.x, this.player.y, enemy.x, enemy.y);
-          if (dist < 250) {
-            const dx = enemy.x - this.player.x;
-            const dy = enemy.y - this.player.y;
-            const len = Math.sqrt(dx * dx + dy * dy);
-            if (len > 0) {
-              enemy.x += (dx / len) * 80;
-              enemy.y += (dy / len) * 80;
-            }
-          }
-        });
+        this.triggerRevivalScreen();
       } else {
         this.state = 'GAME_OVER';
       }
@@ -1031,6 +1025,56 @@ class NeonGameEngine {
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
+  triggerRevivalScreen() {
+    this.state = 'REVIVING';
+    document.getElementById('revive-remaining-val').innerText = this.player.revivesRemaining;
+    this.reviveScreen.classList.remove('hidden');
+  }
+
+  confirmRevival() {
+    this.reviveScreen.classList.add('hidden');
+    
+    // Deduct revives
+    this.player.revivesRemaining--;
+    this.player.reviveCount++;
+    this.player.hp = this.player.maxHp;
+    this.playerIframeTimer = 2000; // 2 seconds invulnerability
+    
+    if (this.damageNumbers) {
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y, "REVIVED!", false));
+    }
+
+    this.triggerScreenShake(30, 15.0);
+    gameAudio.playLevelUp(); // play level up sound for revival fanfare
+
+    // Trigger full screen flash & shockwave
+    this.flashOpacity = 1.0;
+    this.shockwaveRadius = 1;
+
+    // Spawn flashy revival particles
+    this.player.spawnParticles(this.player.x, this.player.y, '#fffb00', 1.5, 30);
+    this.player.spawnParticles(this.player.x, this.player.y, '#39ff14', 1.2, 20);
+
+    // Blow away nearby enemies for breathing room
+    this.enemies.forEach(enemy => {
+      const dist = getDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+      if (dist < 250) {
+        const dx = enemy.x - this.player.x;
+        const dy = enemy.y - this.player.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len > 0) {
+          enemy.x += (dx / len) * 80;
+          enemy.y += (dy / len) * 80;
+        }
+      }
+    });
+
+    // Resume game loop
+    this.state = 'PLAYING';
+    this.lastTime = performance.now();
+    requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
   updateHUD(secs) {
     // Level value
     document.getElementById('hud-level-value').innerText = this.player.level;
@@ -1153,6 +1197,28 @@ class NeonGameEngine {
 
     // 6. Draw Damage Numbers
     this.damageNumbers.forEach(dn => dn.draw(this.ctx));
+    
+    // Draw Shockwave
+    if (this.shockwaveRadius > 0 && this.shockwaveRadius < this.shockwaveMaxRadius) {
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.arc(this.player.x, this.player.y, this.shockwaveRadius, 0, Math.PI * 2);
+      const alpha = 1.0 - this.shockwaveRadius / this.shockwaveMaxRadius;
+      this.ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
+      this.ctx.lineWidth = 15 * alpha + 2;
+      this.ctx.shadowBlur = 30;
+      this.ctx.shadowColor = '#00f0ff';
+      this.ctx.stroke();
+      this.ctx.restore();
+    }
+
+    // Draw Screen Flash
+    if (this.flashOpacity > 0) {
+      this.ctx.save();
+      this.ctx.fillStyle = `rgba(255, 255, 255, ${this.flashOpacity})`;
+      this.ctx.fillRect(0, 0, this.logicalWidth, this.logicalHeight);
+      this.ctx.restore();
+    }
     
     this.ctx.restore();
   }
