@@ -83,10 +83,12 @@ class NeonGameEngine {
     this.startHardBtn = document.getElementById('start-hard-btn');
     this.restartBtn = document.getElementById('restart-btn');
     this.themeToggle = document.getElementById('theme-toggle');
+    this.bgmToggle = document.getElementById('bgm-toggle');
     
     this.startNormalBtn.addEventListener('click', () => this.startGame('NORMAL'));
     this.startHardBtn.addEventListener('click', () => this.startGame('HARD'));
     this.themeToggle.addEventListener('click', () => this.toggleTheme());
+    this.bgmToggle.addEventListener('click', () => this.toggleBGM());
     this.restartBtn.addEventListener('click', () => this.startGame(this.difficulty || 'NORMAL'));
 
     this.reviveScreen = document.getElementById('revive-screen');
@@ -119,6 +121,11 @@ class NeonGameEngine {
         if (this.devAutoRun) {
           this.devAutoRun.checked = this.autoRun;
         }
+      }
+
+      // Mute hotkey: M
+      if (e.key && e.key.toLowerCase() === 'm') {
+        this.toggleBGM();
       }
     });
 
@@ -444,8 +451,11 @@ class NeonGameEngine {
   }
 
   startGame(difficulty = 'NORMAL') {
-    // Start synth context
+    // Start synth context and BGM
     gameAudio.init();
+    gameAudio.setBGMTempo(difficulty === 'HARD' ? 138 : 130);
+    gameAudio.setBGMVolume(0.08);
+    gameAudio.startBGM();
     
     this.difficulty = difficulty;
     if (this.difficulty === 'HARD') {
@@ -747,6 +757,14 @@ class NeonGameEngine {
       this.playerIframeTimer -= dt;
     }
 
+    // Dynamic BGM tempo update in Hell Mode (speed up over time)
+    if (this.hellMode) {
+      const hellTimeSecs = (this.elapsedTime - this.hellModeStartTime) / 1000;
+      const baseBpm = this.difficulty === 'HARD' ? 138 : 130;
+      const targetBpm = Math.min(180, baseBpm + hellTimeSecs * 0.4);
+      gameAudio.setBGMTempo(targetBpm);
+    }
+
     // Spawning Logic
     this.spawnTimer += dt;
     const spawnRate = this.spawnIntervalOverride !== null ? this.spawnIntervalOverride : this.getSpawnInterval(currentSecs);
@@ -806,6 +824,7 @@ class NeonGameEngine {
         this.triggerRevivalScreen();
       } else {
         this.state = 'GAME_OVER';
+        gameAudio.stopBGM();
       }
     }
   }
@@ -1067,6 +1086,7 @@ class NeonGameEngine {
     }
 
     this.state = 'LEVEL_UP';
+    gameAudio.setBGMVolume(0.02);
     gameAudio.playLevelUp();
     
     // Choose 3 random upgrade options
@@ -1281,12 +1301,14 @@ class NeonGameEngine {
     }
     this.levelUpScreen.classList.add('hidden');
     this.state = 'PLAYING';
+    gameAudio.setBGMVolume(0.08);
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
   async triggerJewelLottery() {
     this.state = 'ROULETTE';
+    gameAudio.setBGMVolume(0.02);
     
     // Reset UI
     const spinner = document.getElementById('roulette-spinner');
@@ -1461,6 +1483,7 @@ class NeonGameEngine {
     }
     this.rouletteScreen.classList.add('hidden');
     this.state = 'PLAYING';
+    gameAudio.setBGMVolume(0.08);
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1479,6 +1502,15 @@ class NeonGameEngine {
         this.themeToggle.innerText = '☀️ LIGHT';
       }
     }
+  }
+
+  toggleBGM() {
+    gameAudio.muted = !gameAudio.muted;
+    const btn = document.getElementById('bgm-toggle');
+    if (btn) {
+      btn.innerText = gameAudio.muted ? '🔇 BGM OFF' : '🔊 BGM ON';
+    }
+    gameAudio.setBGMVolume(gameAudio.bgmVolume);
   }
 
   spawnHTMLParticles(parentEl, x, y, colors, count) {
@@ -1528,6 +1560,7 @@ class NeonGameEngine {
 
   triggerRevivalScreen() {
     this.state = 'REVIVING';
+    gameAudio.setBGMVolume(0.02);
     document.getElementById('revive-remaining-val').innerText = this.player.revivesRemaining;
     this.reviveScreen.classList.remove('hidden');
   }
@@ -1572,6 +1605,7 @@ class NeonGameEngine {
 
     // Resume game loop
     this.state = 'PLAYING';
+    gameAudio.setBGMVolume(0.08);
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1639,6 +1673,7 @@ class NeonGameEngine {
   }
 
   showEndScreen() {
+    gameAudio.stopBGM();
     this.hud.classList.add('hidden');
     this.gameOverScreen.classList.remove('hidden');
 
