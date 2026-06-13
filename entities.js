@@ -1966,7 +1966,7 @@ class Enemy {
     return amount;
   }
 
-  update(player, enemies) {
+  update(player, enemies, width = 900, height = 600) {
     if (this.hitTimer > 0) this.hitTimer--;
     if (this.slowTimer > 0) this.slowTimer--;
 
@@ -1977,6 +1977,14 @@ class Enemy {
     // Fixed DT estimation (16.6ms per frame)
     const dt = 16.6;
 
+    this._updatePosition(player, enemies, dt);
+
+    // Clamp inside screen bounds
+    this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
+    this.y = Math.max(this.radius, Math.min(height - this.radius, this.y));
+  }
+
+  _updatePosition(player, enemies, dt) {
     // Special Boss v2 attack behaviors
     if (this.type === 'boss2') {
       if (this.bulletTimer === undefined) {

@@ -720,7 +720,7 @@ class NeonGameEngine {
     this.projectiles = this.projectiles.filter(proj => proj.active && proj.life > 0);
 
     // Update Enemies
-    this.enemies.forEach(enemy => enemy.update(this.player, this.enemies));
+    this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.logicalWidth, this.logicalHeight));
     
     // Fade screen flash
     if (this.flashOpacity > 0) {
