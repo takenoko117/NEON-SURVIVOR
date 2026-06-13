@@ -266,6 +266,63 @@ class Gem {
   }
 }
 
+// Special Upgrade Jewel Class
+class Jewel {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 9; // larger than normal gems
+    this.color = '#fffb00'; // neon yellow/gold
+    this.isAttracted = false;
+    this.speed = 1.0;
+  }
+
+  update(player) {
+    if (!this.isAttracted) {
+      const dist = getDistance(this.x, this.y, player.x, player.y);
+      if (dist <= player.stats.magnet) {
+        this.isAttracted = true;
+      }
+    } else {
+      const dx = player.x - this.x;
+      const dy = player.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 5) {
+        this.speed += 0.3; // Accelerate faster
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
+      }
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.beginPath();
+    
+    // Draw 8-pointed star shape for the jewel
+    const numPoints = 8;
+    for (let i = 0; i < numPoints * 2; i++) {
+      const angle = (i * Math.PI) / numPoints;
+      const r = i % 2 === 0 ? this.radius : this.radius * 0.55;
+      const px = this.x + Math.cos(angle) * r;
+      const py = this.y + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    
+    ctx.fillStyle = '#fffb00';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#fffb00';
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 // Projectile Class
 class Projectile {
   constructor(x, y, angle, speed, damage, radius, color, pierce = 1) {

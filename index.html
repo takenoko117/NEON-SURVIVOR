@@ -100,6 +100,30 @@
       </div>
     </div>
 
+    <!-- Roulette Screen Overlay (pauses game) -->
+    <div id="roulette-screen" class="overlay menu-screen hidden">
+      <div class="menu-content glow-panel" style="text-align: center; width: 500px; max-width: 95%;">
+        <h2 class="neon-title" style="color: var(--neon-yellow); text-shadow: 0 0 15px var(--neon-yellow), 0 0 30px rgba(255, 251, 0, 0.4); font-size: 24px; margin-bottom: 5px;">GOLDEN REWARD</h2>
+        <p class="tagline" style="margin-bottom: 25px;">ウエポン・パッシブ自動アップグレード！</p>
+        
+        <!-- Roulette Display Box -->
+        <div id="roulette-box" style="margin: 20px auto; padding: 25px; background: rgba(6, 7, 13, 0.9); border: 2px solid var(--neon-yellow); box-shadow: 0 0 20px rgba(255, 251, 0, 0.25); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; position: relative; overflow: hidden;">
+          <!-- The item spinning slot -->
+          <div id="roulette-spinner" style="font-size: 50px; margin-bottom: 15px; height: 60px; line-height: 60px;">❓</div>
+          <div id="roulette-item-name" style="font-family: var(--font-retro); font-size: 14px; color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); min-height: 20px;">READY...</div>
+        </div>
+
+        <!-- Selected Items History/Results list -->
+        <div id="roulette-results" style="margin-top: 15px; text-align: left; background: rgba(13, 15, 30, 0.5); padding: 15px; border-radius: 8px; border: 1px solid var(--text-muted); display: none;">
+          <h4 style="font-family: var(--font-retro); font-size: 11px; color: var(--neon-pink); margin-bottom: 10px; border-bottom: 1px solid rgba(255,0,127,0.3); padding-bottom: 5px;">獲得したパワーアップ:</h4>
+          <ul id="roulette-results-list" style="list-style: none; padding-left: 0; font-family: var(--font-ui); font-size: 13px;">
+          </ul>
+        </div>
+
+        <button id="roulette-claim-btn" class="neon-button disabled" style="margin-top: 25px; border-color: var(--text-muted); color: var(--text-muted); box-shadow: none; pointer-events: none;">抽選中...</button>
+      </div>
+    </div>
+
     <!-- Game Over / Victory Overlay -->
     <div id="game-over-screen" class="overlay menu-screen hidden">
       <div class="menu-content glow-panel">

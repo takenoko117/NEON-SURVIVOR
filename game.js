@@ -31,6 +31,7 @@ class NeonGameEngine {
     this.enemies = [];
     this.projectiles = [];
     this.gems = [];
+    this.jewels = [];
     this.particles = [];
     this.damageNumbers = [];
 
@@ -77,6 +78,10 @@ class NeonGameEngine {
     this.reviveScreen = document.getElementById('revive-screen');
     this.reviveConfirmBtn = document.getElementById('revive-confirm-btn');
     this.reviveConfirmBtn.addEventListener('click', () => this.confirmRevival());
+
+    this.rouletteScreen = document.getElementById('roulette-screen');
+    this.rouletteClaimBtn = document.getElementById('roulette-claim-btn');
+    this.rouletteClaimBtn.addEventListener('click', () => this.resumeRoulette());
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -474,6 +479,7 @@ class NeonGameEngine {
     this.enemies = [];
     this.projectiles = [];
     this.gems = [];
+    this.jewels = [];
     this.particles = [];
     this.damageNumbers = [];
 
@@ -482,6 +488,7 @@ class NeonGameEngine {
     this.levelUpScreen.classList.add('hidden');
     this.gameOverScreen.classList.add('hidden');
     if (this.reviveScreen) this.reviveScreen.classList.add('hidden');
+    if (this.rouletteScreen) this.rouletteScreen.classList.add('hidden');
     this.hud.classList.remove('hidden');
 
     // Reset keys
@@ -494,7 +501,7 @@ class NeonGameEngine {
   }
 
   loop(timestamp) {
-    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING') {
+    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING' || this.state === 'ROULETTE') {
       // pause loop, wait for choice/confirmation
       return;
     }
@@ -605,6 +612,17 @@ class NeonGameEngine {
         if (levelUp) {
           this.triggerLevelUp();
         }
+        return false;
+      }
+      return true;
+    });
+
+    // Update Jewels
+    this.jewels.forEach(jewel => jewel.update(this.player));
+    this.jewels = this.jewels.filter(jewel => {
+      const dist = getDistance(this.player.x, this.player.y, jewel.x, jewel.y);
+      if (dist <= this.player.radius + jewel.radius) {
+        this.triggerJewelLottery();
         return false;
       }
       return true;
@@ -790,6 +808,11 @@ class NeonGameEngine {
 
         // Spawn experience gem
         this.gems.push(new Gem(enemy.x, enemy.y, enemy.expValue));
+
+        // 5% chance to drop a special upgrade jewel
+        if (Math.random() < 0.05) {
+          this.jewels.push(new Jewel(enemy.x, enemy.y));
+        }
 
         // Check if boss defeated -> spawn boss2
         if (enemy.type === 'boss') {
@@ -1025,6 +1048,149 @@ class NeonGameEngine {
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
+  async triggerJewelLottery() {
+    this.state = 'ROULETTE';
+    
+    // Reset UI
+    const spinner = document.getElementById('roulette-spinner');
+    const itemName = document.getElementById('roulette-item-name');
+    const claimBtn = document.getElementById('roulette-claim-btn');
+    const resultsBox = document.getElementById('roulette-results');
+    const resultsList = document.getElementById('roulette-results-list');
+    
+    spinner.innerText = '❓';
+    itemName.innerText = 'READY...';
+    resultsBox.style.display = 'none';
+    resultsList.innerHTML = '';
+    
+    claimBtn.classList.add('disabled');
+    claimBtn.style.pointerEvents = 'none';
+    claimBtn.style.borderColor = 'var(--text-muted)';
+    claimBtn.style.color = 'var(--text-muted)';
+    claimBtn.style.boxShadow = 'none';
+    claimBtn.innerText = '抽選中...';
+    
+    if (this.reviveScreen) this.reviveScreen.classList.add('hidden');
+    if (this.levelUpScreen) this.levelUpScreen.classList.add('hidden');
+    if (this.gameOverScreen) this.gameOverScreen.classList.add('hidden');
+    this.rouletteScreen.classList.remove('hidden');
+
+    let pool = this.getUpgradePool();
+    if (pool.length === 0) {
+      pool = [{
+        type: 'heal',
+        name: 'HP全回復',
+        emoji: '🧪',
+        badge: '消耗品',
+        cardClass: 'stat-buff',
+        description: '体力を最大まで回復する',
+        levelText: 'HEAL'
+      }];
+    }
+
+    const rewardCount = Math.min(pool.length, Math.floor(Math.random() * 3) + 1);
+    const selectedUpgrades = [];
+    const tempPool = [...pool];
+    for (let i = 0; i < rewardCount; i++) {
+      const idx = Math.floor(Math.random() * tempPool.length);
+      selectedUpgrades.push(tempPool.splice(idx, 1)[0]);
+    }
+
+    // List of items to cycle through during the spin
+    const spinItems = [
+      { emoji: '🪄', name: '魔法の杖' },
+      { emoji: '🧄', name: 'ニンニクオーラ' },
+      { emoji: '🪓', name: '回転鎌' },
+      { emoji: '🗡️', name: '大剣' },
+      { emoji: '⚡', name: 'サンダーウェーブ' },
+      { emoji: '🔥', name: 'ファイアロード' },
+      { emoji: '❤️', name: 'ホロウ・ハート' },
+      { emoji: '🥓', name: 'プマローラ' },
+      { emoji: '🥬', name: 'ホウレンソウ' },
+      { emoji: '🪶', name: 'ウィング' },
+      { emoji: '🧲', name: 'アトラクターブ' },
+      { emoji: '🧪', name: 'HP全回復' }
+    ];
+
+    // Play SE for jewel pickup
+    gameAudio.playCollect();
+
+    // Sequentially spin and select for each reward
+    for (let r = 0; r < selectedUpgrades.length; r++) {
+      const targetUpgrade = selectedUpgrades[r];
+      
+      // Roulette spinner animation
+      let delay = 50; // ms
+      const steps = 18; // total cycles
+      for (let s = 0; s < steps; s++) {
+        const randItem = spinItems[Math.floor(Math.random() * spinItems.length)];
+        spinner.innerText = randItem.emoji;
+        itemName.innerText = randItem.name;
+        
+        if (gameAudio.ctx && !gameAudio.muted && s % 2 === 0) {
+          gameAudio.playHit();
+        }
+        
+        if (s > 10) {
+          delay += 40;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      // Final stop on target upgrade!
+      spinner.innerText = targetUpgrade.emoji;
+      itemName.innerText = targetUpgrade.name;
+      
+      gameAudio.playLevelUp();
+      this.applyUpgrade(targetUpgrade);
+
+      // Add to results list
+      resultsBox.style.display = 'block';
+      const li = document.createElement('li');
+      li.style.margin = '8px 0';
+      li.style.display = 'flex';
+      li.style.alignItems = 'center';
+      li.style.gap = '10px';
+      
+      let levelText = '';
+      if (targetUpgrade.type === 'weapon_upgrade') {
+        levelText = `(Lv ${targetUpgrade.instance.level})`;
+      } else if (targetUpgrade.type === 'passive') {
+        levelText = `(Lv ${targetUpgrade.instance.level})`;
+      } else if (targetUpgrade.type === 'weapon_new') {
+        levelText = `(NEW!)`;
+      } else {
+        levelText = `(HP回復)`;
+      }
+
+      li.innerHTML = `
+        <span style="font-size: 20px;">${targetUpgrade.emoji}</span>
+        <span style="font-weight: bold; color: #ffffff;">${targetUpgrade.name}</span>
+        <span style="color: var(--neon-yellow); font-size: 11px; font-family: var(--font-retro);">${levelText}</span>
+      `;
+      resultsList.appendChild(li);
+
+      if (r < selectedUpgrades.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+    }
+
+    // Enable the CLAIM button
+    claimBtn.classList.remove('disabled');
+    claimBtn.style.pointerEvents = 'auto';
+    claimBtn.style.borderColor = 'var(--neon-green)';
+    claimBtn.style.color = 'var(--neon-green)';
+    claimBtn.style.boxShadow = '0 0 15px rgba(57, 255, 20, 0.3)';
+    claimBtn.innerText = '閉じる';
+  }
+
+  resumeRoulette() {
+    this.rouletteScreen.classList.add('hidden');
+    this.state = 'PLAYING';
+    this.lastTime = performance.now();
+    requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
   triggerRevivalScreen() {
     this.state = 'REVIVING';
     document.getElementById('revive-remaining-val').innerText = this.player.revivesRemaining;
@@ -1182,6 +1348,9 @@ class NeonGameEngine {
 
     // 1. Draw Experience Gems
     this.gems.forEach(gem => gem.draw(this.ctx));
+    
+    // Draw Special Jewels
+    this.jewels.forEach(jewel => jewel.draw(this.ctx));
 
     // 2. Draw Projectiles
     this.projectiles.forEach(proj => proj.draw(this.ctx));
