@@ -46,7 +46,7 @@ class NeonGameEngine {
     this.devPanelOpen = false;
     this.godMode = false;
     this.freezeSpawns = false;
-    this.autoRun = false;
+    this.autoRun = true;
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
@@ -457,7 +457,7 @@ class NeonGameEngine {
     // Reset Developer Mode State
     this.godMode = false;
     this.freezeSpawns = false;
-    this.autoRun = false;
+    this.autoRun = true;
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
@@ -465,7 +465,7 @@ class NeonGameEngine {
     // Reset Dev Panel elements inputs
     if (this.devGodMode) this.devGodMode.checked = false;
     if (this.devFreezeSpawn) this.devFreezeSpawn.checked = false;
-    if (this.devAutoRun) this.devAutoRun.checked = false;
+    if (this.devAutoRun) this.devAutoRun.checked = true;
     if (this.devSpawnRate) {
       this.devSpawnRate.value = 1500;
       this.devSpawnRateVal.innerText = '1.5s';
@@ -567,18 +567,56 @@ class NeonGameEngine {
       }
     }
 
-    if (this.autoRun && this.player) {
+    // Check if user is actively inputting movement
+    const keysPressed = ['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'];
+    const hasKeyboardInput = keysPressed.some(key => this.keys[key]);
+    
+    let hasMouseInput = false;
+    if (this.mouse.isDown && this.player) {
+      const mDx = this.mouse.x - this.player.x;
+      const mDy = this.mouse.y - this.player.y;
+      const mDist = Math.sqrt(mDx * mDx + mDy * mDy);
+      if (mDist > 10) {
+        hasMouseInput = true;
+      }
+    }
+    const isUserInputting = hasKeyboardInput || hasMouseInput;
+
+    if (isUserInputting) {
+      // 1. Keyboard controls
+      if (this.keys['w'] || this.keys['arrowup']) dy = -1;
+      if (this.keys['s'] || this.keys['arrowdown']) dy = 1;
+      if (this.keys['a'] || this.keys['arrowleft']) dx = -1;
+      if (this.keys['d'] || this.keys['arrowright']) dx = 1;
+
+      // 2. Mouse/Touch control overrides if active or dragging
+      if (this.mouse.isDown) {
+        const mDx = this.mouse.x - this.player.x;
+        const mDy = this.mouse.y - this.player.y;
+        const mDist = Math.sqrt(mDx * mDx + mDy * mDy);
+        
+        // If mouse is far enough from player, move player towards it
+        if (mDist > 10) {
+          dx = mDx;
+          dy = mDy;
+        }
+      }
+    } else if (this.autoRun && this.player) {
       // Auto run logic: evade enemies & walls, attract to experience gems / jewels.
       
-      // 1. Evade enemies within threshold
-      const evasionThreshold = 250;
+      // 1. Evade enemies within dangerous threshold
       for (const enemy of this.enemies) {
         const diffX = this.player.x - enemy.x;
         const diffY = this.player.y - enemy.y;
         const dist = Math.sqrt(diffX * diffX + diffY * diffY);
-        if (dist > 0 && dist < evasionThreshold) {
+        
+        // Tuned threshold: Bosses are a much larger danger, normal enemies are only dangerous close up
+        const isBoss = enemy.type === 'boss' || enemy.type === 'boss2';
+        const dangerThreshold = isBoss ? 220 : 150;
+        
+        if (dist > 0 && dist < dangerThreshold) {
           // Weight increases rapidly as distance decreases
-          const weight = 6000 / (dist * dist + 10);
+          const weight = (isBoss ? 15000 : 8000) / (dist * dist + 20);
           dx += (diffX / dist) * weight;
           dy += (diffY / dist) * weight;
         }
@@ -607,7 +645,7 @@ class NeonGameEngine {
         dy -= 2500 / (d * d);
       }
 
-      // 3. Attract to closest Gem or Jewel
+      // 3. Attract to closest Gem or Jewel (Proactive Collection)
       let closestItem = null;
       let minItemDist = Infinity;
       
@@ -632,8 +670,15 @@ class NeonGameEngine {
         const attractX = closestItem.x - this.player.x;
         const attractY = closestItem.y - this.player.y;
         
-        // Attraction force scale (tuned to be lower than close enemies)
-        const attractionWeight = 1.8;
+        // Attraction force scale (tuned to be proactive)
+        let attractionWeight = 4.0;
+        if (minItemDist < 120) {
+          attractionWeight = 7.0; // Strongly pull to pick up close items
+        }
+        if (closestItem.constructor.name === 'Jewel') {
+          attractionWeight = 9.0; // Upgrade jewel is top priority
+        }
+        
         dx += (attractX / minItemDist) * attractionWeight;
         dy += (attractY / minItemDist) * attractionWeight;
       }
@@ -641,26 +686,6 @@ class NeonGameEngine {
       // 4. Add small jitter/noise to prevent getting stuck in deadlocks / vibration
       dx += (Math.random() - 0.5) * 0.15;
       dy += (Math.random() - 0.5) * 0.15;
-
-    } else {
-      // 1. Keyboard controls
-      if (this.keys['w'] || this.keys['arrowup']) dy = -1;
-      if (this.keys['s'] || this.keys['arrowdown']) dy = 1;
-      if (this.keys['a'] || this.keys['arrowleft']) dx = -1;
-      if (this.keys['d'] || this.keys['arrowright']) dx = 1;
-
-      // 2. Mouse/Touch control overrides if active or dragging
-      if (this.mouse.isDown) {
-        const mDx = this.mouse.x - this.player.x;
-        const mDy = this.mouse.y - this.player.y;
-        const mDist = Math.sqrt(mDx * mDx + mDy * mDy);
-        
-        // If mouse is far enough from player, move player towards it
-        if (mDist > 10) {
-          dx = mDx;
-          dy = mDy;
-        }
-      }
     }
 
     this.player.move(dx, dy, this.logicalWidth, this.logicalHeight);
