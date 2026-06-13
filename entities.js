@@ -1489,9 +1489,20 @@ class Player {
     ];
 
     // Core stats modifiable by passives
+    const self = this;
     this.stats = {
       magnet: 60,
-      damageMultiplier: 1.0,
+      baseDamageMultiplier: 1.0,
+      get damageMultiplier() {
+        let mult = this.baseDamageMultiplier;
+        if (self.hp / self.maxHp < 0.20 && self.hp > 0) {
+          mult *= 1.5;
+        }
+        return mult;
+      },
+      set damageMultiplier(val) {
+        this.baseDamageMultiplier = val;
+      },
       hpRegen: 0.0
     };
 

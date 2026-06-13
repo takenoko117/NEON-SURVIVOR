@@ -1198,6 +1198,33 @@ class NeonGameEngine {
     // 6. Draw Damage Numbers
     this.damageNumbers.forEach(dn => dn.draw(this.ctx));
     
+    // Draw Low HP Red Vignette Aura (under 20% HP)
+    const hpRatio = this.player.hp / this.player.maxHp;
+    if (hpRatio < 0.20 && hpRatio > 0) {
+      this.ctx.save();
+      // Pulsing opacity based on game time
+      const pulse = 0.45 + Math.sin(performance.now() * 0.005) * 0.25;
+      
+      const grad = this.ctx.createRadialGradient(
+        this.logicalWidth / 2, this.logicalHeight / 2, this.logicalHeight * 0.3,
+        this.logicalWidth / 2, this.logicalHeight / 2, this.logicalWidth * 0.65
+      );
+      grad.addColorStop(0, 'rgba(255, 0, 0, 0)');
+      grad.addColorStop(1, `rgba(255, 0, 50, ${pulse * 0.85})`);
+      
+      this.ctx.fillStyle = grad;
+      this.ctx.fillRect(0, 0, this.logicalWidth, this.logicalHeight);
+      
+      // Outer border glow
+      this.ctx.strokeStyle = `rgba(255, 0, 50, ${pulse})`;
+      this.ctx.lineWidth = 8;
+      this.ctx.shadowBlur = 25;
+      this.ctx.shadowColor = '#ff0032';
+      this.ctx.strokeRect(4, 4, this.logicalWidth - 8, this.logicalHeight - 8);
+      
+      this.ctx.restore();
+    }
+
     // Draw Shockwave
     if (this.shockwaveRadius > 0 && this.shockwaveRadius < this.shockwaveMaxRadius) {
       this.ctx.save();
