@@ -112,7 +112,7 @@ class NeonGameEngine {
     // Countdown Timers for Auto-Close
     this.levelUpTimer = null;
     this.rouletteTimer = null;
-    this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') !== 'false');
+    this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') === 'true');
     this.lastMagnetTriggerSecond = 0;
 
     // Rerolls and Banishes
