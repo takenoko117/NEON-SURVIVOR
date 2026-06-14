@@ -34,8 +34,9 @@
       <div class="hud-stats-overlay">
         <div class="stat-item">
           <span class="stat-icon">❤️</span>
-          <div class="hud-hp-bar-container">
+          <div class="hud-hp-bar-container" style="position: relative;">
             <div id="hud-hp-bar-fill"></div>
+            <div id="hud-shield-bar-fill"></div>
           </div>
           <span id="hud-hp-text">100/100</span>
         </div>
@@ -45,8 +46,17 @@
         </div>
       </div>
 
-      <!-- Active Weapons List (rendered in bottom left) -->
-      <div id="hud-weapons" class="hud-weapons-list"></div>
+      <!-- Active Slots (bottom left) -->
+      <div class="hud-slots-container">
+        <div class="hud-slot-header">WEAPONS (MAX 4)</div>
+        <div id="hud-weapon-slots" class="hud-slots-row"></div>
+        
+        <div class="hud-slot-header" style="margin-top: 8px;">PASSIVES (MAX 4)</div>
+        <div id="hud-passive-slots" class="hud-slots-row"></div>
+        
+        <div class="hud-slot-header" style="margin-top: 8px;">RELICS (MAX 3)</div>
+        <div id="hud-relic-slots" class="hud-slots-row"></div>
+      </div>
     </div>
 
     <!-- Start Screen Overlay -->
@@ -82,11 +92,30 @@
 
     <!-- Level Up Choice Overlay (pauses game) -->
     <div id="level-up-screen" class="overlay menu-screen hidden">
-      <div class="menu-content">
-        <h2 class="neon-subtitle">LEVEL UP!</h2>
+      <div class="menu-content glow-panel" style="max-width: 650px; width: 95%;">
+        <h2 class="neon-subtitle" style="margin-bottom: 5px;">LEVEL UP!</h2>
         <p class="level-up-desc" id="level-up-desc-text">アップグレードを選択してください</p>
         <div id="upgrade-options" class="options-container">
           <!-- Dynamically populated choices will go here -->
+        </div>
+        <div class="level-up-actions" style="margin-top: 25px; display: flex; gap: 20px; justify-content: center;">
+          <button id="reroll-btn" class="neon-button" style="border-color: var(--neon-cyan); color: var(--neon-cyan); font-size: 13px; padding: 8px 16px;">
+            リロール (<span id="reroll-count-val">1</span>)
+          </button>
+          <button id="banish-btn" class="neon-button" style="border-color: var(--neon-pink); color: var(--neon-pink); font-size: 13px; padding: 8px 16px;">
+            バニッシュ除外 (<span id="banish-count-val">1</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relic Choice Screen Overlay (pauses game) -->
+    <div id="relic-choice-screen" class="overlay menu-screen hidden">
+      <div class="menu-content glow-panel" style="max-width: 750px; width: 95%;">
+        <h2 class="neon-subtitle" style="color: var(--neon-yellow); text-shadow: 0 0 15px var(--neon-yellow); margin-bottom: 5px;">RELIC DISCOVERY!</h2>
+        <p class="level-up-desc" style="margin-bottom: 25px;">エリートを打ち破り、未知の遺物を手に入れた。1つを選択せよ（最大3個）</p>
+        <div id="relic-options" class="options-container">
+          <!-- Dynamically populated relic choices will go here -->
         </div>
       </div>
     </div>
@@ -223,6 +252,9 @@
           <button id="dev-clear-enemies" class="dev-btn">CLEAR ENEMIES</button>
           <button id="dev-spawn-boss" class="dev-btn">SPAWN BOSS</button>
         </div>
+        <div class="dev-btn-group" style="margin-top: 8px;">
+          <button id="dev-spawn-elite-btn" class="dev-btn" style="border-color: var(--neon-yellow); color: var(--neon-yellow);">SPAWN ELITE</button>
+        </div>
       </div>
 
       <div class="dev-section">
@@ -246,31 +278,37 @@
           <label>🔮 マナ・ボルト (Wand)</label>
           <input type="range" id="dev-wpn-magic" min="0" max="10" step="1" value="1" class="dev-slider small-slider">
           <span id="dev-wpn-magic-val" class="dev-lv-badge">Lv1</span>
+          <label style="margin-left: 8px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--neon-yellow);"><input type="checkbox" id="dev-wpn-magic-evo" disabled> EVO</label>
         </div>
         <div class="dev-control-row">
           <label>🧄 ネオン・ハロー (Garlic)</label>
           <input type="range" id="dev-wpn-garlic" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
           <span id="dev-wpn-garlic-val" class="dev-lv-badge">Lv0</span>
+          <label style="margin-left: 8px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--neon-yellow);"><input type="checkbox" id="dev-wpn-garlic-evo" disabled> EVO</label>
         </div>
         <div class="dev-control-row">
           <label>🪓 サイバー・エッジ (Scythe)</label>
           <input type="range" id="dev-wpn-scythe" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
           <span id="dev-wpn-scythe-val" class="dev-lv-badge">Lv0</span>
+          <label style="margin-left: 8px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--neon-yellow);"><input type="checkbox" id="dev-wpn-scythe-evo" disabled> EVO</label>
         </div>
         <div class="dev-control-row">
           <label>🗡️ ビッグソード (Sword)</label>
           <input type="range" id="dev-wpn-sword" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
           <span id="dev-wpn-sword-val" class="dev-lv-badge">Lv0</span>
+          <label style="margin-left: 8px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--neon-yellow);"><input type="checkbox" id="dev-wpn-sword-evo" disabled> EVO</label>
         </div>
         <div class="dev-control-row">
           <label>⚡ サンダーウェーブ (Thunder)</label>
           <input type="range" id="dev-wpn-thunder" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
           <span id="dev-wpn-thunder-val" class="dev-lv-badge">Lv0</span>
+          <label style="margin-left: 8px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--neon-yellow);"><input type="checkbox" id="dev-wpn-thunder-evo" disabled> EVO</label>
         </div>
         <div class="dev-control-row">
           <label>🔥 ファイアーロード (Fire)</label>
           <input type="range" id="dev-wpn-fire" min="0" max="10" step="1" value="0" class="dev-slider small-slider">
           <span id="dev-wpn-fire-val" class="dev-lv-badge">Lv0</span>
+          <label style="margin-left: 8px; font-size: 11px; display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--neon-yellow);"><input type="checkbox" id="dev-wpn-fire-evo" disabled> EVO</label>
         </div>
       </div>
 
@@ -301,6 +339,90 @@
           <input type="range" id="dev-pass-magnet" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
           <span id="dev-pass-magnet-val" class="dev-lv-badge">Lv0</span>
         </div>
+        <div class="dev-control-row">
+          <label>📖 空白の書 (Cooldown)</label>
+          <input type="range" id="dev-pass-cooldown" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-cooldown-val" class="dev-lv-badge">Lv0</span>
+        </div>
+        <div class="dev-control-row">
+          <label>🕯️ ロウソク (Area)</label>
+          <input type="range" id="dev-pass-area" min="0" max="5" step="1" value="0" class="dev-slider small-slider">
+          <span id="dev-pass-area-val" class="dev-lv-badge">Lv0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Side Panels (Visible on larger screens beside the game container) -->
+  <div class="side-panel left-panel glow-panel">
+    <div class="panel-header">WEAPON EVOLUTIONS</div>
+    <div class="evolution-list">
+      <div class="evo-pair">
+        <span class="game-icon icon-magicwand"></span> <span class="plus">+</span> <span class="game-icon icon-cooldown"></span>
+        <span class="arrow">➜</span>
+        <span class="game-icon icon-evomagicwand"></span>
+      </div>
+      <div class="evo-pair">
+        <span class="game-icon icon-garlicaura"></span> <span class="plus">+</span> <span class="game-icon icon-area"></span>
+        <span class="arrow">➜</span>
+        <span class="game-icon icon-evogarlicaura"></span>
+      </div>
+      <div class="evo-pair">
+        <span class="game-icon icon-spinningscythe"></span> <span class="plus">+</span> <span class="game-icon icon-speed"></span>
+        <span class="arrow">➜</span>
+        <span class="game-icon icon-evospinningscythe"></span>
+      </div>
+      <div class="evo-pair">
+        <span class="game-icon icon-bigsword"></span> <span class="plus">+</span> <span class="game-icon icon-maxhp"></span>
+        <span class="arrow">➜</span>
+        <span class="game-icon icon-evobigsword"></span>
+      </div>
+      <div class="evo-pair">
+        <span class="game-icon icon-thunderwave"></span> <span class="plus">+</span> <span class="game-icon icon-damage"></span>
+        <span class="arrow">➜</span>
+        <span class="game-icon icon-evothunderwave"></span>
+      </div>
+      <div class="evo-pair">
+        <span class="game-icon icon-fireroad"></span> <span class="plus">+</span> <span class="game-icon icon-regen"></span>
+        <span class="arrow">➜</span>
+        <span class="game-icon icon-evofireroad"></span>
+      </div>
+    </div>
+    <div class="panel-footer">※武器Lv10 ＋ 対応パッシブ所持でボス宝箱を獲得</div>
+  </div>
+
+  <div class="side-panel right-panel glow-panel">
+    <div class="panel-header">SYNERGY & REACTIONS</div>
+    
+    <div class="synergy-section">
+      <div class="section-title">属性リアクション</div>
+      <div class="synergy-item">
+        <div class="synergy-title">💥 過負荷 (炎 🔥 + 雷 ⚡)</div>
+        <div class="synergy-desc">最大HP10%の追加ダメージ＋周囲爆発＆ノックバック</div>
+      </div>
+      <div class="synergy-item">
+        <div class="synergy-title">❄️ 破砕 (鈍化 🧄 + 物理 🗡️)</div>
+        <div class="synergy-desc">BigSwordの物理ダメージが1.5倍（クリティカル）</div>
+      </div>
+    </div>
+
+    <div class="synergy-section" style="margin-top: 12px;">
+      <div class="section-title">パッシブ・シナジー</div>
+      <div class="synergy-item">
+        <div class="synergy-title">🧲 + 🕯️ 特異点生成</div>
+        <div class="synergy-desc">ジェム回収時に確率で周囲の敵をスタン</div>
+      </div>
+      <div class="synergy-item">
+        <div class="synergy-title">🪶 + 📖 クロノ・ディレイ</div>
+        <div class="synergy-desc">周囲の敵と敵弾の移動速度を25%低下</div>
+      </div>
+      <div class="synergy-item">
+        <div class="synergy-title">❤️ + 🥬 ブラッド契約</div>
+        <div class="synergy-desc">HP40%未満で背水発動、ダメージ2.0倍</div>
+      </div>
+      <div class="synergy-item">
+        <div class="synergy-title">🥓 + 🕯️ メルト・オーラ</div>
+        <div class="synergy-desc">自動回復時、周囲の敵の防御力低下（被ダメ1.3倍）</div>
       </div>
     </div>
   </div>

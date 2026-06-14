@@ -33,9 +33,9 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
       { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
       { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
-      { "cooldownMult": 0.66, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
-      { "cooldownMult": 0.73, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
-      { "cooldownMult": 0.82, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.55 },
+      { "cooldownMult": 0.99, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
+      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
+      { "cooldownMult": 1.01, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.55 },
       { "cooldownMult": 0.98, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.40 }
     ]
   },
@@ -84,23 +84,23 @@ const DEFAULT_WEAPON_BALANCE = {
     ]
   },
   ThunderWave: {
-    baseDamage: 8,
-    damageGrowth: 3.22,
+    baseDamage: 15,
+    damageGrowth: 0.20,
     baseCooldown: 2400,
     cooldownGrowth: -0.095,
     baseRange: 650,
     rangeGrowth: 0.018,
     levels: [
       { "cooldownMult": 1.00, "rangeMult": 1.00, "damageMult": 1.00, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.99, "rangeMult": 1.00, "damageMult": 0.52, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.98, "rangeMult": 1.00, "damageMult": 0.55, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.96, "rangeMult": 1.00, "damageMult": 0.60, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.94, "rangeMult": 1.00, "damageMult": 0.66, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.92, "rangeMult": 1.00, "damageMult": 0.72, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.90, "rangeMult": 1.00, "damageMult": 0.79, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.81, "rangeMult": 1.00, "damageMult": 0.86, "waveCount": 2, "maxAge": 75 },
-      { "cooldownMult": 0.74, "rangeMult": 1.00, "damageMult": 0.95, "waveCount": 2, "maxAge": 75 },
-      { "cooldownMult": 0.66, "rangeMult": 1.00, "damageMult": 1.00, "waveCount": 3, "maxAge": 75 }
+      { "cooldownMult": 0.99, "rangeMult": 1.00, "damageMult": 1.10, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.98, "rangeMult": 1.00, "damageMult": 1.20, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.96, "rangeMult": 1.00, "damageMult": 1.30, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.94, "rangeMult": 1.00, "damageMult": 1.40, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.92, "rangeMult": 1.00, "damageMult": 1.50, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.90, "rangeMult": 1.00, "damageMult": 1.60, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.81, "rangeMult": 1.00, "damageMult": 1.70, "waveCount": 2, "maxAge": 75 },
+      { "cooldownMult": 0.74, "rangeMult": 1.00, "damageMult": 1.80, "waveCount": 2, "maxAge": 75 },
+      { "cooldownMult": 0.66, "rangeMult": 1.00, "damageMult": 2.00, "waveCount": 3, "maxAge": 75 }
     ]
   },
   FireRoad: {
@@ -323,13 +323,75 @@ class Jewel {
   }
 }
 
+// Relic Chest Drop Class
+class RelicChest {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 12; // Larger than jewel
+    this.color = '#ffe600'; // neon gold
+    this.isAttracted = false;
+    this.speed = 1.0;
+  }
+
+  update(player) {
+    if (!this.isAttracted) {
+      const dist = getDistance(this.x, this.y, player.x, player.y);
+      if (dist <= player.stats.magnet) {
+        this.isAttracted = true;
+      }
+    } else {
+      const dx = player.x - this.x;
+      const dy = player.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist > 5) {
+        this.speed += 0.35; // Accelerate slightly faster than jewel
+        this.x += (dx / dist) * this.speed;
+        this.y += (dy / dist) * this.speed;
+      }
+    }
+  }
+
+  draw(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    
+    // Animate rotation over time
+    const time = Date.now() / 300;
+    ctx.rotate(time);
+
+    // Draw glowing chest box (neon golden chest)
+    ctx.beginPath();
+    ctx.rect(-8, -8, 16, 16);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = this.color;
+    ctx.fillStyle = 'rgba(255, 230, 0, 0.25)';
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw inner lock symbol
+    ctx.beginPath();
+    ctx.arc(0, -1, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.fillRect(-1.5, 1, 3, 4);
+
+    ctx.restore();
+  }
+}
+
 // Projectile Class
 class Projectile {
-  constructor(x, y, angle, speed, damage, radius, color, pierce = 1) {
+  constructor(x, y, angle, speed, damage, radius, color, pierce = 1, isEnemyProjectile = false) {
     this.x = x;
     this.y = y;
     this.vx = Math.cos(angle) * speed;
     this.vy = Math.sin(angle) * speed;
+    this.baseVx = this.vx;
+    this.baseVy = this.vy;
     this.damage = damage;
     this.radius = radius;
     this.color = color;
@@ -338,6 +400,7 @@ class Projectile {
     this.active = true;
     this.angle = angle;
     this.life = 180; // frames max life to prevent out of bounds memory leaks
+    this.isEnemyProjectile = isEnemyProjectile;
   }
 
   update() {
@@ -457,6 +520,7 @@ class Weapon {
     this.typeDescription = typeDescription; // For UI Card
     this.level = 1;
     this.cooldownTimer = 0;
+    this.isEvolved = false;
   }
 
   upgrade() {
@@ -473,13 +537,25 @@ class Weapon {
     } else {
       const fired = this.fire(player, enemies, projectiles);
       if (fired) {
-        this.cooldownTimer = this.getCooldown();
+        this.cooldownTimer = this.getCooldown(player);
+
+        // Relic: Ruined Codex synergy (12% chance to trigger double attack if cooldown is reduced by >= 30%)
+        if (player.relics && player.relics.includes('RuinedCodex') && (player.stats.cooldownMultiplier || 1.0) <= 0.70) {
+          if (Math.random() < 0.12) {
+            setTimeout(() => {
+              if (window.gameEngine && window.gameEngine.state === 'PLAYING' && player.hp > 0) {
+                this.fire(player, enemies, projectiles);
+                player.spawnParticles(player.x, player.y, '#b026ff', 1.0, 5);
+              }
+            }, 180);
+          }
+        }
       }
     }
   }
 
-  getCooldown() {
-    return 1000; // default 1 second
+  getCooldown(player) {
+    return 1000 * (player ? player.stats.cooldownMultiplier : 1); // default 1 second
   }
 
   fire(player, enemies, projectiles) {
@@ -497,10 +573,12 @@ class MagicWand extends Weapon {
     super("マナ・ボルト", "🔮", "単体追尾攻撃");
   }
 
-  getCooldown() {
+  getCooldown(player) {
+    if (this.isEvolved) return 30; // 30ms super rapid fire
     const balance = window.weaponBalance.MagicWand;
     const config = balance.levels[this.level - 1];
-    return balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
+    const base = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
+    return base * (player ? player.stats.cooldownMultiplier : 1);
   }
 
   fire(player, enemies, projectiles) {
@@ -513,22 +591,27 @@ class MagicWand extends Weapon {
 
     const balance = window.weaponBalance.MagicWand;
     const config = balance.levels[this.level - 1];
-    const projectileCount = config.count;
+    const projectileCount = this.isEvolved ? 1 : config.count;
     const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
-    const damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
-    const speed = 7;
-    const pierce = config.pierce;
+    let damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    if (this.isEvolved) damage *= 0.55; // Adjust damage for extreme fire rate
+    const speed = this.isEvolved ? 12 : 7;
+    const pierce = this.isEvolved ? 99 : config.pierce;
 
     // Fire at nearest target
     const target = sortedEnemies[0];
     let baseAngle = Math.atan2(target.y - player.y, target.x - player.x);
 
-    // Audio cue
-    gameAudio.playShoot();
+    // Audio cue (reduced frequency for evolved rapid fire)
+    if (!this.isEvolved || Math.random() < 0.15) {
+      gameAudio.playShoot();
+    }
 
     for (let i = 0; i < projectileCount; i++) {
       let angle;
-      if (this.level === 10) {
+      if (this.isEvolved) {
+        angle = baseAngle + (Math.random() - 0.5) * 0.05; // slight spread
+      } else if (this.level === 10) {
         angle = (i / 18) * Math.PI * 2;
       } else {
         angle = baseAngle + (i - (projectileCount - 1) / 2) * 0.15;
@@ -539,8 +622,8 @@ class MagicWand extends Weapon {
         angle, 
         speed, 
         damage, 
-        5, 
-        '#00f0ff', // cyan
+        this.isEvolved ? 8 : 5, 
+        this.isEvolved ? '#ffe600' : '#00f0ff', // Yellow neon for evolved
         pierce
       ));
     }
@@ -579,7 +662,7 @@ class GarlicAura extends Weapon {
   update(dt, player, enemies, projectiles) {
     const balance = window.weaponBalance.GarlicAura;
     const config = balance.levels[this.level - 1];
-    const interval = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
+    const interval = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult * player.stats.cooldownMultiplier;
     this.tickTimer += dt;
     if (this.tickTimer >= interval) {
       this.tickTimer = 0;
@@ -590,22 +673,26 @@ class GarlicAura extends Weapon {
   getRadius(player) {
     const balance = window.weaponBalance.GarlicAura;
     const config = balance.levels[this.level - 1];
-    return balance.baseRadius * (1 + balance.radiusGrowth * (this.level - 1)) * config.radiusMult;
+    let base = balance.baseRadius * (1 + balance.radiusGrowth * (this.level - 1)) * config.radiusMult;
+    if (this.isEvolved) base *= 2.0;
+    return base * (player ? player.stats.areaMultiplier : 1);
   }
 
   getDamage(player) {
     const balance = window.weaponBalance.GarlicAura;
     const config = balance.levels[this.level - 1];
     const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
-    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    let damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    if (this.isEvolved) damage *= 1.35; // Evolved damage buff
+    return damage;
   }
 
   triggerAura(player, enemies) {
     const radius = this.getRadius(player);
     const damage = this.getDamage(player);
     const config = window.weaponBalance.GarlicAura.levels[this.level - 1];
-    const slowEffect = config.slowRatio > 0.0;
-    const isUltimate = this.level >= 10;
+    const slowEffect = config.slowRatio > 0.0 || this.isEvolved;
+    const isUltimate = this.level >= 10 || this.isEvolved;
     
     let hitAny = false;
 
@@ -623,8 +710,9 @@ class GarlicAura extends Weapon {
           const dy = player.y - enemy.y;
           const len = Math.sqrt(dx * dx + dy * dy);
           if (len > 0) {
-            enemy.x += (dx / len) * 8; // Pull force
-            enemy.y += (dy / len) * 8;
+            const pullForce = this.isEvolved ? 3.0 : 1.8; // Evolved pulls smoothly but strongly
+            enemy.x += (dx / len) * pullForce;
+            enemy.y += (dy / len) * pullForce;
           }
         } else if (this.level >= 3) {
           const dx = enemy.x - player.x;
@@ -641,7 +729,7 @@ class GarlicAura extends Weapon {
         // Slow effect (Level 5+)
         if (slowEffect) {
           enemy.slowTimer = isUltimate ? 40 : 30; // slow duration
-          enemy.slowRatio = config.slowRatio;
+          enemy.slowRatio = this.isEvolved ? 0.60 : config.slowRatio; // 60% slow for evolved
         }
       }
     });
@@ -656,6 +744,10 @@ class GarlicAura extends Weapon {
     const time = Date.now() / 1000;
     ctx.save();
     
+    const color1 = this.isEvolved ? '0, 240, 255' : '57, 255, 20'; // Cyan vs Green
+    const color2 = this.isEvolved ? '176, 38, 255' : '57, 255, 20'; // Purple vs Green
+    const shadowColor = this.isEvolved ? '#b026ff' : '#39ff14';
+
     // 1. Draw dynamic glowing wavy bio-field fill
     ctx.beginPath();
     const pointsCount = 48;
@@ -674,43 +766,43 @@ class GarlicAura extends Weapon {
 
     // Radial gradient based on average radius
     const grad = ctx.createRadialGradient(player.x, player.y, radius * 0.4, player.x, player.y, radius + 5);
-    grad.addColorStop(0, 'rgba(57, 255, 20, 0.0)');
-    grad.addColorStop(0.6, 'rgba(57, 255, 20, 0.03)');
-    grad.addColorStop(0.9, 'rgba(57, 255, 20, 0.15)');
-    grad.addColorStop(1, 'rgba(57, 255, 20, 0.35)');
+    grad.addColorStop(0, `rgba(${color1}, 0.0)`);
+    grad.addColorStop(0.6, `rgba(${color1}, 0.03)`);
+    grad.addColorStop(0.9, `rgba(${color2}, 0.15)`);
+    grad.addColorStop(1, `rgba(${color2}, 0.35)`);
     
     ctx.fillStyle = grad;
     ctx.fill();
 
     // Wavy outer glowing stroke
-    ctx.strokeStyle = 'rgba(57, 255, 20, 0.7)';
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = '#39ff14';
+    ctx.strokeStyle = `rgba(${color1}, 0.7)`;
+    ctx.lineWidth = this.isEvolved ? 3 : 2;
+    ctx.shadowBlur = this.isEvolved ? 20 : 12;
+    ctx.shadowColor = shadowColor;
     ctx.stroke();
 
     // 2. Expanding radial energy ripple (pulses outward)
-    const rippleCount = 2;
+    const rippleCount = this.isEvolved ? 3 : 2;
     for (let rIdx = 0; rIdx < rippleCount; rIdx++) {
-      const pulseSpeed = 1.3;
+      const pulseSpeed = this.isEvolved ? 1.0 : 1.3;
       const pulseProgress = ((time * pulseSpeed) + (rIdx / rippleCount)) % 1.0;
       const rippleRadius = radius * pulseProgress;
       const rippleAlpha = (1 - pulseProgress) * 0.45;
       
       ctx.beginPath();
       ctx.arc(player.x, player.y, rippleRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(57, 255, 20, ${rippleAlpha})`;
+      ctx.strokeStyle = `rgba(${this.isEvolved ? color1 : '57, 255, 20'}, ${rippleAlpha})`;
       ctx.lineWidth = 1.5;
       ctx.shadowBlur = 6;
-      ctx.shadowColor = '#39ff14';
+      ctx.shadowColor = shadowColor;
       ctx.stroke();
     }
 
-    // 3. Rotating technical energy rings (opposite directions)
+    // 3. Rotating dashed rings
     // Outer dashed ring
     ctx.beginPath();
     ctx.arc(player.x, player.y, radius - 2, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(57, 255, 20, 0.35)';
+    ctx.strokeStyle = `rgba(${color2}, 0.35)`;
     ctx.lineWidth = 1;
     ctx.setLineDash([15, 30]);
     ctx.lineDashOffset = time * 25; // Rotate counter-clockwise
@@ -720,7 +812,7 @@ class GarlicAura extends Weapon {
     // Inner dashed ring
     ctx.beginPath();
     ctx.arc(player.x, player.y, radius * 0.75, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(57, 255, 20, 0.25)';
+    ctx.strokeStyle = `rgba(${color1}, 0.25)`;
     ctx.lineWidth = 1;
     ctx.setLineDash([8, 16]);
     ctx.lineDashOffset = -time * 18; // Rotate clockwise
@@ -760,11 +852,12 @@ class SpinningScythe extends Weapon {
   update(dt, player, enemies, projectiles) {
     const balance = window.weaponBalance.SpinningScythe;
     const config = balance.levels[this.level - 1];
-    const count = config.count;
+    const count = this.isEvolved ? 8 : config.count;
     const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
-    const damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
-    const speed = balance.baseSpeed * (1 + balance.speedGrowth * (this.level - 1)) * config.speedMult;
-    const distance = balance.baseDistance * (1 + balance.distanceGrowth * (this.level - 1)) * config.distanceMult;
+    let damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    if (this.isEvolved) damage *= 1.25; // Evolved damage buff
+    const speed = balance.baseSpeed * (1 + balance.speedGrowth * (this.level - 1)) * config.speedMult * (this.isEvolved ? 2.5 : 1.0);
+    const distance = this.isEvolved ? 35 * player.stats.areaMultiplier : balance.baseDistance * (1 + balance.distanceGrowth * (this.level - 1)) * config.distanceMult * player.stats.areaMultiplier;
     
     // Keep array size matching target count
     if (this.blades.length !== count) {
@@ -778,7 +871,7 @@ class SpinningScythe extends Weapon {
           speed,
           distance,
           damage,
-          '#b026ff' // purple
+          this.isEvolved ? '#00f0ff' : '#b026ff' // Cyan for evolved, purple for normal
         ));
       }
     }
@@ -789,6 +882,8 @@ class SpinningScythe extends Weapon {
       blade.orbitalSpeed = speed;
       blade.distance = distance;
       blade.damage = damage;
+      blade.radius = (this.isEvolved ? 10 : 8) * player.stats.areaMultiplier;
+      if (this.isEvolved) blade.color = '#00f0ff';
       
       blade.update(dt, enemies);
 
@@ -798,14 +893,14 @@ class SpinningScythe extends Weapon {
          if (dist <= blade.radius + enemy.radius) {
            // Check if cooldown expired for this specific enemy
            if (!blade.hitCooldowns.has(enemy.id)) {
-             enemy.takeDamage(blade.damage);
-             blade.hitCooldowns.set(enemy.id, 20); // 20 frames hit immunity for this blade
+             enemy.takeDamage(blade.damage, true);
+             blade.hitCooldowns.set(enemy.id, this.isEvolved ? 12 : 20); // Faster hit tick rate for evolved
              gameAudio.playHit();
              
              // Level 5 extra: spawn spark particles
-             if (this.level >= 5) {
-               const sparkCount = this.level >= 10 ? 7 : 3;
-               player.spawnParticles(blade.x, blade.y, '#b026ff', 0.5, sparkCount);
+             if (this.level >= 5 || this.isEvolved) {
+               const sparkCount = this.isEvolved ? 5 : (this.level >= 10 ? 7 : 3);
+               player.spawnParticles(blade.x, blade.y, this.isEvolved ? '#00f0ff' : '#b026ff', 0.5, sparkCount);
              }
            }
          }
@@ -866,8 +961,8 @@ class BigSword extends Weapon {
     const balance = window.weaponBalance.BigSword;
     const config = balance.levels[this.level - 1];
     const count = config.count;
-    const length = this.getLength();
-    const width = this.getWidth();
+    const length = this.getLength(player);
+    const width = this.getWidth(player);
     const damage = this.getDamage(player);
     const handleOffset = 25;
 
@@ -904,7 +999,7 @@ class BigSword extends Weapon {
             const critMultiplier = this.level >= 10 ? 3.0 : 2.5;
             const finalDamage = damage * (isCrit ? critMultiplier : 1.0);
             
-            enemy.takeDamage(finalDamage);
+            enemy.takeDamage(finalDamage, true);
             
             if (player.damageNumbersRef) {
               player.damageNumbersRef.push(new DamageNumber(enemy.x, enemy.y, finalDamage, isCrit));
@@ -931,7 +1026,7 @@ class BigSword extends Weapon {
             }
 
             gameAudio.playHit();
-            const cooldownVal = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
+            const cooldownVal = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult * player.stats.cooldownMultiplier;
             this.hitCooldowns.set(hitKey, cooldownVal);
           }
         }
@@ -940,32 +1035,39 @@ class BigSword extends Weapon {
   }
 
   getSwordCount() {
+    if (this.isEvolved) return 8;
     return window.weaponBalance.BigSword.levels[this.level - 1].count;
   }
 
-  getLength() {
+  getLength(player) {
     const balance = window.weaponBalance.BigSword;
     const config = balance.levels[this.level - 1];
-    return balance.baseLength * (1 + balance.lengthGrowth * (this.level - 1)) * config.lengthMult;
+    let base = balance.baseLength * (1 + balance.lengthGrowth * (this.level - 1)) * config.lengthMult;
+    if (this.isEvolved) base *= 1.3;
+    return base * (player ? player.stats.areaMultiplier : 1);
   }
 
-  getWidth() {
+  getWidth(player) {
     const balance = window.weaponBalance.BigSword;
     const config = balance.levels[this.level - 1];
-    return balance.baseWidth * (1 + balance.widthGrowth * (this.level - 1)) * config.widthMult;
+    let base = balance.baseWidth * (1 + balance.widthGrowth * (this.level - 1)) * config.widthMult;
+    if (this.isEvolved) base *= 1.2;
+    return base * (player ? player.stats.areaMultiplier : 1);
   }
 
   getDamage(player) {
     const balance = window.weaponBalance.BigSword;
     const config = balance.levels[this.level - 1];
     const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
-    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    let damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    if (this.isEvolved) damage *= 1.4; // Evolved damage buff
+    return damage;
   }
 
   drawSwords(ctx, player) {
     const count = this.getSwordCount();
-    const length = this.getLength();
-    const width = this.getWidth();
+    const length = this.getLength(player);
+    const width = this.getWidth(player);
     const handleOffset = 25;
 
     for (let i = 0; i < count; i++) {
@@ -990,14 +1092,15 @@ class BigSword extends Weapon {
       ctx.lineTo(xStart, halfW * 0.4);
       ctx.closePath();
 
-      // Premium golden neon style rendering
-      const color = this.level >= 10 ? '#ffe600' : '#ffb700'; // ultimate is bright yellow, normal is gold/orange-yellow
-      const strokeColor = this.level >= 10 ? '#ffffff' : '#ffd700';
+      // Premium golden neon style rendering, red/pink for evolved
+      const color = this.isEvolved ? '#ff0055' : (this.level >= 10 ? '#ffe600' : '#ffb700');
+      const strokeColor = this.isEvolved ? '#ffffff' : (this.level >= 10 ? '#ffffff' : '#ffd700');
+      const fillStyle = this.isEvolved ? 'rgba(255, 0, 85, 0.25)' : `rgba(${this.level >= 10 ? '255, 230, 0' : '255, 183, 0'}, 0.25)`;
 
-      ctx.fillStyle = `rgba(${this.level >= 10 ? '255, 230, 0' : '255, 183, 0'}, 0.25)`;
+      ctx.fillStyle = fillStyle;
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2.5;
-      ctx.shadowBlur = this.level >= 10 ? 20 : 10;
+      ctx.shadowBlur = this.isEvolved ? 24 : (this.level >= 10 ? 20 : 10);
       ctx.shadowColor = color;
       
       ctx.fill();
@@ -1045,16 +1148,18 @@ class ThunderWave extends Weapon {
     this.activeWaves = [];
   }
 
-  getCooldown() {
+  getCooldown(player) {
     const balance = window.weaponBalance.ThunderWave;
     const config = balance.levels[this.level - 1];
-    return balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
+    const base = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
+    return base * (player ? player.stats.cooldownMultiplier : 1);
   }
 
-  getRange() {
+  getRange(player) {
     const balance = window.weaponBalance.ThunderWave;
     const config = balance.levels[this.level - 1];
-    return balance.baseRange * (1 + balance.rangeGrowth * (this.level - 1)) * config.rangeMult;
+    const base = balance.baseRange * (1 + balance.rangeGrowth * (this.level - 1)) * config.rangeMult;
+    return base * (player ? player.stats.areaMultiplier : 1);
   }
 
   getDamage(player) {
@@ -1070,13 +1175,13 @@ class ThunderWave extends Weapon {
 
   fire(player, enemies, projectiles) {
     const config = window.weaponBalance.ThunderWave.levels[this.level - 1];
-    const waveCount = config.waveCount;
+    const waveCount = this.isEvolved ? 3 : config.waveCount; // Evolved always releases 3 waves
     for (let w = 0; w < waveCount; w++) {
       this.activeWaves.push({
         delay: w * 250, // 250ms delay between consecutive waves
         age: 0,
         maxAge: config.maxAge,
-        maxRange: this.getRange(),
+        maxRange: this.getRange(player),
         damage: this.getDamage(player),
         knockback: this.getKnockback(),
         hitEnemies: []
@@ -1087,14 +1192,7 @@ class ThunderWave extends Weapon {
   }
 
   update(dt, player, enemies, projectiles) {
-    if (this.cooldownTimer > 0) {
-      this.cooldownTimer -= dt;
-    } else {
-      const fired = this.fire(player, enemies, projectiles);
-      if (fired) {
-        this.cooldownTimer = this.getCooldown();
-      }
-    }
+    super.update(dt, player, enemies, projectiles);
 
     this.activeWaves.forEach(wave => {
       if (wave.delay > 0) {
@@ -1116,11 +1214,53 @@ class ThunderWave extends Weapon {
           const isCrit = Math.random() < 0.10;
           const finalDmg = wave.damage * (isCrit ? 2.0 : 1.0);
           
-          enemy.takeDamage(finalDmg);
+          enemy.takeDamage(finalDmg, true);
           wave.hitEnemies.push(enemy.id);
 
           if (player.damageNumbersRef) {
             player.damageNumbersRef.push(new DamageNumber(enemy.x, enemy.y, finalDmg, isCrit));
+          }
+
+          // Overload Synergy: Fire + Thunder
+          if (enemy.burnTimer > 0) {
+            enemy.burnTimer = 0; // consume burn
+            
+            const overloadBase = enemy.maxHp * 0.10;
+            const overloadDmg = overloadBase * (isCrit ? 1.5 : 1.0);
+            enemy.takeDamage(overloadDmg);
+            
+            if (player.damageNumbersRef) {
+              player.damageNumbersRef.push(new DamageNumber(enemy.x, enemy.y, Math.round(overloadDmg), true, '#ff00ff', 16));
+            }
+            
+            // Splash damage and knockback to nearby enemies
+            enemies.forEach(other => {
+              if (!other.active || other.id === enemy.id) return;
+              const splashDist = getDistance(enemy.x, enemy.y, other.x, other.y);
+              if (splashDist <= 80) {
+                const splashDmg = overloadDmg * 0.5;
+                other.takeDamage(splashDmg);
+                if (player.damageNumbersRef) {
+                  player.damageNumbersRef.push(new DamageNumber(other.x, other.y, Math.round(splashDmg), false, '#ff00ff', 12));
+                }
+                
+                // Knockback
+                const okDx = other.x - enemy.x;
+                const okDy = other.y - enemy.y;
+                const okLen = Math.sqrt(okDx * okDx + okDy * okDy);
+                if (okLen > 0) {
+                  const force = 12 * other.getKnockbackMultiplier();
+                  other.x += (okDx / okLen) * force;
+                  other.y += (okDy / okLen) * force;
+                }
+              }
+            });
+            
+            // Visual particles (pink & white)
+            for (let pi = 0; pi < 12; pi++) {
+              player.spawnParticles(enemy.x, enemy.y, '#ff00ff', 1.5, 1);
+              player.spawnParticles(enemy.x, enemy.y, '#ffffff', 1.3, 1);
+            }
           }
 
           if (player.particlesRef) {
@@ -1162,24 +1302,27 @@ class ThunderWave extends Weapon {
       const alpha = Math.max(0, 1 - progress);
 
       ctx.save();
-      ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 15;
+      const waveColor = this.isEvolved ? `rgba(255, 230, 0, ${alpha})` : `rgba(0, 240, 255, ${alpha})`;
+      const glowColor = this.isEvolved ? '#fffb00' : '#00f0ff';
+      ctx.strokeStyle = waveColor;
+      ctx.shadowColor = glowColor;
+      ctx.shadowBlur = this.isEvolved ? 22 : 15;
 
       // Draw expanding electric concentric waves
       // 1. Draw smooth circle
       ctx.beginPath();
       ctx.arc(player.x, player.y, currentRadius, 0, Math.PI * 2);
-      ctx.lineWidth = 4 * (1 - progress) + 1;
+      ctx.lineWidth = (this.isEvolved ? 6 : 4) * (1 - progress) + 1;
       ctx.stroke();
 
       // 2. Draw a slightly jagged electric circle
       ctx.beginPath();
-      const segments = 24;
+      const segments = this.isEvolved ? 32 : 24;
       const angleStep = (Math.PI * 2) / segments;
       for (let i = 0; i <= segments; i++) {
         const angle = i * angleStep;
-        const jitter = (Math.random() - 0.5) * 8 * (1 - progress);
+        const jitterMagnitude = this.isEvolved ? 14 : 8;
+        const jitter = (Math.random() - 0.5) * jitterMagnitude * (1 - progress);
         const r = currentRadius + jitter;
         const x = player.x + Math.cos(angle) * r;
         const y = player.y + Math.sin(angle) * r;
@@ -1189,16 +1332,20 @@ class ThunderWave extends Weapon {
           ctx.lineTo(x, y);
         }
       }
-      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = this.isEvolved ? `rgba(255, 255, 255, ${alpha * 0.95})` : `rgba(255, 255, 255, ${alpha * 0.9})`;
+      ctx.lineWidth = this.isEvolved ? 2.5 : 1.5;
       ctx.stroke();
 
-      if (this.level >= 5) {
+      if (this.level >= 5 || this.isEvolved) {
         ctx.beginPath();
         ctx.arc(player.x, player.y, Math.max(0, currentRadius - 20), 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(176, 38, 255, ${alpha * 0.7})`;
-        ctx.shadowColor = '#b026ff';
-        ctx.lineWidth = 2;
+        
+        const innerColor = this.isEvolved ? `rgba(255, 94, 0, ${alpha * 0.8})` : `rgba(176, 38, 255, ${alpha * 0.7})`;
+        const innerGlow = this.isEvolved ? '#ff5e00' : '#b026ff';
+        
+        ctx.strokeStyle = innerColor;
+        ctx.shadowColor = innerGlow;
+        ctx.lineWidth = this.isEvolved ? 3 : 2;
         ctx.stroke();
       }
 
@@ -1241,62 +1388,73 @@ class FireRoad extends Weapon {
     return balance.baseLifetime * (1 + balance.lifetimeGrowth * (this.level - 1)) * config.lifetimeMult;
   }
 
-  getRadius() {
+  getRadius(player) {
     const balance = window.weaponBalance.FireRoad;
     const config = balance.levels[this.level - 1];
-    return balance.baseRadius * (1 + balance.radiusGrowth * (this.level - 1)) * config.radiusMult;
+    const base = balance.baseRadius * (1 + balance.radiusGrowth * (this.level - 1)) * config.radiusMult;
+    return base * (player ? player.stats.areaMultiplier : 1);
   }
 
   getDamage(player) {
     const balance = window.weaponBalance.FireRoad;
     const config = balance.levels[this.level - 1];
     const baseDamage = balance.baseDamage * player.stats.damageMultiplier;
-    return baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    let damage = baseDamage * (1 + balance.damageGrowth * (this.level - 1)) * config.damageMult;
+    if (this.isEvolved) damage *= 1.5; // Evolved damage buff
+    return damage;
   }
 
-  update(dt, player, enemies, projectiles) {
+  getCooldown(player) {
+    const balance = window.weaponBalance.FireRoad;
+    const config = balance.levels[this.level - 1];
+    return balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult * player.stats.cooldownMultiplier;
+  }
+
+  fire(player, enemies, projectiles) {
     const isMoving = this.lastPlayerX !== undefined && (Math.abs(this.lastPlayerX - player.x) > 0.1 || Math.abs(this.lastPlayerY - player.y) > 0.1);
     this.lastPlayerX = player.x;
     this.lastPlayerY = player.y;
 
-    if (this.cooldownTimer > 0) {
-      this.cooldownTimer -= dt;
-    }
-
-    // Drop flame segment when moving and cooldown is ready
-    if (isMoving && this.cooldownTimer <= 0) {
+    if (isMoving) {
       this.flames.push({
         x: player.x,
         y: player.y,
         life: this.getLifetime(),
         maxLife: this.getLifetime(),
-        radius: this.getRadius(),
+        radius: this.getRadius(player),
         damage: this.getDamage(player),
         hitImmunity: new Map() // enemyId -> immunity duration
       });
-      const balance = window.weaponBalance.FireRoad;
-      const config = balance.levels[this.level - 1];
-      const cooldownVal = balance.baseCooldown * (1 + balance.cooldownGrowth * (this.level - 1)) * config.cooldownMult;
-      this.cooldownTimer = cooldownVal;
+      return true;
     }
+    return false;
+  }
+
+  update(dt, player, enemies, projectiles) {
+    if (this.lastPlayerX === undefined) {
+      this.lastPlayerX = player.x;
+      this.lastPlayerY = player.y;
+    }
+
+    super.update(dt, player, enemies, projectiles);
 
     // Update flame timers & collision ticks
     this.flames.forEach(flame => {
       const oldLife = flame.life;
       flame.life -= dt;
 
-      // Level 10 Ultimate expiration explosion triggers once
-      if (this.level >= 10 && oldLife > 0 && flame.life <= 0) {
-        player.spawnParticles(flame.x, flame.y, '#ff007f', 1.2, 5);
-        player.spawnParticles(flame.x, flame.y, '#ff5e00', 1.0, 3);
+      // Level 10 Ultimate / Evolved expiration explosion triggers once
+      if ((this.level >= 10 || this.isEvolved) && oldLife > 0 && flame.life <= 0) {
+        player.spawnParticles(flame.x, flame.y, this.isEvolved ? '#00f0ff' : '#ff007f', 1.2, 5);
+        player.spawnParticles(flame.x, flame.y, this.isEvolved ? '#005eff' : '#ff5e00', 1.0, 3);
         // Deal damage to enemies around it on explosion
         enemies.forEach(enemy => {
           if (!enemy.active) return;
           const dist = getDistance(flame.x, flame.y, enemy.x, enemy.y);
           if (dist <= flame.radius * 1.5) {
-            enemy.takeDamage(flame.damage * 0.8);
+            enemy.takeDamage(flame.damage * (this.isEvolved ? 1.2 : 0.8));
             if (player.damageNumbersRef) {
-              player.damageNumbersRef.push(new DamageNumber(enemy.x, enemy.y, flame.damage * 0.8, false));
+              player.damageNumbersRef.push(new DamageNumber(enemy.x, enemy.y, flame.damage * (this.isEvolved ? 1.2 : 0.8), false));
             }
           }
         });
@@ -1310,6 +1468,14 @@ class FireRoad extends Weapon {
         }
       }
 
+      // Player self-healing if evolved and stepping on own flames
+      if (this.isEvolved && player.hp > 0 && player.hp < player.maxHp) {
+        const pDist = getDistance(flame.x, flame.y, player.x, player.y);
+        if (pDist <= flame.radius) {
+          player.hp = Math.min(player.maxHp, player.hp + dt * 0.003); // Heal approx 3 HP per second
+        }
+      }
+
       enemies.forEach(enemy => {
         if (!enemy.active) return;
         if (flame.hitImmunity.has(enemy.id)) return;
@@ -1319,19 +1485,20 @@ class FireRoad extends Weapon {
           let dmg = flame.damage;
           
           // Slow effect (Level 3+)
-          if (this.level >= 3) {
+          if (this.level >= 3 || this.isEvolved) {
             enemy.slowTimer = 35; // slow for 35 frames (approx 600ms)
-            if (this.level >= 10) {
-              enemy.slowRatio = 0.50; // 50% slow for ultimate fire
+            if (this.level >= 10 || this.isEvolved) {
+              enemy.slowRatio = this.isEvolved ? 0.60 : 0.50; // 60% slow for evolved fire
             }
           }
 
           // Double damage on slowed enemies (Level 5+)
-          if (this.level >= 5 && enemy.slowTimer > 0) {
+          if ((this.level >= 5 || this.isEvolved) && enemy.slowTimer > 0) {
             dmg *= 2.0;
           }
 
           enemy.takeDamage(dmg);
+          enemy.burnTimer = 180; // Overload burn effect (3 seconds)
           flame.hitImmunity.set(enemy.id, 300); // 300ms hit ticks
 
           if (player.damageNumbersRef) {
@@ -1339,7 +1506,7 @@ class FireRoad extends Weapon {
           }
 
           if (player.particlesRef && Math.random() < 0.35) {
-            player.spawnParticles(enemy.x, enemy.y, '#ff007f', 0.6, 2);
+            player.spawnParticles(enemy.x, enemy.y, this.isEvolved ? '#00f0ff' : '#ff007f', 0.6, 2);
           }
 
           gameAudio.playHit();
@@ -1383,7 +1550,7 @@ class FireRoad extends Weapon {
       const baseRadius = f.radius * flicker;
       const drawRadius = baseRadius * (0.8 + (1 - progress) * 0.2); // expand slightly
 
-      // 1. Draw outer magenta neon flame shape
+      // 1. Draw outer flame shape (Cyan for evolved)
       ctx.beginPath();
       const segments = 16;
       const angleStep = (Math.PI * 2) / segments;
@@ -1401,17 +1568,21 @@ class FireRoad extends Weapon {
       }
       ctx.closePath();
 
-      ctx.strokeStyle = `rgba(255, 0, 127, ${alpha * 0.7})`; // Magenta neon
-      ctx.shadowColor = '#ff007f';
-      ctx.shadowBlur = 12;
+      const color1 = this.isEvolved ? '0, 240, 255' : '255, 0, 127';
+      const color2 = this.isEvolved ? '0, 94, 255' : '255, 94, 0';
+      const color3 = this.isEvolved ? '255, 255, 255' : '255, 230, 0';
+
+      ctx.strokeStyle = `rgba(${color1}, ${alpha * 0.7})`;
+      ctx.shadowColor = this.isEvolved ? '#00f0ff' : '#ff007f';
+      ctx.shadowBlur = this.isEvolved ? 18 : 12;
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
       // Semi-transparent hot center
-      ctx.fillStyle = `rgba(255, 0, 127, ${alpha * 0.05})`;
+      ctx.fillStyle = `rgba(${color1}, ${alpha * 0.05})`;
       ctx.fill();
 
-      // 2. Draw inner hot orange core flame shape
+      // 2. Draw inner hot core flame shape
       ctx.beginPath();
       const coreRadius = drawRadius * 0.6;
       for (let i = 0; i <= segments; i++) {
@@ -1426,12 +1597,12 @@ class FireRoad extends Weapon {
       }
       ctx.closePath();
 
-      ctx.fillStyle = `rgba(255, 94, 0, ${alpha * 0.5})`; // Orange hot center
-      ctx.shadowColor = '#ff5e00';
+      ctx.fillStyle = `rgba(${color2}, ${alpha * 0.5})`;
+      ctx.shadowColor = this.isEvolved ? '#005eff' : '#ff5e00';
       ctx.shadowBlur = 6;
       ctx.fill();
 
-      // 3. Draw innermost yellow/white heat core
+      // 3. Draw innermost heat core
       ctx.beginPath();
       const heatRadius = drawRadius * 0.3;
       for (let i = 0; i <= segments; i++) {
@@ -1445,8 +1616,8 @@ class FireRoad extends Weapon {
       }
       ctx.closePath();
 
-      ctx.fillStyle = `rgba(255, 230, 0, ${alpha * 0.65})`; // Hot yellow center
-      ctx.shadowColor = '#fffb00';
+      ctx.fillStyle = `rgba(${color3}, ${alpha * 0.65})`;
+      ctx.shadowColor = this.isEvolved ? '#ffffff' : '#fffb00';
       ctx.shadowBlur = 4;
       ctx.fill();
 
@@ -1463,8 +1634,8 @@ class FireRoad extends Weapon {
 
         ctx.beginPath();
         ctx.arc(sparkX, sparkY, sparkR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 230, 0, ${sparkAlpha * 0.85})`;
-        ctx.shadowColor = '#fffb00';
+        ctx.fillStyle = `rgba(${this.isEvolved ? '0, 240, 255' : '255, 230, 0'}, ${sparkAlpha * 0.85})`;
+        ctx.shadowColor = this.isEvolved ? '#00f0ff' : '#fffb00';
         ctx.shadowBlur = 6;
         ctx.fill();
       }
@@ -1488,20 +1659,7 @@ class PassiveItem {
   upgrade(player) {
     if (this.level < 5) {
       this.level++;
-      // Apply stat changes to player
-      if (this.statName === 'maxHp') {
-        const oldMax = player.maxHp;
-        player.maxHp = Math.round(100 * (1 + this.level * this.modifierPerLevel));
-        player.hp += (player.maxHp - oldMax); // heal by change amount
-      } else if (this.statName === 'speed') {
-        player.speed = 2.5 * (1 + this.level * this.modifierPerLevel);
-      } else if (this.statName === 'magnet') {
-        player.stats.magnet = 60 * (1 + this.level * this.modifierPerLevel);
-      } else if (this.statName === 'damage') {
-        player.stats.damageMultiplier = 1 + this.level * this.modifierPerLevel;
-      } else if (this.statName === 'regen') {
-        player.stats.hpRegen = this.level * this.modifierPerLevel;
-      }
+      player.recalculatePassiveStats();
       return true;
     }
     return false;
@@ -1518,6 +1676,8 @@ class PassiveItem {
     if (this.statName === 'magnet') return `アイテムの吸引範囲（マグネット）が ${valPercent}% 拡大します。`;
     if (this.statName === 'damage') return `与えるすべてのダメージが ${valPercent}% 増加します。`;
     if (this.statName === 'regen') return `1秒ごとにHPが ${lvl * this.modifierPerLevel} 回復します。`;
+    if (this.statName === 'cooldown') return `武器の攻撃間隔（クールダウン）が ${Math.abs(valPercent)}% 減少します。`;
+    if (this.statName === 'area') return `武器の攻撃範囲とサイズが ${valPercent}% 増加します。`;
     return "";
   }
 }
@@ -1545,8 +1705,17 @@ class Player {
       new PassiveItem("プマローラ", "🥓", "regen", 0.5, "自動HP回復"),
       new PassiveItem("ホウレンソウ", "🥬", "damage", 0.1, "全攻撃力増加"),
       new PassiveItem("ウィング", "🪶", "speed", 0.08, "移動速度上昇"),
-      new PassiveItem("アトラクターブ", "🧲", "magnet", 0.25, "回収範囲増加")
+      new PassiveItem("アトラクターブ", "🧲", "magnet", 0.25, "回収範囲増加"),
+      new PassiveItem("空白の書", "📖", "cooldown", -0.08, "攻撃のクールダウン減少"),
+      new PassiveItem("ロウソク", "🕯️", "area", 0.1, "攻撃範囲・サイズ増加")
     ];
+
+    // Relics and Shield
+    this.relics = [];
+    this.shield = 0;
+    this.stationaryFrames = 0;
+    this.lastX = x;
+    this.lastY = y;
 
     // Core stats modifiable by passives
     const self = this;
@@ -1555,15 +1724,38 @@ class Player {
       baseDamageMultiplier: 1.0,
       get damageMultiplier() {
         let mult = this.baseDamageMultiplier;
-        if (self.hp / self.maxHp < 0.20 && self.hp > 0) {
-          mult *= 1.5;
+        
+        // Check "Blood Pact" Synergy (maxHp + damage)
+        const hasHeart = self.passives.find(p => p.statName === 'maxHp').level > 0;
+        const hasSpinach = self.passives.find(p => p.statName === 'damage').level > 0;
+        const bloodPact = hasHeart && hasSpinach;
+        
+        const threshold = bloodPact ? 0.40 : 0.20;
+        const buffMult = bloodPact ? 2.0 : 1.5;
+
+        if (self.hp / self.maxHp < threshold && self.hp > 0) {
+          mult *= buffMult;
         }
+
+        // Relic: Iron Bulwark synergy (+25% damage when shield is active)
+        if (self.relics && self.relics.includes('IronBulwark') && self.shield > 0) {
+          mult *= 1.25;
+        }
+        
+        // Relic: Neon Anchor synergy (up to +100% damage when standing still)
+        if (self.relics && self.relics.includes('NeonAnchor') && self.stationaryFrames > 0) {
+          const anchorSeconds = Math.min(5, self.stationaryFrames / 60);
+          mult *= (1.0 + anchorSeconds * 0.20);
+        }
+
         return mult;
       },
       set damageMultiplier(val) {
         this.baseDamageMultiplier = val;
       },
-      hpRegen: 0.0
+      hpRegen: 0.0,
+      cooldownMultiplier: 1.0,
+      areaMultiplier: 1.0
     };
 
     this.kills = 0;
@@ -1592,6 +1784,33 @@ class Player {
 
   takeDamage(amount) {
     if (this.hp <= 0) return;
+    
+    // Relic: Iron Bulwark (generate shield on taking damage to prevent subsequent damage)
+    if (this.relics && this.relics.includes('IronBulwark')) {
+      if (this.shield <= 0) {
+        this.shield = this.maxHp * 0.15;
+      }
+    }
+
+    // Shield mitigation
+    if (this.shield > 0) {
+      if (this.shield >= amount) {
+        this.shield -= amount;
+        amount = 0;
+      } else {
+        amount -= this.shield;
+        this.shield = 0;
+      }
+    }
+
+    if (amount <= 0) {
+      gameAudio.playHit();
+      // Show blocked text
+      if (this.damageNumbersRef) {
+        this.damageNumbersRef.push(new DamageNumber(this.x, this.y - 20, "BLOCKED", false, '#00f0ff', 11));
+      }
+      return;
+    }
     
     this.hp -= amount;
     this.hitTimer = 10; // flash white for 10 frames
@@ -1667,6 +1886,8 @@ class Player {
     this.stats.magnet = 60;
     this.stats.damageMultiplier = 1.0;
     this.stats.hpRegen = 0.0;
+    this.stats.cooldownMultiplier = 1.0;
+    this.stats.areaMultiplier = 1.0;
 
     this.passives.forEach(p => {
       if (p.level > 0) {
@@ -1680,6 +1901,10 @@ class Player {
           this.stats.damageMultiplier = 1 + p.level * p.modifierPerLevel;
         } else if (p.statName === 'regen') {
           this.stats.hpRegen = p.level * p.modifierPerLevel;
+        } else if (p.statName === 'cooldown') {
+          this.stats.cooldownMultiplier = 1 + p.level * p.modifierPerLevel; // negative modifier, so 1 - 0.08 * level
+        } else if (p.statName === 'area') {
+          this.stats.areaMultiplier = 1 + p.level * p.modifierPerLevel;
         }
       }
     });
@@ -1689,17 +1914,63 @@ class Player {
     }
   }
 
-  update(dt) {
+  update(dt, enemies) {
     if (this.hitTimer > 0) this.hitTimer--;
+
+    // Update stationary timer for Neon Anchor
+    if (this.relics && this.relics.includes('NeonAnchor')) {
+      if (this.lastX !== undefined && Math.abs(this.x - this.lastX) < 0.05 && Math.abs(this.y - this.lastY) < 0.05) {
+        this.stationaryFrames++;
+      } else {
+        this.stationaryFrames = 0;
+      }
+      this.lastX = this.x;
+      this.lastY = this.y;
+    }
 
     // HP regeneration tick (every 1 second)
     if (this.stats.hpRegen > 0 && this.hp > 0 && this.hp < this.maxHp) {
       this.regenTimer += dt;
       if (this.regenTimer >= 1000) {
         this.regenTimer = 0;
+        const oldHp = this.hp;
         this.hp = Math.min(this.maxHp, this.hp + this.stats.hpRegen);
+        const actualHealed = this.hp - oldHp;
+        
+        // Relic: Iron Bulwark (generate shield on healing)
+        if (this.relics && this.relics.includes('IronBulwark') && actualHealed > 0) {
+          const maxShield = this.maxHp * 0.15;
+          this.shield = Math.min(maxShield, this.shield + maxShield);
+        }
+        
+        // Check "Melt Aura" Synergy (regen + area)
+        const hasRegen = this.passives.find(p => p.statName === 'regen').level > 0;
+        const hasArea = this.passives.find(p => p.statName === 'area').level > 0;
+        if (hasRegen && hasArea && enemies) {
+          this.triggerMeltAuraPulse(enemies);
+        }
       }
     }
+  }
+
+  triggerMeltAuraPulse(enemies) {
+    // Green pulse VFX
+    const pulseCount = 16;
+    for (let i = 0; i < pulseCount; i++) {
+      const p = new Particle(this.x, this.y, '#39ff14', 1.5);
+      if (this.particlesRef) this.particlesRef.push(p);
+    }
+    
+    // Apply Melt debuff to nearby enemies
+    const meltRadius = 150 * (this.stats.areaMultiplier || 1.0);
+    enemies.forEach(enemy => {
+      if (enemy.active) {
+        const dist = getDistance(this.x, this.y, enemy.x, enemy.y);
+        if (dist <= meltRadius) {
+          enemy.meltTimer = 600; // 10 seconds of defense down (+30% damage)
+        }
+      }
+    });
   }
 
   spawnParticles(x, y, color, speed, count) {
@@ -1841,17 +2112,23 @@ class Player {
 
 // ENEMY CLASS
 class Enemy {
-  constructor(x, y, type = 'spider', scaleMultiplier = 1.0) {
+  constructor(x, y, type = 'spider', scaleMultiplier = 1.0, isElite = false) {
     this.id = Math.random().toString(36).substring(2, 9);
     this.x = x;
     this.y = y;
     this.type = type;
+    this.isElite = isElite;
     this.slowTimer = 0;
     this.hitTimer = 0;
+    this.burnTimer = 0; // Overload synergy
+    this.meltTimer = 0; // Melt Aura synergy
     this.phantomTime = Math.random() * 100;
+    this.isKnockedBack = false;
+    this.knockbackTimer = 0;
+    this.lastHitDamage = 0;
     
     // 20% chance to spawn with custom image for minor enemies (non-bosses)
-    this.useImage = (type !== 'boss' && type !== 'boss2') && (Math.random() < 0.20);
+    this.useImage = (type !== 'boss' && type !== 'boss2') && (Math.random() < 0.20) && !isElite;
 
     // Configure properties based on enemy type
     switch (type) {
@@ -1953,15 +2230,49 @@ class Enemy {
         break;
     }
     
+    // Apply Elite Mutation buffs
+    if (this.isElite) {
+      this.name = "★" + this.name + " (ELITE)";
+      this.radius *= 1.4;
+      this.speed *= 1.25;
+      this.maxHp *= 3.5;
+      this.damage *= 1.5;
+      this.color = '#ffe600'; // Neon Gold/Yellow for Elites
+      this.expValue *= 5;
+    }
+    
     this.hp = this.maxHp;
     this.active = true;
   }
 
-  takeDamage(amount) {
+  takeDamage(amount, applyKnockback = false) {
     if (this.hp <= 0) return 0;
+
+    // Relic: Prismatic Lens synergy
+    if (window.gameEngine && window.gameEngine.player) {
+      const player = window.gameEngine.player;
+      if (player.relics && player.relics.includes('PrismaticLens') && (player.stats.areaMultiplier || 1.0) >= 1.30) {
+        const dist = getDistance(player.x, player.y, this.x, this.y);
+        const lensRadius = 150 * (player.stats.areaMultiplier || 1.0);
+        if (dist <= lensRadius) {
+          amount *= 1.15;
+        }
+      }
+    }
+    
+    // Melt Aura synergy: +30% damage taken
+    if (this.meltTimer > 0) {
+      amount *= 1.30;
+    }
     
     this.hp -= amount;
     this.hitTimer = 5; // flash white for 5 frames
+
+    if (applyKnockback) {
+      this.isKnockedBack = true;
+      this.knockbackTimer = 15;
+      this.lastHitDamage = amount;
+    }
     
     if (this.hp <= 0) {
       this.hp = 0;
@@ -1980,7 +2291,40 @@ class Enemy {
 
   update(player, enemies, width = 900, height = 600) {
     if (this.hitTimer > 0) this.hitTimer--;
-    if (this.slowTimer > 0) this.slowTimer--;
+    
+    if (this.slowTimer > 0) {
+      this.slowTimer--;
+    } else {
+      this.slowRatio = null;
+    }
+
+    if (this.knockbackTimer > 0) {
+      this.knockbackTimer--;
+      if (this.knockbackTimer <= 0) {
+        this.isKnockedBack = false;
+      }
+    }
+    
+    if (this.burnTimer > 0) {
+      this.burnTimer--;
+      // Deal small tick damage every 15 frames
+      if (this.burnTimer % 15 === 0) {
+        this.takeDamage(2); // 2 points of fire damage
+        if (player.damageNumbersRef) {
+          player.damageNumbersRef.push(new DamageNumber(this.x, this.y, 2, false, '#ff007f', 10));
+        }
+      }
+      if (Math.random() < 0.15 && player.particlesRef) {
+        player.spawnParticles(this.x, this.y, '#ff007f', 0.4, 1); // Red/pink fire sparks
+      }
+    }
+
+    if (this.meltTimer > 0) {
+      this.meltTimer--;
+      if (Math.random() < 0.12 && player.particlesRef) {
+        player.spawnParticles(this.x, this.y, '#39ff14', 0.3, 1); // Green acid sparks
+      }
+    }
 
     // Update animations timer
     if (this.animationTimer === undefined) this.animationTimer = Math.random() * 100;
@@ -2026,7 +2370,8 @@ class Enemy {
               bulletDamage,
               4,
               '#ff00ff',
-              1
+              1,
+              true
             ));
           }
         }
@@ -2106,7 +2451,7 @@ class Enemy {
     let sepCount = 0;
     
     enemies.forEach(other => {
-      if (other.id === this.id) return;
+      if (other.id === this.id || !other.active) return;
       const d = getDistance(this.x, this.y, other.x, other.y);
       const minDist = this.radius + other.radius + 3; // buffer
       
@@ -2115,6 +2460,29 @@ class Enemy {
         sepX += (this.x - other.x) / d;
         sepY += (this.y - other.y) / d;
         sepCount++;
+
+        // Relic: Tactical Coil synergy (Billiard effect)
+        if (this.isKnockedBack && this.knockbackTimer > 0 && player.relics && player.relics.includes('TacticalCoil')) {
+          const billiardDmg = Math.round(this.lastHitDamage * 0.8);
+          if (billiardDmg > 0) {
+            other.takeDamage(billiardDmg);
+            if (player.damageNumbersRef) {
+              player.damageNumbersRef.push(new DamageNumber(other.x, other.y, billiardDmg, false, '#00ffcc', 11));
+            }
+            player.spawnParticles(other.x, other.y, '#00ffcc', 0.8, 3);
+            
+            // Billiard transfer
+            other.isKnockedBack = true;
+            other.knockbackTimer = 10;
+            other.lastHitDamage = billiardDmg;
+            
+            const pushForce = 8 * other.getKnockbackMultiplier();
+            other.x += ((other.x - this.x) / d) * pushForce;
+            other.y += ((other.y - this.y) / d) * pushForce;
+          }
+          this.isKnockedBack = false;
+          this.knockbackTimer = 0;
+        }
       }
     });
 

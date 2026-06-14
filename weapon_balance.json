@@ -112,19 +112,19 @@
         "slowRatio": 0.65
       },
       {
-        "cooldownMult": 0.66,
+        "cooldownMult": 0.99,
         "radiusMult": 1,
         "damageMult": 1,
         "slowRatio": 0.65
       },
       {
-        "cooldownMult": 0.73,
+        "cooldownMult": 1,
         "radiusMult": 1,
         "damageMult": 1,
         "slowRatio": 0.65
       },
       {
-        "cooldownMult": 0.82,
+        "cooldownMult": 1.01,
         "radiusMult": 1,
         "damageMult": 1,
         "slowRatio": 0.55
@@ -302,8 +302,8 @@
     ]
   },
   "ThunderWave": {
-    "baseDamage": 5,
-    "damageGrowth": 3.22,
+    "baseDamage": 15,
+    "damageGrowth": 0.2,
     "baseCooldown": 2400,
     "cooldownGrowth": -0.095,
     "baseRange": 650,
@@ -319,63 +319,63 @@
       {
         "cooldownMult": 0.99,
         "rangeMult": 1,
-        "damageMult": 0.52,
+        "damageMult": 1.1,
         "waveCount": 1,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.98,
         "rangeMult": 1,
-        "damageMult": 0.55,
+        "damageMult": 1.2,
         "waveCount": 1,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.96,
         "rangeMult": 1,
-        "damageMult": 0.6,
+        "damageMult": 1.3,
         "waveCount": 1,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.94,
         "rangeMult": 1,
-        "damageMult": 0.66,
+        "damageMult": 1.4,
         "waveCount": 1,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.92,
         "rangeMult": 1,
-        "damageMult": 0.72,
+        "damageMult": 1.5,
         "waveCount": 1,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.9,
         "rangeMult": 1,
-        "damageMult": 0.79,
+        "damageMult": 1.6,
         "waveCount": 1,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.81,
         "rangeMult": 1,
-        "damageMult": 0.86,
+        "damageMult": 1.7,
         "waveCount": 2,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.74,
         "rangeMult": 1,
-        "damageMult": 0.95,
+        "damageMult": 1.8,
         "waveCount": 2,
         "maxAge": 75
       },
       {
         "cooldownMult": 0.66,
         "rangeMult": 1,
-        "damageMult": 1,
+        "damageMult": 2,
         "waveCount": 3,
         "maxAge": 75
       }

@@ -1,5 +1,50 @@
 // Core Game Engine for Neon Survivor
 
+const RELIC_POOL = [
+  {
+    id: 'IronBulwark',
+    name: '鉄の防壁 (Iron Bulwark)',
+    emoji: '🛡️',
+    description: '被弾時、またはHP自動回復時に最大HPの15%分の「青シールド」を獲得。シールドがある間、プレイヤーの与えるダメージが25%上昇する。',
+    synergy: '🥓 プマローラ / ❤️ ホロウ・ハート と相性抜群'
+  },
+  {
+    id: 'VolatileInk',
+    name: '揮発性のインク (Volatile Ink)',
+    emoji: '🧪',
+    description: '燃焼または酸状態の敵が死亡した時、その敵が爆発して最大HPの15%のダメージを周囲に与え、デバフを周囲の敵に伝染させる。',
+    synergy: '🔥 ファイアーロード / 🥓+🕯️ メルト・オーラ と相性抜群'
+  },
+  {
+    id: 'PrismaticLens',
+    name: 'プリズム・レンズ (Prismatic Lens)',
+    emoji: '🔍',
+    description: '攻撃範囲拡大の合計が30%以上の時、プレイヤーの周囲の範囲内にいる敵の被ダメージが常時15%増加する。',
+    synergy: '🕯️ ロウソク / 🧄 ガーリックオーラ と相性抜群'
+  },
+  {
+    id: 'RuinedCodex',
+    name: '破滅の写本 (Ruined Codex)',
+    emoji: '📖',
+    description: 'クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に12%の確率で、その攻撃が2回連続で発動する。',
+    synergy: '📖 空白の書 / 🔮 マナ・ボルト と相性抜群'
+  },
+  {
+    id: 'NeonAnchor',
+    name: 'ネオン・アンカー (Neon Anchor)',
+    emoji: '⚓',
+    description: 'プレイヤーが立ち止まっている間、1秒ごとに全武器のダメージが+20%（最大+100%）累積する。動くとリセットされる。',
+    synergy: '🧄 ガーリックオーラ / 🔥 ファイアーロード と相性抜群'
+  },
+  {
+    id: 'TacticalCoil',
+    name: 'タクティカル・コイル (Tactical Coil)',
+    emoji: '🌀',
+    description: '敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも80%のダメージを与える（ビリヤード連鎖）。',
+    synergy: '⚡ サンダーウェーブ / 🗡️ ビッグソード と相性抜群'
+  }
+];
+
 class NeonGameEngine {
   constructor() {
     this.canvas = document.getElementById('game-canvas');
@@ -35,6 +80,7 @@ class NeonGameEngine {
     this.projectiles = [];
     this.gems = [];
     this.jewels = [];
+    this.relicChests = [];
     this.particles = [];
     this.damageNumbers = [];
 
@@ -66,6 +112,11 @@ class NeonGameEngine {
     // Countdown Timers for Auto-Close
     this.levelUpTimer = null;
     this.rouletteTimer = null;
+
+    // Rerolls and Banishes
+    this.rerollsRemaining = 1;
+    this.banishesRemaining = 1;
+    this.banishedItems = new Set();
     
     // Bind DOM events
     this.setupDOM();
@@ -107,6 +158,12 @@ class NeonGameEngine {
     this.rouletteScreen = document.getElementById('roulette-screen');
     this.rouletteClaimBtn = document.getElementById('roulette-claim-btn');
     this.rouletteClaimBtn.addEventListener('click', () => this.resumeRoulette());
+
+    // Setup Level Up buttons
+    this.rerollBtn = document.getElementById('reroll-btn');
+    this.banishBtn = document.getElementById('banish-btn');
+    this.rerollBtn.addEventListener('click', () => this.triggerReroll());
+    this.banishBtn.addEventListener('click', () => this.toggleBanishMode());
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -323,6 +380,16 @@ class NeonGameEngine {
       }
     });
 
+    // Spawn elite
+    this.devSpawnElite = document.getElementById('dev-spawn-elite-btn');
+    if (this.devSpawnElite) {
+      this.devSpawnElite.addEventListener('click', () => {
+        if (this.state === 'PLAYING') {
+          this.spawnEliteEnemy();
+        }
+      });
+    }
+
     // Balance Controls
     this.devChestDrop = document.getElementById('dev-chest-drop');
     this.devChestDropVal = document.getElementById('dev-chest-drop-val');
@@ -430,28 +497,52 @@ class NeonGameEngine {
     bindPassive('dev-pass-damage', 'dev-pass-damage-val', 'damage');
     bindPassive('dev-pass-speed', 'dev-pass-speed-val', 'speed');
     bindPassive('dev-pass-magnet', 'dev-pass-magnet-val', 'magnet');
+    bindPassive('dev-pass-cooldown', 'dev-pass-cooldown-val', 'cooldown');
+    bindPassive('dev-pass-area', 'dev-pass-area-val', 'area');
+
+    // Bind evolution checkboxes
+    const bindEvo = (checkboxId, weaponClassName) => {
+      const evoCheck = document.getElementById(checkboxId);
+      if (evoCheck) {
+        evoCheck.addEventListener('change', () => {
+          this.setWeaponEvolution(weaponClassName, evoCheck.checked);
+        });
+      }
+    };
+    bindEvo('dev-wpn-magic-evo', 'MagicWand');
+    bindEvo('dev-wpn-garlic-evo', 'GarlicAura');
+    bindEvo('dev-wpn-scythe-evo', 'SpinningScythe');
+    bindEvo('dev-wpn-sword-evo', 'BigSword');
+    bindEvo('dev-wpn-thunder-evo', 'ThunderWave');
+    bindEvo('dev-wpn-fire-evo', 'FireRoad');
   }
 
   syncDevPanel() {
     if (!this.player) return;
 
-    const syncWpn = (weaponClassName, sliderId, badgeId) => {
+    const syncWpn = (weaponClassName, sliderId, badgeId, evoCheckboxId) => {
       const wpn = this.player.weapons.find(w => w.constructor.name === weaponClassName);
       const lvl = wpn ? wpn.level : 0;
+      const isEvolved = wpn ? wpn.isEvolved : false;
       const slider = document.getElementById(sliderId);
       const badge = document.getElementById(badgeId);
+      const evoCheck = document.getElementById(evoCheckboxId);
       if (slider && badge) {
         slider.value = lvl;
         badge.innerText = `Lv${lvl}`;
       }
+      if (evoCheck) {
+        evoCheck.checked = isEvolved;
+        evoCheck.disabled = lvl < 10;
+      }
     };
 
-    syncWpn('MagicWand', 'dev-wpn-magic', 'dev-wpn-magic-val');
-    syncWpn('GarlicAura', 'dev-wpn-garlic', 'dev-wpn-garlic-val');
-    syncWpn('SpinningScythe', 'dev-wpn-scythe', 'dev-wpn-scythe-val');
-    syncWpn('BigSword', 'dev-wpn-sword', 'dev-wpn-sword-val');
-    syncWpn('ThunderWave', 'dev-wpn-thunder', 'dev-wpn-thunder-val');
-    syncWpn('FireRoad', 'dev-wpn-fire', 'dev-wpn-fire-val');
+    syncWpn('MagicWand', 'dev-wpn-magic', 'dev-wpn-magic-val', 'dev-wpn-magic-evo');
+    syncWpn('GarlicAura', 'dev-wpn-garlic', 'dev-wpn-garlic-val', 'dev-wpn-garlic-evo');
+    syncWpn('SpinningScythe', 'dev-wpn-scythe', 'dev-wpn-scythe-val', 'dev-wpn-scythe-evo');
+    syncWpn('BigSword', 'dev-wpn-sword', 'dev-wpn-sword-val', 'dev-wpn-sword-evo');
+    syncWpn('ThunderWave', 'dev-wpn-thunder', 'dev-wpn-thunder-val', 'dev-wpn-thunder-evo');
+    syncWpn('FireRoad', 'dev-wpn-fire', 'dev-wpn-fire-val', 'dev-wpn-fire-evo');
 
     const syncPass = (statName, sliderId, badgeId) => {
       const pass = this.player.passives.find(p => p.statName === statName);
@@ -469,6 +560,8 @@ class NeonGameEngine {
     syncPass('damage', 'dev-pass-damage', 'dev-pass-damage-val');
     syncPass('speed', 'dev-pass-speed', 'dev-pass-speed-val');
     syncPass('magnet', 'dev-pass-magnet', 'dev-pass-magnet-val');
+    syncPass('cooldown', 'dev-pass-cooldown', 'dev-pass-cooldown-val');
+    syncPass('area', 'dev-pass-area', 'dev-pass-area-val');
 
     if (this.devAutoRun) {
       this.devAutoRun.checked = this.autoRun;
@@ -482,6 +575,58 @@ class NeonGameEngine {
       this.devExpGrowth.value = this.expGrowthRate;
       this.devExpGrowthVal.innerText = `${this.expGrowthRate.toFixed(2)}x`;
     }
+  }
+
+  setWeaponEvolution(weaponClassName, evolveState) {
+    if (!this.player) return;
+    const w = this.player.weapons.find(wpn => wpn.constructor.name === weaponClassName);
+    if (!w) return;
+
+    if (evolveState) {
+      if (!w.isEvolved) {
+        w.isEvolved = true;
+        w.level = 10;
+        
+        const EVOLUTION_PAIRS = {
+          MagicWand: { name: 'ネオン・ストリーム', emoji: '⚡' },
+          GarlicAura: { name: 'コズミック・ネビュラ', emoji: '🌌' },
+          SpinningScythe: { name: 'ヘリカル・ウィンド', emoji: '🌪️' },
+          BigSword: { name: 'ジャッジメント・デイ', emoji: '⚔️' },
+          ThunderWave: { name: 'ライトニング・テンペスト', emoji: '🌩️' },
+          FireRoad: { name: 'フェニックス・アッシュ', emoji: '🐦' }
+        };
+        const pair = EVOLUTION_PAIRS[weaponClassName];
+        if (pair) {
+          w.name = pair.name;
+          w.emoji = pair.emoji;
+        }
+        
+        this.triggerScreenShake(15, 6.0);
+        this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `+${w.name} EVOLVED+`, true, '#fffb00', 14));
+      }
+    } else {
+      if (w.isEvolved) {
+        w.isEvolved = false;
+        
+        const ORIGINAL_PAIRS = {
+          MagicWand: { name: 'マナ・ボルト', emoji: '🔮' },
+          GarlicAura: { name: 'ネオン・ハロー', emoji: '🧄' },
+          SpinningScythe: { name: 'サイバー・エッジ', emoji: '🪓' },
+          BigSword: { name: 'マキシマム・エッジ', emoji: '🗡️' },
+          ThunderWave: { name: 'サンダーウェーブ', emoji: '⚡' },
+          FireRoad: { name: 'ファイアーロード', emoji: '🔥' }
+        };
+        const orig = ORIGINAL_PAIRS[weaponClassName];
+        if (orig) {
+          w.name = orig.name;
+          w.emoji = orig.emoji;
+        }
+        this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `-${w.name} DE-EVOLVED-`, false, '#ff007f', 12));
+      }
+    }
+    
+    this.updateHUD(Math.floor(this.elapsedTime / 1000));
+    this.syncDevPanel();
   }
 
   triggerScreenShake(duration, intensity) {
@@ -504,6 +649,11 @@ class NeonGameEngine {
     }
 
     // Reset Game State variables
+    this.rerollsRemaining = 1;
+    this.banishesRemaining = 1;
+    if (this.banishedItems) this.banishedItems.clear();
+    else this.banishedItems = new Set();
+
     this.state = 'PLAYING';
     this.elapsedTime = 0;
     this.spawnTimer = 0;
@@ -576,6 +726,7 @@ class NeonGameEngine {
     this.projectiles = [];
     this.gems = [];
     this.jewels = [];
+    this.relicChests = [];
     this.particles = [];
     this.damageNumbers = [];
 
@@ -597,7 +748,7 @@ class NeonGameEngine {
   }
 
   loop(timestamp) {
-    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING') {
+    if (this.state === 'LEVEL_UP' || this.state === 'REVIVING' || this.state === 'RELIC_CHOICE') {
       // pause loop, wait for choice/confirmation
       return;
     }
@@ -726,11 +877,21 @@ class NeonGameEngine {
         dy -= 2500 / (d * d);
       }
 
-      // 3. Attract to closest Gem or Jewel (Proactive Collection)
+      // 3. Attract to closest Gem, Jewel or Relic Chest (Proactive Collection)
       let closestItem = null;
       let minItemDist = Infinity;
       
-      // Prioritize jewels
+      // Prioritize relic chests first
+      if (this.relicChests) {
+        for (const chest of this.relicChests) {
+          const d = Math.sqrt((chest.x - this.player.x) ** 2 + (chest.y - this.player.y) ** 2);
+          if (d < minItemDist) {
+            minItemDist = d;
+            closestItem = chest;
+          }
+        }
+      }
+      // Prioritize jewels next
       for (const jewel of this.jewels) {
         const d = Math.sqrt((jewel.x - this.player.x) ** 2 + (jewel.y - this.player.y) ** 2);
         if (d < minItemDist) {
@@ -756,8 +917,10 @@ class NeonGameEngine {
         if (minItemDist < 120) {
           attractionWeight = 7.0; // Strongly pull to pick up close items
         }
-        if (closestItem.constructor.name === 'Jewel') {
-          attractionWeight = 9.0; // Upgrade jewel is top priority
+        if (closestItem.constructor.name === 'RelicChest') {
+          attractionWeight = 11.0; // Relic chest is top priority
+        } else if (closestItem.constructor.name === 'Jewel') {
+          attractionWeight = 9.0; // Upgrade jewel is next priority
         }
         
         dx += (attractX / minItemDist) * attractionWeight;
@@ -770,19 +933,45 @@ class NeonGameEngine {
     }
 
     this.player.move(dx, dy, this.logicalWidth, this.logicalHeight);
-    this.player.update(dt);
+    this.player.update(dt, this.enemies);
 
     // Update Player Weapons
     this.player.weapons.forEach(weapon => {
       weapon.update(dt, this.player, this.enemies, this.projectiles);
     });
 
+    // Check Chrono Delay Synergy (wing + cooldown book)
+    const hasWing = this.player.passives.find(p => p.statName === 'speed')?.level > 0;
+    const hasBook = this.player.passives.find(p => p.statName === 'cooldown')?.level > 0;
+    const hasChronoDelay = hasWing && hasBook;
+
     // Update Projectiles
-    this.projectiles.forEach(proj => proj.update(dt));
+    this.projectiles.forEach(proj => {
+      if (proj.isEnemyProjectile && hasChronoDelay) {
+        const dist = getDistance(this.player.x, this.player.y, proj.x, proj.y);
+        if (dist <= 150) {
+          proj.vx = proj.baseVx * 0.75;
+          proj.vy = proj.baseVy * 0.75;
+        } else {
+          proj.vx = proj.baseVx;
+          proj.vy = proj.baseVy;
+        }
+      }
+      proj.update(dt);
+    });
     this.projectiles = this.projectiles.filter(proj => proj.active && proj.life > 0);
 
     // Update Enemies
-    this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.logicalWidth, this.logicalHeight));
+    this.enemies.forEach(enemy => {
+      if (hasChronoDelay) {
+        const dist = getDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+        if (dist <= 150) {
+          enemy.slowTimer = 2; // Keep slow active
+          enemy.slowRatio = (enemy.slowRatio !== undefined && enemy.slowRatio !== null) ? Math.min(enemy.slowRatio, 0.75) : 0.75;
+        }
+      }
+      enemy.update(this.player, this.enemies, this.logicalWidth, this.logicalHeight);
+    });
     
     // Fade screen flash
     if (this.flashOpacity > 0) {
@@ -837,6 +1026,26 @@ class NeonGameEngine {
         if (levelUp) {
           this.triggerLevelUp();
         }
+
+        // Singularity Synergy (Attractor magnet + Candle area)
+        const hasMagnet = this.player.passives.find(p => p.statName === 'magnet')?.level > 0;
+        const hasCandle = this.player.passives.find(p => p.statName === 'area')?.level > 0;
+        if (hasMagnet && hasCandle && Math.random() < 0.25) {
+          this.triggerScreenShake(5, 3.0);
+          
+          this.enemies.forEach(enemy => {
+            const eDist = getDistance(this.player.x, this.player.y, enemy.x, enemy.y);
+            if (eDist <= 150) {
+              enemy.slowTimer = 90; // 1.5s
+              enemy.slowRatio = 0.0; // Stun
+            }
+          });
+
+          for (let i = 0; i < 20; i++) {
+            this.particles.push(new Particle(this.player.x, this.player.y, '#00ddff', 1.5));
+          }
+        }
+
         return false;
       }
       return true;
@@ -852,6 +1061,19 @@ class NeonGameEngine {
       }
       return true;
     });
+
+    // Update Relic Chests
+    if (this.relicChests) {
+      this.relicChests.forEach(chest => chest.update(this.player));
+      this.relicChests = this.relicChests.filter(chest => {
+        const dist = getDistance(this.player.x, this.player.y, chest.x, chest.y);
+        if (dist <= this.player.radius + chest.radius) {
+          this.triggerRelicChoice();
+          return false;
+        }
+        return true;
+      });
+    }
 
     // Update Particles
     this.particles.forEach(p => p.update());
@@ -938,7 +1160,8 @@ class NeonGameEngine {
       }
     }
 
-    const enemy = new Enemy(x, y, type, scaleMultiplier);
+    const isElite = (type !== 'boss' && type !== 'boss2' && type !== 'mini-slime' && Math.random() < 0.025);
+    const enemy = new Enemy(x, y, type, scaleMultiplier, isElite);
     enemy.speed *= speedMult;
     enemy.damage *= damageMult;
     this.enemies.push(enemy);
@@ -973,6 +1196,26 @@ class NeonGameEngine {
     return boss2;
   }
 
+  spawnEliteEnemy() {
+    this.triggerScreenShake(10, 4.0);
+    const angle = Math.random() * Math.PI * 2;
+    const spawnDist = 250;
+    const x = this.player.x + Math.cos(angle) * spawnDist;
+    const y = this.player.y + Math.sin(angle) * spawnDist;
+    
+    // Choose a random standard enemy type
+    const types = ['spider', 'bat', 'skeleton', 'golem', 'phantom', 'slime'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    
+    const scaleMultiplier = this.enemyScaleMultiplier * this.enemyHpMultiplierOverride * (this.difficulty === 'HARD' ? 2.0 : 1.0);
+    const enemy = new Enemy(x, y, type, scaleMultiplier, true); // true for isElite
+    enemy.speed *= this.enemySpeedMultiplierOverride;
+    this.enemies.push(enemy);
+    
+    // Float text or alert
+    this.damageNumbers.push(new DamageNumber(enemy.x, enemy.y - 20, "WARNING: ELITE INCOMING!", true, '#ffe600', 14));
+  }
+
   enterHellMode() {
     this.hellMode = true;
     this.hellModeStartTime = this.elapsedTime;
@@ -1003,6 +1246,7 @@ class NeonGameEngine {
   resolveCollisions() {
     // 1. Projectiles vs Enemies
     this.projectiles.forEach(proj => {
+      if (proj.isEnemyProjectile) return;
       this.enemies.forEach(enemy => {
         if (!proj.active || !enemy.active) return;
         
@@ -1015,7 +1259,7 @@ class NeonGameEngine {
           const isCrit = Math.random() < 0.08; // 8% crit chance
           const damageAmount = proj.damage * (isCrit ? 2.0 : 1.0);
           
-          enemy.takeDamage(damageAmount);
+          enemy.takeDamage(damageAmount, true);
           this.damageNumbers.push(new DamageNumber(enemy.x, enemy.y, damageAmount, isCrit));
           
           // Spawn particle blowout (increased count!)
@@ -1050,12 +1294,52 @@ class NeonGameEngine {
       });
     });
 
+    // 1.5 Player vs Enemy Projectiles
+    this.projectiles.forEach(proj => {
+      if (proj.isEnemyProjectile && proj.active) {
+        const dist = getDistance(this.player.x, this.player.y, proj.x, proj.y);
+        if (dist <= proj.radius + this.player.radius) {
+          if (!this.godMode && this.playerIframeTimer <= 0) {
+            this.player.takeDamage(proj.damage);
+            this.playerIframeTimer = 350; // 350ms iframes
+            this.triggerScreenShake(10, 6.0);
+          }
+          proj.active = false;
+        }
+      }
+    });
+
     // Filter dead enemies & spawn experience gems
     const newSpawns = [];
     this.enemies = this.enemies.filter(enemy => {
       if (!enemy.active) {
         // Increment kill count
         this.player.kills++;
+
+        // Relic: Volatile Ink (explode and spread burn/melt on death)
+        if (this.player.relics && this.player.relics.includes('VolatileInk') && (enemy.burnTimer > 0 || enemy.meltTimer > 0)) {
+          const isBurn = enemy.burnTimer > 0;
+          const isMelt = enemy.meltTimer > 0;
+          const explosionDmg = enemy.maxHp * 0.15;
+          
+          this.enemies.forEach(other => {
+            if (!other.active || other.id === enemy.id) return;
+            const dist = getDistance(enemy.x, enemy.y, other.x, other.y);
+            if (dist <= 90) { // 90px explosion radius
+              other.takeDamage(explosionDmg);
+              this.damageNumbers.push(new DamageNumber(other.x, other.y, Math.round(explosionDmg), false, '#ffaa00', 12));
+              
+              if (isBurn) other.burnTimer = 180;
+              if (isMelt) other.meltTimer = 300;
+            }
+          });
+          
+          // Explosion particles
+          for (let pIdx = 0; pIdx < 16; pIdx++) {
+            this.player.spawnParticles(enemy.x, enemy.y, isBurn ? '#ff5500' : '#39ff14', 1.4, 1);
+            this.player.spawnParticles(enemy.x, enemy.y, '#ffffff', 1.2, 1);
+          }
+        }
         
         // Spawn particles (blowout spark count!)
         this.player.spawnParticles(enemy.x, enemy.y, enemy.color, 1.3, enemy.type === 'boss' ? 50 : 18);
@@ -1079,9 +1363,15 @@ class NeonGameEngine {
         // Spawn experience gem
         this.gems.push(new Gem(enemy.x, enemy.y, enemy.expValue));
 
-        // Configurable chance to drop a special upgrade jewel (chest)
-        if (Math.random() < this.chestDropChance) {
+        // Configurable chance to drop a special upgrade jewel (chest), or guaranteed for bosses
+        const isBoss = enemy.type === 'boss' || enemy.type === 'boss2';
+        if (isBoss || Math.random() < this.chestDropChance) {
           this.jewels.push(new Jewel(enemy.x, enemy.y));
+        }
+
+        // Spawn Relic Chest for bosses or elite enemies
+        if (isBoss || enemy.isElite) {
+          this.relicChests.push(new RelicChest(enemy.x, enemy.y));
         }
 
         // Check if boss defeated -> spawn boss2
@@ -1133,9 +1423,15 @@ class NeonGameEngine {
     }
 
     this.state = 'LEVEL_UP';
+    this.banishModeActive = false; // Reset banish mode on entry
     gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     gameAudio.playLevelUp();
     
+    this.renderUpgradeChoices(pool);
+    this.levelUpScreen.classList.remove('hidden');
+  }
+
+  renderUpgradeChoices(pool) {
     // Choose 3 random upgrade options
     const upgrades = this.generateUpgrades(pool);
     
@@ -1145,9 +1441,16 @@ class NeonGameEngine {
     upgrades.forEach(opt => {
       const card = document.createElement('div');
       card.className = `upgrade-card ${opt.cardClass}`;
+      if (this.banishModeActive) {
+        card.classList.add('banish-mode-active');
+      }
       
+      const isEvo = opt.type === 'weapon_evolution';
+      const iconClass = this.getItemIconClass(opt.instance, isEvo);
+      const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : opt.emoji;
+
       card.innerHTML = `
-        <div class="card-emoji">${opt.emoji}</div>
+        <div class="card-emoji">${iconHtml}</div>
         <div class="card-title">${opt.name}</div>
         <div class="card-type-badge">${opt.badge}</div>
         <p class="card-desc">${opt.description}</p>
@@ -1155,18 +1458,22 @@ class NeonGameEngine {
       `;
       
       card.addEventListener('click', () => {
-        if (this.levelUpTimer) {
-          clearInterval(this.levelUpTimer);
-          this.levelUpTimer = null;
+        if (this.banishModeActive) {
+          this.applyBanish(opt);
+        } else {
+          if (this.levelUpTimer) {
+            clearInterval(this.levelUpTimer);
+            this.levelUpTimer = null;
+          }
+          this.applyUpgrade(opt);
+          this.resumeGame();
         }
-        this.applyUpgrade(opt);
-        this.resumeGame();
       });
       
       container.appendChild(card);
     });
 
-    this.levelUpScreen.classList.remove('hidden');
+    this.updateLevelUpButtons();
 
     // Start 3-second auto-select countdown
     let timeLeft = 3;
@@ -1186,12 +1493,116 @@ class NeonGameEngine {
         this.levelUpTimer = null;
         
         // Auto-select the middle option
+        if (this.banishModeActive) {
+          this.banishModeActive = false;
+        }
         const middleIndex = Math.floor(upgrades.length / 2);
         const selectedOpt = upgrades[middleIndex];
         this.applyUpgrade(selectedOpt);
         this.resumeGame();
       }
     }, 1000);
+  }
+
+  updateLevelUpButtons() {
+    const rerollCountVal = document.getElementById('reroll-count-val');
+    const banishCountVal = document.getElementById('banish-count-val');
+    
+    if (rerollCountVal) rerollCountVal.innerText = this.rerollsRemaining;
+    if (banishCountVal) banishCountVal.innerText = this.banishesRemaining;
+
+    if (this.rerollBtn) {
+      this.rerollBtn.disabled = this.rerollsRemaining <= 0;
+      if (this.rerollsRemaining <= 0) {
+        this.rerollBtn.style.opacity = '0.5';
+        this.rerollBtn.style.cursor = 'not-allowed';
+      } else {
+        this.rerollBtn.style.opacity = '1';
+        this.rerollBtn.style.cursor = 'pointer';
+      }
+    }
+
+    if (this.banishBtn) {
+      this.banishBtn.disabled = this.banishesRemaining <= 0;
+      if (this.banishesRemaining <= 0) {
+        this.banishBtn.style.opacity = '0.5';
+        this.banishBtn.style.cursor = 'not-allowed';
+        this.banishBtn.innerText = `バニッシュ除外 (0)`;
+      } else {
+        this.banishBtn.style.opacity = '1';
+        this.banishBtn.style.cursor = 'pointer';
+        if (this.banishModeActive) {
+          this.banishBtn.innerText = 'キャンセル';
+          this.banishBtn.style.borderColor = '#ffffff';
+          this.banishBtn.style.color = '#ffffff';
+        } else {
+          this.banishBtn.innerText = `バニッシュ除外 (${this.banishesRemaining})`;
+          this.banishBtn.style.borderColor = 'var(--neon-pink)';
+          this.banishBtn.style.color = 'var(--neon-pink)';
+        }
+      }
+    }
+  }
+
+  triggerReroll() {
+    if (this.rerollsRemaining <= 0) return;
+    this.rerollsRemaining--;
+    
+    const pool = this.getUpgradePool();
+    if (pool.length === 0) {
+      if (this.levelUpTimer) {
+        clearInterval(this.levelUpTimer);
+        this.levelUpTimer = null;
+      }
+      this.triggerMaxExpBlast();
+      this.resumeGame();
+      return;
+    }
+    
+    this.banishModeActive = false; // Reset banish mode on reroll
+    this.renderUpgradeChoices(pool);
+  }
+
+  toggleBanishMode() {
+    if (this.banishesRemaining <= 0) return;
+    this.banishModeActive = !this.banishModeActive;
+    
+    const cards = document.querySelectorAll('.upgrade-card');
+    cards.forEach(card => {
+      if (this.banishModeActive) {
+        card.classList.add('banish-mode-active');
+      } else {
+        card.classList.remove('banish-mode-active');
+      }
+    });
+    
+    this.updateLevelUpButtons();
+  }
+
+  applyBanish(opt) {
+    if (opt.type === 'weapon_new' || opt.type === 'weapon_upgrade') {
+      this.banishedItems.add(opt.instance.constructor.name);
+    } else if (opt.type === 'passive') {
+      this.banishedItems.add(opt.instance.statName);
+    }
+    
+    this.banishesRemaining--;
+    this.banishModeActive = false;
+    
+    gameAudio.playHit();
+    
+    const pool = this.getUpgradePool();
+    if (pool.length === 0) {
+      if (this.levelUpTimer) {
+        clearInterval(this.levelUpTimer);
+        this.levelUpTimer = null;
+      }
+      this.triggerMaxExpBlast();
+      this.resumeGame();
+      return;
+    }
+    
+    this.renderUpgradeChoices(pool);
   }
 
   triggerMaxExpBlast() {
@@ -1258,8 +1669,47 @@ class NeonGameEngine {
   getUpgradePool() {
     const pool = [];
 
+    const EVOLUTION_PAIRS = {
+      MagicWand: { passive: 'cooldown', evolvedName: 'ネオン・ストリーム', evolvedEmoji: '⚡', desc: '【進化】超高速貫通レーザービームを掃射する' },
+      GarlicAura: { passive: 'area', evolvedName: 'コズミック・ネビュラ', evolvedEmoji: '🌌', desc: '【進化】超巨大な重力場オーラで敵を引き寄せる' },
+      SpinningScythe: { passive: 'speed', evolvedName: 'ヘリカル・ウィンド', evolvedEmoji: '🌪️', desc: '【進化】プレイヤーの周囲を8枚の防壁鎌が超高速旋回する' },
+      BigSword: { passive: 'maxHp', evolvedName: 'ジャッジメント・デイ', evolvedEmoji: '⚔️', desc: '【進化】周囲8方向にHP減少割合で威力が上がる大剣を突き刺す' },
+      ThunderWave: { passive: 'damage', evolvedName: 'ライトニング・テンペスト', evolvedEmoji: '🌩️', desc: '【進化】波が当たった敵から連鎖する稲妻を発生させる' },
+      FireRoad: { passive: 'regen', evolvedName: 'フェニックス・アッシュ', evolvedEmoji: '🐦', desc: '【進化】プレイヤーを回復し敵を焼く青い炎を残す' }
+    };
+
+    // Check weapon evolutions available
+    this.player.weapons.forEach(w => {
+      // Exclude if banished
+      if (this.banishedItems && this.banishedItems.has(w.constructor.name)) return;
+
+      if (w.level === 10 && !w.isEvolved) {
+        const pair = EVOLUTION_PAIRS[w.constructor.name];
+        if (pair) {
+          const passive = this.player.passives.find(p => p.statName === pair.passive);
+          if (passive && passive.level > 0) {
+            pool.push({
+              type: 'weapon_evolution',
+              instance: w,
+              name: pair.evolvedName,
+              emoji: pair.evolvedEmoji,
+              badge: '武器進化',
+              cardClass: 'new-weapon',
+              description: pair.desc,
+              levelText: 'EVO',
+              evolvedName: pair.evolvedName,
+              evolvedEmoji: pair.evolvedEmoji
+            });
+          }
+        }
+      }
+    });
+
     // Check weapon upgrades available
     this.player.weapons.forEach(w => {
+      // Exclude if banished
+      if (this.banishedItems && this.banishedItems.has(w.constructor.name)) return;
+
       if (w.level < 10) {
         pool.push({
           type: 'weapon_upgrade',
@@ -1274,37 +1724,50 @@ class NeonGameEngine {
       }
     });
 
-    // Check new weapons available to acquire
-    const allWeapons = [new MagicWand(), new GarlicAura(), new SpinningScythe(), new BigSword(), new ThunderWave(), new FireRoad()];
-    allWeapons.forEach(w => {
-      const alreadyOwned = this.player.weapons.some(owned => owned.constructor.name === w.constructor.name);
-      if (!alreadyOwned) {
-        pool.push({
-          type: 'weapon_new',
-          instance: w,
-          name: w.name,
-          emoji: w.emoji,
-          badge: '新規武器',
-          cardClass: 'new-weapon',
-          description: w.getDescription(false),
-          levelText: 'NEW'
-        });
-      }
-    });
+    // Check new weapons available to acquire (Only if weapon count < 4)
+    if (this.player.weapons.length < 4) {
+      const allWeapons = [new MagicWand(), new GarlicAura(), new SpinningScythe(), new BigSword(), new ThunderWave(), new FireRoad()];
+      allWeapons.forEach(w => {
+        // Exclude if banished
+        if (this.banishedItems && this.banishedItems.has(w.constructor.name)) return;
+
+        const alreadyOwned = this.player.weapons.some(owned => owned.constructor.name === w.constructor.name);
+        if (!alreadyOwned) {
+          pool.push({
+            type: 'weapon_new',
+            instance: w,
+            name: w.name,
+            emoji: w.emoji,
+            badge: '新規武器',
+            cardClass: 'new-weapon',
+            description: w.getDescription(false),
+            levelText: 'NEW'
+          });
+        }
+      });
+    }
 
     // Check passives available to upgrade
+    const ownedPassivesCount = this.player.passives.filter(p => p.level > 0).length;
+
     this.player.passives.forEach(p => {
+      // Exclude if banished
+      if (this.banishedItems && this.banishedItems.has(p.statName)) return;
+
       if (p.level < 5) {
-        pool.push({
-          type: 'passive',
-          instance: p,
-          name: p.name,
-          emoji: p.emoji,
-          badge: 'ステータス強化',
-          cardClass: 'stat-buff',
-          description: p.getDescription(true),
-          levelText: p.level === 0 ? 'NEW' : `LV ${p.level} → ${p.level + 1}`
-        });
+        // Can upgrade if already owned, or if not owned but we have room (< 4 slots)
+        if (p.level > 0 || ownedPassivesCount < 4) {
+          pool.push({
+            type: 'passive',
+            instance: p,
+            name: p.name,
+            emoji: p.emoji,
+            badge: 'ステータス強化',
+            cardClass: 'stat-buff',
+            description: p.getDescription(true),
+            levelText: p.level === 0 ? 'NEW' : `LV ${p.level} → ${p.level + 1}`
+          });
+        }
       }
     });
 
@@ -1337,6 +1800,28 @@ class NeonGameEngine {
       opt.instance.upgrade(this.player);
     } else if (opt.type === 'heal') {
       this.player.hp = this.player.maxHp;
+    } else if (opt.type === 'weapon_evolution') {
+      opt.instance.isEvolved = true;
+      opt.instance.level = 10;
+      opt.instance.name = opt.evolvedName;
+      opt.instance.emoji = opt.evolvedEmoji;
+      
+      // Special evolution effects
+      this.triggerScreenShake(30, 15.0);
+      this.flashOpacity = 1.0;
+      this.flashColorOverride = 'rgba(255, 230, 0, 0.8)'; // Golden flash
+      gameAudio.playCollect();
+      
+      // Spawn flashy golden particles
+      const particleColors = ['#fffb00', '#ffffff', '#00f0ff', '#b026ff'];
+      for (let i = 0; i < 60; i++) {
+        const speed = Math.random() * 5 + 2;
+        const p = new Particle(this.player.x, this.player.y, particleColors[i % particleColors.length], speed);
+        this.particles.push(p);
+      }
+      
+      // Floaty text
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `+${opt.name} EVOLVED+`, true, '#fffb00', 16));
     }
     this.syncDevPanel();
   }
@@ -1347,10 +1832,93 @@ class NeonGameEngine {
       this.levelUpTimer = null;
     }
     this.levelUpScreen.classList.add('hidden');
+    const relicScreen = document.getElementById('relic-choice-screen');
+    if (relicScreen) relicScreen.classList.add('hidden');
     this.state = 'PLAYING';
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
+  triggerRelicChoice() {
+    // If player already has 3 relics, award full shield charge and bonus HP instead
+    if (this.player.relics && this.player.relics.length >= 3) {
+      gameAudio.playUpgrade(); // Play a nice sound
+      
+      // Recharge shield completely (15% of max HP)
+      const maxShield = this.player.maxHp * 0.15;
+      this.player.shield = maxShield;
+      
+      // Heal player slightly
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * 0.20);
+      
+      // Spawn particles
+      for (let i = 0; i < 25; i++) {
+        this.player.spawnParticles(this.player.x, this.player.y, '#ffe600', 1.5, 1);
+      }
+      
+      // Flash the screen briefly
+      this.flashOpacity = 0.45;
+      this.flashColorOverride = '#00f0ff';
+      
+      // Create a floating text
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 20, "SHIELD FULL CHARGE", true, '#00f0ff', 16));
+      return;
+    }
+
+    this.state = 'RELIC_CHOICE';
+    gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
+    gameAudio.playLevelUp(); // reuse level up sound or nice reward sound
+
+    // Show Relic Screen Modal
+    const screen = document.getElementById('relic-choice-screen');
+    const container = document.getElementById('relic-options');
+    container.innerHTML = '';
+
+    // Generate 3 unique relics that player does NOT own
+    const availableRelics = RELIC_POOL.filter(relic => !this.player.relics.includes(relic.id));
+    
+    // Shuffle and pick up to 3
+    const shuffled = availableRelics.sort(() => 0.5 - Math.random());
+    const choices = shuffled.slice(0, Math.min(3, shuffled.length));
+
+    // If somehow no choices available (all acquired), which shouldn't happen due to limit of 3, show close button
+    if (choices.length === 0) {
+      this.resumeGame();
+      return;
+    }
+
+    choices.forEach(relic => {
+      const card = document.createElement('div');
+      card.className = 'relic-card';
+      card.innerHTML = `
+        <div class="relic-card-icon">${relic.emoji}</div>
+        <div class="relic-card-name">${relic.name}</div>
+        <p class="relic-card-desc">${relic.description}</p>
+        <div class="relic-card-synergy">${relic.synergy}</div>
+      `;
+
+      card.addEventListener('click', () => {
+        // Obtain relic
+        if (!this.player.relics) {
+          this.player.relics = [];
+        }
+        this.player.relics.push(relic.id);
+        
+        // Relic specific instant effect
+        if (relic.id === 'IronBulwark') {
+          // Grant shield instantly
+          this.player.shield = this.player.maxHp * 0.15;
+        }
+
+        // Resume game
+        this.resumeGame();
+      });
+
+      container.appendChild(card);
+    });
+
+    screen.classList.remove('hidden');
   }
 
   async triggerJewelLottery() {
@@ -1404,17 +1972,17 @@ class NeonGameEngine {
 
     // List of items to cycle through during the spin
     const spinItems = [
-      { emoji: '🪄', name: '魔法の杖' },
-      { emoji: '🧄', name: 'ニンニクオーラ' },
-      { emoji: '🪓', name: '回転鎌' },
-      { emoji: '🗡️', name: '大剣' },
-      { emoji: '⚡', name: 'サンダーウェーブ' },
-      { emoji: '🔥', name: 'ファイアロード' },
-      { emoji: '❤️', name: 'ホロウ・ハート' },
-      { emoji: '🥓', name: 'プマローラ' },
-      { emoji: '🥬', name: 'ホウレンソウ' },
-      { emoji: '🪶', name: 'ウィング' },
-      { emoji: '🧲', name: 'アトラクターブ' },
+      { className: 'icon-magicwand', name: '魔法の杖' },
+      { className: 'icon-garlicaura', name: 'ニンニクオーラ' },
+      { className: 'icon-spinningscythe', name: '回転鎌' },
+      { className: 'icon-bigsword', name: '大剣' },
+      { className: 'icon-thunderwave', name: 'サンダーウェーブ' },
+      { className: 'icon-fireroad', name: 'ファイアロード' },
+      { className: 'icon-maxhp', name: 'ホロウ・ハート' },
+      { className: 'icon-regen', name: 'プマローラ' },
+      { className: 'icon-damage', name: 'ホウレンソウ' },
+      { className: 'icon-speed', name: 'ウィング' },
+      { className: 'icon-magnet', name: 'アトラクターブ' },
       { emoji: '🧪', name: 'HP全回復' }
     ];
 
@@ -1430,7 +1998,11 @@ class NeonGameEngine {
       const steps = 18; // total cycles
       for (let s = 0; s < steps; s++) {
         const randItem = spinItems[Math.floor(Math.random() * spinItems.length)];
-        spinner.innerText = randItem.emoji;
+        if (randItem.className) {
+          spinner.innerHTML = `<span class="game-icon ${randItem.className}"></span>`;
+        } else {
+          spinner.innerHTML = randItem.emoji;
+        }
         itemName.innerText = randItem.name;
         
         if (gameAudio.playRouletteTick && s % 2 === 0) {
@@ -1444,7 +2016,13 @@ class NeonGameEngine {
       }
 
       // Final stop on target upgrade!
-      spinner.innerText = targetUpgrade.emoji;
+      const isEvo = targetUpgrade.type === 'weapon_evolution';
+      const iconClass = this.getItemIconClass(targetUpgrade.instance, isEvo);
+      if (iconClass) {
+        spinner.innerHTML = `<span class="game-icon ${iconClass}"></span>`;
+      } else {
+        spinner.innerHTML = targetUpgrade.emoji;
+      }
       itemName.innerText = targetUpgrade.name;
       
       gameAudio.playLevelUp();
@@ -1488,8 +2066,10 @@ class NeonGameEngine {
         levelText = `(HP回復)`;
       }
 
+      const iconHtml = iconClass ? `<span class="game-icon ${iconClass}" style="width: 32px; height: 26px; filter: none;"></span>` : targetUpgrade.emoji;
+
       li.innerHTML = `
-        <span style="font-size: 20px;">${targetUpgrade.emoji}</span>
+        <span style="font-size: 20px; display: flex; align-items: center; justify-content: center; min-width: 32px;">${iconHtml}</span>
         <span style="font-weight: bold; color: #ffffff;">${targetUpgrade.name}</span>
         <span style="color: var(--neon-yellow); font-size: 11px; font-family: var(--font-retro);">${levelText}</span>
       `;
@@ -1682,6 +2262,28 @@ class NeonGameEngine {
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
 
+  getItemIconClass(item, isEvolved = false) {
+    if (!item) return '';
+    
+    // Check if Weapon
+    if (item.constructor.name === 'MagicWand' || 
+        item.constructor.name === 'GarlicAura' || 
+        item.constructor.name === 'SpinningScythe' || 
+        item.constructor.name === 'BigSword' || 
+        item.constructor.name === 'ThunderWave' || 
+        item.constructor.name === 'FireRoad') {
+      const prefix = isEvolved || item.isEvolved ? 'icon-evo' : 'icon-';
+      return prefix + item.constructor.name.toLowerCase();
+    }
+    
+    // Check if PassiveItem
+    if (item.statName) {
+      return 'icon-' + item.statName.toLowerCase();
+    }
+    
+    return '';
+  }
+
   updateHUD(secs) {
     // Level value
     document.getElementById('hud-level-value').innerText = this.player.level;
@@ -1699,39 +2301,77 @@ class NeonGameEngine {
     // HP Value and bar
     const hpPercent = Math.max(0, (this.player.hp / this.player.maxHp) * 100);
     document.getElementById('hud-hp-bar-fill').style.width = `${hpPercent}%`;
-    document.getElementById('hud-hp-text').innerText = `${Math.round(this.player.hp)}/${this.player.maxHp}`;
+    
+    // Shield Value and bar (overlay on top of HP bar container)
+    const shieldBar = document.getElementById('hud-shield-bar-fill');
+    if (shieldBar) {
+      const shieldPercent = Math.min(100, Math.max(0, ((this.player.shield || 0) / this.player.maxHp) * 100));
+      shieldBar.style.width = `${shieldPercent}%`;
+      // If shield is active, show shield in HP text e.g., "100(+15)/100"
+      if ((this.player.shield || 0) > 0) {
+        document.getElementById('hud-hp-text').innerText = `${Math.round(this.player.hp)}(+${Math.round(this.player.shield)})/${this.player.maxHp}`;
+      } else {
+        document.getElementById('hud-hp-text').innerText = `${Math.round(this.player.hp)}/${this.player.maxHp}`;
+      }
+    } else {
+      document.getElementById('hud-hp-text').innerText = `${Math.round(this.player.hp)}/${this.player.maxHp}`;
+    }
 
     // Kills value
     document.getElementById('hud-kills').innerText = this.player.kills;
 
-    // Weapons list overlay
-    const weaponsContainer = document.getElementById('hud-weapons');
-    weaponsContainer.innerHTML = '';
+    // Draw weapons in slots (max 4)
+    const wSlotsContainer = document.getElementById('hud-weapon-slots');
+    wSlotsContainer.innerHTML = '';
     
-    // Draw weapons in bottom left list
-    this.player.weapons.forEach(w => {
-      const wEl = document.createElement('div');
-      wEl.className = 'hud-weapon-icon';
-      wEl.innerHTML = `
-        <span class="hud-weapon-emoji">${w.emoji}</span>
-        <span class="hud-weapon-level">L${w.level}</span>
-      `;
-      weaponsContainer.appendChild(wEl);
-    });
+    const activeWeapons = this.player.weapons;
+    for (let i = 0; i < 4; i++) {
+      if (i < activeWeapons.length) {
+        const w = activeWeapons[i];
+        const wEl = document.createElement('div');
+        wEl.className = 'hud-weapon-icon';
+        const iconClass = this.getItemIconClass(w);
+        const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : w.emoji;
+        wEl.innerHTML = `
+          <span class="hud-weapon-emoji">${iconHtml}</span>
+          <span class="hud-weapon-level">L${w.level}</span>
+        `;
+        wSlotsContainer.appendChild(wEl);
+      } else {
+        const emptyEl = document.createElement('div');
+        emptyEl.className = 'hud-slot-empty';
+        emptyEl.innerText = '?';
+        wSlotsContainer.appendChild(emptyEl);
+      }
+    }
 
-    // Draw passives in bottom left list (only active ones)
-    this.player.passives.forEach(p => {
-      if (p.level > 0) {
+    // Draw passives in slots (max 4)
+    const pSlotsContainer = document.getElementById('hud-passive-slots');
+    pSlotsContainer.innerHTML = '';
+    
+    const activePassives = this.player.passives.filter(p => p.level > 0);
+    for (let i = 0; i < 4; i++) {
+      if (i < activePassives.length) {
+        const p = activePassives[i];
         const pEl = document.createElement('div');
         pEl.className = 'hud-weapon-icon';
         pEl.style.borderColor = 'rgba(176, 38, 255, 0.4)';
+        const iconClass = this.getItemIconClass(p);
+        const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : p.emoji;
         pEl.innerHTML = `
-          <span class="hud-weapon-emoji">${p.emoji}</span>
+          <span class="hud-weapon-emoji">${iconHtml}</span>
           <span class="hud-weapon-level">L${p.level}</span>
         `;
-        weaponsContainer.appendChild(pEl);
+        pSlotsContainer.appendChild(pEl);
+      } else {
+        const emptyEl = document.createElement('div');
+        emptyEl.className = 'hud-slot-empty';
+        emptyEl.style.borderColor = 'rgba(176, 38, 255, 0.15)';
+        emptyEl.style.color = 'rgba(176, 38, 255, 0.08)';
+        emptyEl.innerText = '?';
+        pSlotsContainer.appendChild(emptyEl);
       }
-    });
+    }
 
     // Toggle HUD Hell Badge visibility
     const hellBadge = document.getElementById('hud-hell');
@@ -1740,6 +2380,33 @@ class NeonGameEngine {
         hellBadge.classList.remove('hidden');
       } else {
         hellBadge.classList.add('hidden');
+      }
+    }
+
+    // Draw relics in slots (max 3)
+    const rSlotsContainer = document.getElementById('hud-relic-slots');
+    if (rSlotsContainer) {
+      rSlotsContainer.innerHTML = '';
+      const activeRelics = this.player.relics || [];
+      for (let i = 0; i < 3; i++) {
+        if (i < activeRelics.length) {
+          const relicId = activeRelics[i];
+          const relicData = RELIC_POOL.find(r => r.id === relicId);
+          const rEl = document.createElement('div');
+          rEl.className = 'hud-relic-icon';
+          rEl.innerHTML = `
+            <span class="hud-relic-emoji">${relicData ? relicData.emoji : '❓'}</span>
+          `;
+          if (relicData) {
+            rEl.title = `${relicData.name}: ${relicData.description}`;
+          }
+          rSlotsContainer.appendChild(rEl);
+        } else {
+          const emptyEl = document.createElement('div');
+          emptyEl.className = 'hud-relic-slot-empty';
+          emptyEl.innerText = '?';
+          rSlotsContainer.appendChild(emptyEl);
+        }
       }
     }
   }
@@ -1808,6 +2475,11 @@ class NeonGameEngine {
     
     // Draw Special Jewels
     this.jewels.forEach(jewel => jewel.draw(this.ctx));
+
+    // Draw Relic Chests
+    if (this.relicChests) {
+      this.relicChests.forEach(chest => chest.draw(this.ctx));
+    }
 
     // 2. Draw Projectiles
     this.projectiles.forEach(proj => proj.draw(this.ctx));

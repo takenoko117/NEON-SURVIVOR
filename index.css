@@ -181,6 +181,7 @@ body {
   border: 1px solid rgba(255, 0, 127, 0.3);
   border-radius: 5px;
   overflow: hidden;
+  position: relative;
 }
 
 #hud-hp-bar-fill {
@@ -205,12 +206,42 @@ body {
   text-shadow: 0 0 5px rgba(255, 0, 127, 0.3);
 }
 
-.hud-weapons-list {
+.hud-slots-container {
   position: absolute;
   bottom: 20px;
   left: 20px;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hud-slot-header {
+  font-family: var(--font-retro);
+  font-size: 8px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px #000;
+  margin-bottom: 2px;
+}
+
+.hud-slots-row {
+  display: flex;
+  gap: 6px;
+}
+
+.hud-slot-empty {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(0, 240, 255, 0.08);
+  font-size: 11px;
+  font-family: var(--font-retro);
+  box-shadow: inset 0 0 6px rgba(0, 240, 255, 0.02);
 }
 
 .hud-weapon-icon {
@@ -229,6 +260,15 @@ body {
 
 .hud-weapon-emoji {
   font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hud-weapon-icon .game-icon {
+  width: 32px;
+  height: 26px;
+  filter: none;
 }
 
 .hud-weapon-level {
@@ -545,10 +585,73 @@ body {
   box-shadow: 0 0 25px rgba(176, 38, 255, 0.3);
 }
 
+/* Banish Mode Styling */
+.upgrade-card.banish-mode-active {
+  border-color: var(--neon-pink) !important;
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.15) !important;
+}
+.upgrade-card.banish-mode-active:hover {
+  box-shadow: 0 0 25px rgba(255, 0, 127, 0.6) !important;
+  border-color: #ff007f !important;
+  transform: translateY(-8px) scale(0.98);
+}
+.upgrade-card.banish-mode-active::after {
+  content: "BANISH!";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--neon-pink);
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--neon-pink);
+  text-shadow: 0 0 2px #000;
+}
+
 .card-emoji {
   font-size: 38px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 45px;
 }
+
+/* Game Sprite Icons */
+.game-icon {
+  display: inline-block;
+  width: 55px;
+  height: 45px;
+  background-image: url('img/Wepon_passive_icon.png');
+  background-size: 600% 400%; /* 6 columns, 4 rows */
+  background-repeat: no-repeat;
+  image-rendering: pixelated; /* pixel-art sharpness */
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.25));
+}
+
+.icon-magicwand { background-position: 0% 0%; }
+.icon-garlicaura { background-position: 20% 0%; }
+.icon-spinningscythe { background-position: 40% 0%; }
+.icon-bigsword { background-position: 100% 0%; }
+.icon-thunderwave { background-position: 0% 33.333%; }
+.icon-fireroad { background-position: 20% 33.333%; }
+
+.icon-maxhp { background-position: 0% 66.666%; }
+.icon-regen { background-position: 20% 66.666%; }
+.icon-damage { background-position: 40% 66.666%; }
+.icon-speed { background-position: 80% 66.666%; }
+.icon-magnet { background-position: 0% 100%; }
+.icon-cooldown { background-position: 40% 33.333%; }
+.icon-area { background-position: 60% 33.333%; }
+
+.icon-evomagicwand { background-position: 100% 66.666%; }
+.icon-evogarlicaura { background-position: 100% 100%; }
+.icon-evospinningscythe { background-position: 80% 0%; }
+.icon-evobigsword { background-position: 60% 0%; }
+.icon-evothunderwave { background-position: 60% 66.666%; }
+.icon-evofireroad { background-position: 20% 100%; }
 
 .card-title {
   font-size: 16px;
@@ -1033,4 +1136,257 @@ body.light-mode .hud-stats-overlay {
 
 body.light-mode #roulette-results-list li span[style*="color: #ffffff"] {
   color: #141724 !important;
+}
+
+/* Side Panels Layout */
+.side-panel {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 260px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  border-radius: 12px;
+  padding: 16px;
+  z-index: 10;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.left-panel {
+  left: 20px;
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.15);
+}
+
+.right-panel {
+  right: 20px;
+  border-color: rgba(255, 0, 127, 0.3);
+  box-shadow: 0 0 25px rgba(255, 0, 127, 0.15);
+}
+
+.panel-header {
+  font-family: var(--font-retro);
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 15px;
+  letter-spacing: 1.5px;
+  color: var(--text-main);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  text-shadow: 0 0 6px var(--neon-cyan);
+}
+
+.right-panel .panel-header {
+  text-shadow: 0 0 6px var(--neon-pink);
+  color: #fff;
+}
+
+.evolution-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.evo-pair {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.evo-pair .game-icon {
+  width: 38px;
+  height: 31px;
+  background-size: 600% 400%;
+}
+
+.evo-pair .plus {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.evo-pair .arrow {
+  font-size: 12px;
+  color: var(--neon-green);
+  text-shadow: 0 0 4px var(--neon-green);
+}
+
+.panel-footer {
+  font-size: 8px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 15px;
+  line-height: 1.3;
+}
+
+.synergy-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.section-title {
+  font-family: var(--font-retro);
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.synergy-item {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  margin-bottom: 6px;
+}
+
+.synergy-title {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--text-main);
+  margin-bottom: 3px;
+}
+
+.synergy-desc {
+  font-size: 8.5px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+/* Media Query to hide side panels on narrow screens */
+@media (max-width: 1700px) {
+  .side-panel {
+    display: none;
+  }
+}
+
+/* --- Shield Bar Style --- */
+#hud-shield-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.45) 0%, rgba(0, 150, 255, 0.65) 100%);
+  border-right: 2px solid #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.4);
+  transition: width 0.15s ease-out;
+  pointer-events: none;
+}
+
+/* --- Relic HUD slots --- */
+.hud-relic-icon {
+  width: 44px;
+  height: 44px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+}
+
+.hud-relic-emoji {
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+}
+
+.hud-relic-slot-empty {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 215, 0, 0.02);
+  border: 1px dashed rgba(255, 215, 0, 0.15);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: rgba(255, 215, 0, 0.08);
+  font-size: 11px;
+  font-family: var(--font-retro);
+  box-shadow: inset 0 0 6px rgba(255, 215, 0, 0.01);
+}
+
+/* --- Relic Selection Modal --- */
+#relic-choice-screen .menu-content {
+  width: 750px;
+  max-width: 95%;
+}
+
+.relic-card {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 2px solid rgba(255, 215, 0, 0.25);
+  border-radius: 12px;
+  padding: 24px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.05);
+}
+
+.relic-card:hover {
+  transform: translateY(-8px);
+  background: rgba(25, 20, 45, 0.85);
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+}
+
+.relic-card-icon {
+  font-size: 40px;
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+  animation: floatIcon 3s ease-in-out infinite alternate;
+}
+
+@keyframes floatIcon {
+  from { transform: translateY(0px); }
+  to { transform: translateY(-5px); }
+}
+
+.relic-card-name {
+  font-family: var(--font-retro);
+  font-size: 14px;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  text-align: center;
+}
+
+.relic-card-desc {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-light);
+  text-align: center;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.relic-card-synergy {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-align: center;
+  margin-top: auto;
+  width: calc(100% - 16px);
 }
