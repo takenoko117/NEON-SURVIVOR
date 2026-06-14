@@ -539,9 +539,11 @@ class Weapon {
       if (fired) {
         this.cooldownTimer = this.getCooldown(player);
 
-        // Relic: Ruined Codex synergy (12% chance to trigger double attack if cooldown is reduced by >= 30%)
+        // Relic: Ruined Codex synergy (12% chance to trigger double attack if cooldown is reduced by >= 30%, +6% per level)
         if (player.relics && player.relics.includes('RuinedCodex') && (player.stats.cooldownMultiplier || 1.0) <= 0.70) {
-          if (Math.random() < 0.12) {
+          const lvl = player.relicLevels ? (player.relicLevels['RuinedCodex'] || 1) : 1;
+          const chance = 0.12 + (lvl - 1) * 0.06;
+          if (Math.random() < chance) {
             setTimeout(() => {
               if (window.gameEngine && window.gameEngine.state === 'PLAYING' && player.hp > 0) {
                 this.fire(player, enemies, projectiles);
@@ -1712,6 +1714,7 @@ class Player {
 
     // Relics and Shield
     this.relics = [];
+    this.relicLevels = {};
     this.shield = 0;
     this.stationaryFrames = 0;
     this.lastX = x;
@@ -1737,15 +1740,20 @@ class Player {
           mult *= buffMult;
         }
 
-        // Relic: Iron Bulwark synergy (+25% damage when shield is active)
+        // Relic: Iron Bulwark synergy (+25% damage when shield is active, +10% per level)
         if (self.relics && self.relics.includes('IronBulwark') && self.shield > 0) {
-          mult *= 1.25;
+          const lvl = self.relicLevels ? (self.relicLevels['IronBulwark'] || 1) : 1;
+          mult *= (1.25 + (lvl - 1) * 0.10);
         }
         
-        // Relic: Neon Anchor synergy (up to +100% damage when standing still)
+        // Relic: Neon Anchor synergy (up to +100% damage when standing still, +25% max, +5% speed per level)
         if (self.relics && self.relics.includes('NeonAnchor') && self.stationaryFrames > 0) {
-          const anchorSeconds = Math.min(5, self.stationaryFrames / 60);
-          mult *= (1.0 + anchorSeconds * 0.20);
+          const lvl = self.relicLevels ? (self.relicLevels['NeonAnchor'] || 1) : 1;
+          const speed = 0.20 + (lvl - 1) * 0.05;
+          const maxBuff = 1.00 + (lvl - 1) * 0.25;
+          const anchorSeconds = self.stationaryFrames / 60;
+          const addedMult = Math.min(maxBuff, anchorSeconds * speed);
+          mult *= (1.0 + addedMult);
         }
 
         return mult;
@@ -1785,10 +1793,11 @@ class Player {
   takeDamage(amount) {
     if (this.hp <= 0) return;
     
-    // Relic: Iron Bulwark (generate shield on taking damage to prevent subsequent damage)
+    // Relic: Iron Bulwark (generate shield on taking damage to prevent subsequent damage, +5% cap per level)
     if (this.relics && this.relics.includes('IronBulwark')) {
       if (this.shield <= 0) {
-        this.shield = this.maxHp * 0.15;
+        const lvl = this.relicLevels ? (this.relicLevels['IronBulwark'] || 1) : 1;
+        this.shield = this.maxHp * (0.15 + (lvl - 1) * 0.05);
       }
     }
 
@@ -1937,9 +1946,10 @@ class Player {
         this.hp = Math.min(this.maxHp, this.hp + this.stats.hpRegen);
         const actualHealed = this.hp - oldHp;
         
-        // Relic: Iron Bulwark (generate shield on healing)
+        // Relic: Iron Bulwark (generate shield on healing, +5% cap per level)
         if (this.relics && this.relics.includes('IronBulwark') && actualHealed > 0) {
-          const maxShield = this.maxHp * 0.15;
+          const lvl = this.relicLevels ? (this.relicLevels['IronBulwark'] || 1) : 1;
+          const maxShield = this.maxHp * (0.15 + (lvl - 1) * 0.05);
           this.shield = Math.min(maxShield, this.shield + maxShield);
         }
         
@@ -2321,7 +2331,9 @@ class Enemy {
         const dist = getDistance(player.x, player.y, this.x, this.y);
         const lensRadius = 150 * (player.stats.areaMultiplier || 1.0);
         if (dist <= lensRadius) {
-          amount *= 1.15;
+          const lvl = player.relicLevels ? (player.relicLevels['PrismaticLens'] || 1) : 1;
+          const damageIncrease = 0.15 + (lvl - 1) * 0.10;
+          amount *= (1.0 + damageIncrease);
         }
       }
     }
@@ -2654,9 +2666,11 @@ class Enemy {
         sepY += (this.y - other.y) / d;
         sepCount++;
 
-        // Relic: Tactical Coil synergy (Billiard effect)
+        // Relic: Tactical Coil synergy (Billiard effect, damage transmission 80% + 10% per level, max 100%)
         if (this.isKnockedBack && this.knockbackTimer > 0 && player.relics && player.relics.includes('TacticalCoil')) {
-          const billiardDmg = Math.round(this.lastHitDamage * 0.8);
+          const lvl = player.relicLevels ? (player.relicLevels['TacticalCoil'] || 1) : 1;
+          const transmission = Math.min(1.0, 0.80 + (lvl - 1) * 0.10);
+          const billiardDmg = Math.round(this.lastHitDamage * transmission);
           if (billiardDmg > 0) {
             other.takeDamage(billiardDmg);
             if (player.damageNumbersRef) {

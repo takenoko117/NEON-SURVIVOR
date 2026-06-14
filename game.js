@@ -1363,12 +1363,14 @@ class NeonGameEngine {
         if (this.player.relics && this.player.relics.includes('VolatileInk') && (enemy.burnTimer > 0 || enemy.meltTimer > 0)) {
           const isBurn = enemy.burnTimer > 0;
           const isMelt = enemy.meltTimer > 0;
-          const explosionDmg = enemy.maxHp * 0.15;
+          const lvl = this.player.relicLevels ? (this.player.relicLevels['VolatileInk'] || 1) : 1;
+          const explosionDmg = enemy.maxHp * (0.15 + (lvl - 1) * 0.05);
+          const radius = 90 + (lvl - 1) * 20;
           
           this.enemies.forEach(other => {
             if (!other.active || other.id === enemy.id) return;
             const dist = getDistance(enemy.x, enemy.y, other.x, other.y);
-            if (dist <= 90) { // 90px explosion radius
+            if (dist <= radius) {
               other.takeDamage(explosionDmg);
               this.damageNumbers.push(new DamageNumber(other.x, other.y, Math.round(explosionDmg), false, '#ffaa00', 12));
               
@@ -1884,77 +1886,126 @@ class NeonGameEngine {
   }
 
   triggerRelicChoice() {
-    // If player already has 3 relics, award full shield charge and bonus HP instead
-    if (this.player.relics && this.player.relics.length >= 3) {
-      gameAudio.playUpgrade(); // Play a nice sound
-      
-      // Recharge shield completely (15% of max HP)
-      const maxShield = this.player.maxHp * 0.15;
-      this.player.shield = maxShield;
-      
-      // Heal player slightly
-      this.player.hp = Math.min(this.player.maxHp, this.player.hp + this.player.maxHp * 0.20);
-      
-      // Spawn particles
-      for (let i = 0; i < 25; i++) {
-        this.player.spawnParticles(this.player.x, this.player.y, '#ffe600', 1.5, 1);
-      }
-      
-      // Flash the screen briefly
-      this.flashOpacity = 0.45;
-      this.flashColorOverride = '#00f0ff';
-      
-      // Create a floating text
-      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 20, "SHIELD FULL CHARGE", true, '#00f0ff', 16));
-      return;
-    }
-
     this.state = 'RELIC_CHOICE';
     gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
-    gameAudio.playLevelUp(); // reuse level up sound or nice reward sound
+    gameAudio.playLevelUp(); // Play safe chime
 
     // Show Relic Screen Modal
     const screen = document.getElementById('relic-choice-screen');
     const container = document.getElementById('relic-options');
     container.innerHTML = '';
 
-    // Generate 3 unique relics that player does NOT own
-    const availableRelics = RELIC_POOL.filter(relic => !this.player.relics.includes(relic.id));
-    
-    // Shuffle and pick up to 3
-    const shuffled = availableRelics.sort(() => 0.5 - Math.random());
-    const choices = shuffled.slice(0, Math.min(3, shuffled.length));
+    // Check if player already has 3 relics
+    const hasThreeRelics = (this.player.relics && this.player.relics.length >= 3);
 
-    // If somehow no choices available (all acquired), which shouldn't happen due to limit of 3, show close button
+    let choices = [];
+    if (hasThreeRelics) {
+      // Prompt upgrade for currently owned relics
+      choices = RELIC_POOL.filter(relic => this.player.relics.includes(relic.id));
+    } else {
+      // Prompt discovery of new relics
+      const availableRelics = RELIC_POOL.filter(relic => !this.player.relics.includes(relic.id));
+      const shuffled = availableRelics.sort(() => 0.5 - Math.random());
+      choices = shuffled.slice(0, Math.min(3, shuffled.length));
+    }
+
     if (choices.length === 0) {
       this.resumeGame();
       return;
     }
 
+    // Update description text based on state
+    const descText = screen.querySelector('.level-up-desc');
+    if (descText) {
+      if (hasThreeRelics) {
+        descText.innerText = '装備済みの遺物のエネルギーが高まっている。1つを過給（レベルアップ）せよ。';
+      } else {
+        descText.innerText = 'エリートを打ち破り、未知の遺物を手に入れた。1つを選択せよ（最大3個）';
+      }
+    }
+
     choices.forEach(relic => {
       const card = document.createElement('div');
       card.className = 'relic-card';
+      
+      const currentLvl = this.player.relicLevels ? (this.player.relicLevels[relic.id] || 1) : 1;
+      const nextLvl = currentLvl + 1;
+      let levelBadgeHtml = '';
+      let upgradeDescHtml = '';
+      
+      if (hasThreeRelics) {
+        levelBadgeHtml = `<div class="card-level-indicator" style="position: absolute; bottom: 8px; right: 12px; font-family: var(--font-retro); font-size: 9px; color: var(--neon-cyan);">L${currentLvl} ➜ L${nextLvl}</div>`;
+        let upgradeText = '';
+        switch (relic.id) {
+          case 'IronBulwark':
+            upgradeText = `シールド上限: ${15 + (nextLvl - 1) * 5}% / ダメージ: +${25 + (nextLvl - 1) * 10}%`;
+            break;
+          case 'VolatileInk':
+            upgradeText = `爆発ダメ: ${15 + (nextLvl - 1) * 5}% / 半径: ${90 + (nextLvl - 1) * 20}px`;
+            break;
+          case 'PrismaticLens':
+            upgradeText = `敵被ダメージ: +${15 + (nextLvl - 1) * 10}%`;
+            break;
+          case 'RuinedCodex':
+            upgradeText = `2回連続発動確率: ${12 + (nextLvl - 1) * 6}%`;
+            break;
+          case 'NeonAnchor':
+            upgradeText = `蓄積: 秒間+${20 + (nextLvl - 1) * 5}% (最大+${100 + (nextLvl - 1) * 25}%)`;
+            break;
+          case 'TacticalCoil':
+            upgradeText = `衝突ダメージ伝達: ${Math.min(100, 80 + (nextLvl - 1) * 10)}%`;
+            break;
+        }
+        if (upgradeText) {
+          upgradeDescHtml = `<div class="relic-card-upgrade-info" style="font-size: 10px; color: var(--neon-yellow); margin-top: 6px; border-top: 1px dashed rgba(255,230,0,0.3); padding-top: 4px;">UPGRADE ➜ ${upgradeText}</div>`;
+        }
+      }
+
       card.innerHTML = `
         <div class="relic-card-icon">${relic.emoji}</div>
         <div class="relic-card-name">${relic.name}</div>
         <p class="relic-card-desc">${relic.description}</p>
         <div class="relic-card-synergy">${relic.synergy}</div>
+        ${upgradeDescHtml}
+        ${levelBadgeHtml}
       `;
 
       card.addEventListener('click', () => {
-        // Obtain relic
         if (!this.player.relics) {
           this.player.relics = [];
         }
-        this.player.relics.push(relic.id);
-        
-        // Relic specific instant effect
-        if (relic.id === 'IronBulwark') {
-          // Grant shield instantly
-          this.player.shield = this.player.maxHp * 0.15;
+        if (!this.player.relicLevels) {
+          this.player.relicLevels = {};
         }
 
-        // Resume game
+        if (hasThreeRelics) {
+          // Upgrade existing relic
+          this.player.relicLevels[relic.id] = (this.player.relicLevels[relic.id] || 1) + 1;
+          
+          // Instant upgrade effect trigger
+          if (relic.id === 'IronBulwark') {
+            const lvl = this.player.relicLevels['IronBulwark'];
+            const shieldCap = this.player.maxHp * (0.15 + (lvl - 1) * 0.05);
+            this.player.shield = shieldCap; // Refill up to new cap
+          }
+          
+          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${relic.emoji} RELIC UPGRADED!`, true, '#ffe600', 13));
+        } else {
+          // Obtain new relic
+          this.player.relics.push(relic.id);
+          this.player.relicLevels[relic.id] = 1;
+          
+          if (relic.id === 'IronBulwark') {
+            this.player.shield = this.player.maxHp * 0.15;
+          }
+          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${relic.emoji} RELIC ACQUIRED!`, true, '#ffe600', 13));
+        }
+
+        // Particle burst
+        for (let i = 0; i < 20; i++) {
+          this.player.spawnParticles(this.player.x, this.player.y, '#ffe600', 1.0, 1);
+        }
+
         this.resumeGame();
       });
 
@@ -2437,11 +2488,34 @@ class NeonGameEngine {
           const relicData = RELIC_POOL.find(r => r.id === relicId);
           const rEl = document.createElement('div');
           rEl.className = 'hud-relic-icon';
+          const lvl = this.player.relicLevels ? (this.player.relicLevels[relicId] || 1) : 1;
           rEl.innerHTML = `
             <span class="hud-relic-emoji">${relicData ? relicData.emoji : '❓'}</span>
+            <span class="hud-weapon-level" style="color: var(--neon-yellow);">L${lvl}</span>
           `;
           if (relicData) {
-            rEl.title = `${relicData.name}: ${relicData.description}`;
+            let dynamicDesc = relicData.description;
+            switch (relicId) {
+              case 'IronBulwark':
+                dynamicDesc = `被弾時、またはHP自動回復時に最大HPの${15 + (lvl - 1) * 5}%分の「青シールド」を獲得。シールドがある間、プレイヤーの与えるダメージが${25 + (lvl - 1) * 10}%上昇する。`;
+                break;
+              case 'VolatileInk':
+                dynamicDesc = `燃焼または酸状態の敵が死亡した時、その敵が爆発して最大HPの${15 + (lvl - 1) * 5}%のダメージを周囲（半径${90 + (lvl - 1) * 20}px）に与え、デバフを周囲の敵に伝染させる。`;
+                break;
+              case 'PrismaticLens':
+                dynamicDesc = `攻撃範囲拡大の合計が30%以上の時、プレイヤーの周囲の範囲内にいる敵の被ダメージが常時${15 + (lvl - 1) * 10}%増加する。`;
+                break;
+              case 'RuinedCodex':
+                dynamicDesc = `クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に${12 + (lvl - 1) * 6}%の確率で、その攻撃が2回連続で発動する。`;
+                break;
+              case 'NeonAnchor':
+                dynamicDesc = `プレイヤーが立ち止まっている間、1秒ごとに全武器のダメージが+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。動くとリセットされる。`;
+                break;
+              case 'TacticalCoil':
+                dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
+                break;
+            }
+            rEl.title = `${relicData.name} (Lv${lvl}): ${dynamicDesc}`;
           }
           rSlotsContainer.appendChild(rEl);
         } else {
