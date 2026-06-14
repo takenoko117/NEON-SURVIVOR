@@ -113,6 +113,7 @@ class NeonGameEngine {
     this.levelUpTimer = null;
     this.rouletteTimer = null;
     this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') !== 'false');
+    this.lastMagnetTriggerSecond = 0;
 
     // Rerolls and Banishes
     this.rerollsRemaining = 1;
@@ -662,6 +663,7 @@ class NeonGameEngine {
 
     this.state = 'PLAYING';
     this.elapsedTime = 0;
+    this.lastMagnetTriggerSecond = 0;
     this.spawnTimer = 0;
     this.enemyScaleMultiplier = 1.0;
     this.playerIframeTimer = 0;
@@ -785,6 +787,12 @@ class NeonGameEngine {
   update(dt) {
     this.elapsedTime += dt;
     const currentSecs = Math.floor(this.elapsedTime / 1000);
+
+    // Trigger screen-wide magnet attraction every 60 seconds (1 minute)
+    if (currentSecs > 0 && currentSecs >= this.lastMagnetTriggerSecond + 60) {
+      this.lastMagnetTriggerSecond = Math.floor(currentSecs / 60) * 60;
+      this.triggerScreenWideMagnet();
+    }
 
     // End condition
     if (currentSecs >= this.totalGameDuration && !this.bossSpawned) {
@@ -1960,6 +1968,34 @@ class NeonGameEngine {
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
+  triggerScreenWideMagnet() {
+    // 1. Attract all experience gems, jewels, and chests
+    if (this.gems) {
+      this.gems.forEach(gem => gem.isAttracted = true);
+    }
+    if (this.jewels) {
+      this.jewels.forEach(jewel => jewel.isAttracted = true);
+    }
+    if (this.relicChests) {
+      this.relicChests.forEach(chest => chest.isAttracted = true);
+    }
+
+    // 2. Play SE for magnet trigger
+    gameAudio.playCollect();
+
+    // 3. Screen-wide flash (cyan neon color glow)
+    this.flashOpacity = 0.6;
+    this.flashColorOverride = 'rgba(0, 240, 255, 0.4)'; // Neon Cyan flash
+
+    // 4. Spawn floaty text (ALL MAGNET!) and particles
+    if (this.player) {
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 40, "ALL MAGNET!", true, '#00f0ff', 15));
+      for (let i = 0; i < 30; i++) {
+        this.player.spawnParticles(this.player.x, this.player.y, '#00f0ff', 1.2, 2);
+      }
+    }
   }
 
   triggerRelicChoice() {
