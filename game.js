@@ -1098,11 +1098,11 @@ class NeonGameEngine {
   }
 
   getSpawnInterval(secs) {
-    if (secs < 60) return 600;    // 0.6s
-    if (secs < 120) return 400;   // 0.4s
-    if (secs < 180) return 250;   // 0.25s
-    if (secs < 240) return 180;   // 0.18s
-    return 90;                    // 0.09s
+    if (secs < 60) return 320;    // 0.32s
+    if (secs < 120) return 220;   // 0.22s
+    if (secs < 180) return 150;   // 0.15s
+    if (secs < 240) return 100;   // 0.10s
+    return 70;                    // 0.07s
   }
 
   spawnEnemy(secs) {
@@ -1236,11 +1236,11 @@ class NeonGameEngine {
   }
 
   getMaxEnemyCount(secs) {
-    if (secs < 60) return 120;
-    if (secs < 120) return 200;
-    if (secs < 180) return 320;
-    if (secs < 240) return 400;
-    return 500;
+    if (secs < 60) return 150;
+    if (secs < 120) return 250;
+    if (secs < 180) return 380;
+    if (secs < 240) return 480;
+    return 600;
   }
 
   resolveCollisions() {

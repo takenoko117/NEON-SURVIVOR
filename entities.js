@@ -2510,6 +2510,48 @@ class Enemy {
     }
     ctx.translate(this.x + offsetX, this.y + offsetY);
 
+    // Elite Aura / Waves (Drawn in background behind the enemy body)
+    if (this.isElite) {
+      ctx.save();
+      const time = Date.now() / 200;
+      
+      // 1. Spinning golden spikes/halo aura
+      ctx.beginPath();
+      const spikeCount = 12;
+      for (let i = 0; i < spikeCount * 2; i++) {
+        const angle = (i * Math.PI) / spikeCount + time * 0.12;
+        const pulse = 1.0 + Math.sin(time + i) * 0.1;
+        const r = i % 2 === 0 ? this.radius * 1.75 * pulse : this.radius * 1.25 * pulse;
+        const px = Math.cos(angle) * r;
+        const py = Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(255, 230, 0, 0.55)';
+      ctx.lineWidth = 2.0;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#ffe600';
+      ctx.stroke();
+      
+      // 2. Outward expanding shockwaves (ripples)
+      const waveCount = 2;
+      for (let w = 0; w < waveCount; w++) {
+        const progress = ((time * 0.35) + (w / waveCount)) % 1.0;
+        const waveRadius = this.radius * (1.15 + progress * 0.95);
+        const waveAlpha = (1 - progress) * 0.65;
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, waveRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 230, 0, ${waveAlpha})`;
+        ctx.lineWidth = 1.8;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#ffe600';
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     // Procedural Walking Animation: Squish, Stretch and Wobble
     if (this.animationTimer === undefined) this.animationTimer = Math.random() * 100;
     const wobble = Math.sin(this.animationTimer) * 0.15;
