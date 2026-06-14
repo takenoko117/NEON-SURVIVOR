@@ -112,6 +112,7 @@ class NeonGameEngine {
     // Countdown Timers for Auto-Close
     this.levelUpTimer = null;
     this.rouletteTimer = null;
+    this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') !== 'false');
 
     // Rerolls and Banishes
     this.rerollsRemaining = 1;
@@ -164,6 +165,11 @@ class NeonGameEngine {
     this.banishBtn = document.getElementById('banish-btn');
     this.rerollBtn.addEventListener('click', () => this.triggerReroll());
     this.banishBtn.addEventListener('click', () => this.toggleBanishMode());
+    this.autoSelectToggleBtn = document.getElementById('auto-select-toggle-btn');
+    if (this.autoSelectToggleBtn) {
+      this.autoSelectToggleBtn.addEventListener('click', () => this.toggleAutoSelect());
+    }
+    this.updateAutoSelectButtonUI();
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -1518,35 +1524,43 @@ class NeonGameEngine {
       container.appendChild(card);
     });
 
+    this.currentUpgrades = upgrades;
     this.updateLevelUpButtons();
 
-    // Start 3-second auto-select countdown
+    // Start 3-second auto-select countdown if enabled
     let timeLeft = 3;
     const descText = document.getElementById('level-up-desc-text');
     if (descText) {
-      descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
+      if (this.autoSelectEnabled) {
+        descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
+      } else {
+        descText.innerText = `アップグレードを選択してください`;
+      }
     }
 
     if (this.levelUpTimer) clearInterval(this.levelUpTimer);
-    this.levelUpTimer = setInterval(() => {
-      timeLeft--;
-      if (descText) {
-        descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
-      }
-      if (timeLeft <= 0) {
-        clearInterval(this.levelUpTimer);
-        this.levelUpTimer = null;
-        
-        // Auto-select the middle option
-        if (this.banishModeActive) {
-          this.banishModeActive = false;
+    
+    if (this.autoSelectEnabled) {
+      this.levelUpTimer = setInterval(() => {
+        timeLeft--;
+        if (descText) {
+          descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
         }
-        const middleIndex = Math.floor(upgrades.length / 2);
-        const selectedOpt = upgrades[middleIndex];
-        this.applyUpgrade(selectedOpt);
-        this.resumeGame();
-      }
-    }, 1000);
+        if (timeLeft <= 0) {
+          clearInterval(this.levelUpTimer);
+          this.levelUpTimer = null;
+          
+          // Auto-select the middle option
+          if (this.banishModeActive) {
+            this.banishModeActive = false;
+          }
+          const middleIndex = Math.floor(upgrades.length / 2);
+          const selectedOpt = upgrades[middleIndex];
+          this.applyUpgrade(selectedOpt);
+          this.resumeGame();
+        }
+      }, 1000);
+    }
   }
 
   updateLevelUpButtons() {
@@ -1606,6 +1620,68 @@ class NeonGameEngine {
     
     this.banishModeActive = false; // Reset banish mode on reroll
     this.renderUpgradeChoices(pool);
+  }
+
+  toggleAutoSelect() {
+    this.autoSelectEnabled = !this.autoSelectEnabled;
+    localStorage.setItem('neon_auto_select', this.autoSelectEnabled);
+    this.updateAutoSelectButtonUI();
+
+    if (this.state === 'LEVEL_UP') {
+      const descText = document.getElementById('level-up-desc-text');
+      if (this.autoSelectEnabled) {
+        let timeLeft = 3;
+        if (descText) {
+          descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
+        }
+        if (this.levelUpTimer) clearInterval(this.levelUpTimer);
+        this.levelUpTimer = setInterval(() => {
+          timeLeft--;
+          if (descText) {
+            descText.innerText = `アップグレードを選択してください (自動選択まで ${timeLeft}秒)`;
+          }
+          if (timeLeft <= 0) {
+            clearInterval(this.levelUpTimer);
+            this.levelUpTimer = null;
+            if (this.banishModeActive) this.banishModeActive = false;
+            
+            const upgrades = this.currentUpgrades || [];
+            if (upgrades.length > 0) {
+              const middleIndex = Math.floor(upgrades.length / 2);
+              const selectedOpt = upgrades[middleIndex];
+              this.applyUpgrade(selectedOpt);
+              this.resumeGame();
+            }
+          }
+        }, 1000);
+      } else {
+        if (this.levelUpTimer) {
+          clearInterval(this.levelUpTimer);
+          this.levelUpTimer = null;
+        }
+        if (descText) {
+          descText.innerText = `アップグレードを選択してください`;
+        }
+      }
+    }
+  }
+
+  updateAutoSelectButtonUI() {
+    const btn = document.getElementById('auto-select-toggle-btn');
+    const statusVal = document.getElementById('auto-select-status-val');
+    if (btn && statusVal) {
+      if (this.autoSelectEnabled) {
+        statusVal.innerText = 'ON';
+        btn.style.borderColor = 'var(--neon-yellow)';
+        btn.style.color = 'var(--neon-yellow)';
+        btn.style.boxShadow = '0 0 10px rgba(255, 230, 0, 0.3)';
+      } else {
+        statusVal.innerText = 'OFF';
+        btn.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        btn.style.color = 'rgba(255, 255, 255, 0.5)';
+        btn.style.boxShadow = 'none';
+      }
+    }
   }
 
   toggleBanishMode() {
@@ -1876,6 +1952,7 @@ class NeonGameEngine {
       clearInterval(this.levelUpTimer);
       this.levelUpTimer = null;
     }
+    this.currentUpgrades = null;
     this.levelUpScreen.classList.add('hidden');
     const relicScreen = document.getElementById('relic-choice-screen');
     if (relicScreen) relicScreen.classList.add('hidden');
