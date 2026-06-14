@@ -2164,8 +2164,13 @@ class NeonGameEngine {
     let pool = this.getUpgradePool();
     // Filter out unacquired weapons and passives for GOLDEN REWARD (only allow upgrades of owned ones)
     pool = pool.filter(opt => {
+      if (!opt) return false;
       if (opt.type === 'weapon_new') return false;
-      if (opt.type === 'passive' && opt.instance.level === 0) return false;
+      if (opt.type === 'passive') {
+        if (!opt.instance || opt.instance.level === 0 || opt.levelText === 'NEW') {
+          return false;
+        }
+      }
       return true;
     });
 
@@ -2189,21 +2194,25 @@ class NeonGameEngine {
       selectedUpgrades.push(tempPool.splice(idx, 1)[0]);
     }
 
-    // List of items to cycle through during the spin
-    const spinItems = [
-      { className: 'icon-magicwand', name: '魔法の杖' },
-      { className: 'icon-garlicaura', name: 'ニンニクオーラ' },
-      { className: 'icon-spinningscythe', name: '回転鎌' },
-      { className: 'icon-bigsword', name: '大剣' },
-      { className: 'icon-thunderwave', name: 'サンダーウェーブ' },
-      { className: 'icon-fireroad', name: 'ファイアロード' },
-      { className: 'icon-maxhp', name: 'ホロウ・ハート' },
-      { className: 'icon-regen', name: 'プマローラ' },
-      { className: 'icon-damage', name: 'ホウレンソウ' },
-      { className: 'icon-speed', name: 'ウィング' },
-      { className: 'icon-magnet', name: 'アトラクターブ' },
-      { emoji: '🧪', name: 'HP全回復' }
-    ];
+    // Build spin items dynamically based on owned weapons and passives
+    const spinItems = [];
+    
+    // Add owned weapons
+    this.player.weapons.forEach(w => {
+      const iconClass = this.getItemIconClass(w, w.isEvolved);
+      spinItems.push({ className: iconClass, name: w.name });
+    });
+    
+    // Add owned passives
+    this.player.passives.forEach(p => {
+      if (p.level > 0) {
+        const iconClass = this.getItemIconClass(p);
+        spinItems.push({ className: iconClass, name: p.name });
+      }
+    });
+    
+    // Always add HP recovery
+    spinItems.push({ emoji: '🧪', name: 'HP全回復' });
 
     // Play SE for jewel pickup
     gameAudio.playCollect();
