@@ -1136,27 +1136,54 @@ class NeonGameEngine {
       } else if (roll < 0.08) {
         type = 'boss';
       } else {
-        // Standard high-level swarm mix
+        // Standard high-level swarm mix (including new types in hell mode)
         const swarmRoll = Math.random();
-        type = swarmRoll < 0.3 ? 'bat' : (swarmRoll < 0.55 ? 'phantom' : (swarmRoll < 0.75 ? 'slime' : (swarmRoll < 0.9 ? 'skeleton' : 'golem')));
+        type = swarmRoll < 0.12 ? 'bat' : 
+               (swarmRoll < 0.23 ? 'phantom' : 
+               (swarmRoll < 0.33 ? 'slime' : 
+               (swarmRoll < 0.44 ? 'defender' : 
+               (swarmRoll < 0.55 ? 'spawner' : 
+               (swarmRoll < 0.66 ? 'mine' : 
+               (swarmRoll < 0.77 ? 'wyrm' : 
+               (swarmRoll < 0.88 ? 'golem' : 'skeleton')))))));
       }
     } else {
       // Wave spawning logic based on time elapsed
       if (secs >= 240) {
-        // 4-5 minutes (Ultimate Swarm)
-        type = roll < 0.3 ? 'bat' : (roll < 0.55 ? 'phantom' : (roll < 0.75 ? 'slime' : (roll < 0.9 ? 'skeleton' : 'golem')));
+        // 4-5 minutes (Ultimate Swarm - all types mixed)
+        type = roll < 0.12 ? 'bat' : 
+               (roll < 0.23 ? 'phantom' : 
+               (roll < 0.33 ? 'slime' : 
+               (roll < 0.44 ? 'defender' : 
+               (roll < 0.55 ? 'spawner' : 
+               (roll < 0.66 ? 'mine' : 
+               (roll < 0.77 ? 'wyrm' : 
+               (roll < 0.88 ? 'golem' : 'skeleton')))))));
       } else if (secs >= 180) {
-        // 3-4 minutes (All types mixed)
-        type = roll < 0.25 ? 'bat' : (roll < 0.45 ? 'phantom' : (roll < 0.65 ? 'slime' : (roll < 0.85 ? 'skeleton' : 'golem')));
+        // 3-4 minutes (Introduce Defender & Spawner)
+        type = roll < 0.15 ? 'bat' : 
+               (roll < 0.3 ? 'phantom' : 
+               (roll < 0.43 ? 'slime' : 
+               (roll < 0.55 ? 'defender' : 
+               (roll < 0.67 ? 'spawner' : 
+               (roll < 0.78 ? 'mine' : 
+               (roll < 0.89 ? 'wyrm' : 'golem'))))));
       } else if (secs >= 120) {
-        // 2-3 minutes (Introduce Golem & Slimes)
-        type = roll < 0.25 ? 'slime' : (roll < 0.5 ? 'phantom' : (roll < 0.75 ? 'skeleton' : (roll < 0.9 ? 'bat' : 'golem')));
+        // 2-3 minutes (Introduce Golem, Slimes, and Mine)
+        type = roll < 0.2 ? 'slime' : 
+               (roll < 0.4 ? 'phantom' : 
+               (roll < 0.6 ? 'skeleton' : 
+               (roll < 0.75 ? 'mine' : 
+               (roll < 0.9 ? 'golem' : 'drone'))));
       } else if (secs >= 60) {
-        // 1-2 minutes (Introduce Skeleton & Phantom)
-        type = roll < 0.35 ? 'skeleton' : (roll < 0.7 ? 'phantom' : (roll < 0.85 ? 'bat' : 'spider'));
+        // 1-2 minutes (Introduce Skeleton, Phantom, Drone, and Wyrm)
+        type = roll < 0.25 ? 'skeleton' : 
+               (roll < 0.5 ? 'phantom' : 
+               (roll < 0.7 ? 'drone' : 
+               (roll < 0.85 ? 'wyrm' : 'bat')));
       } else {
         // 0-1 minute (Spiders & Bats)
-        type = roll < 0.6 ? 'spider' : 'bat';
+        type = roll < 0.55 ? 'spider' : 'bat';
       }
     }
 
@@ -1255,6 +1282,22 @@ class NeonGameEngine {
 
         const dist = getDistance(proj.x, proj.y, enemy.x, enemy.y);
         if (dist <= proj.radius + enemy.radius) {
+          // Check if shield defender blocks the hit from the front
+          if (enemy.type === 'defender') {
+            const angleToProj = Math.atan2(proj.y - enemy.y, proj.x - enemy.x);
+            let angleDiff = angleToProj - enemy.shieldAngle;
+            while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+            while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+
+            if (Math.abs(angleDiff) <= Math.PI / 3) {
+              proj.active = false;
+              this.player.spawnParticles(proj.x, proj.y, '#00f0ff', 0.8, 5);
+              this.damageNumbers.push(new DamageNumber(enemy.x, enemy.y - 12, "GUARD!", false, '#00f0ff', 11));
+              gameAudio.playHit();
+              return;
+            }
+          }
+
           // Hit! Deal damage
           const isCrit = Math.random() < 0.08; // 8% crit chance
           const damageAmount = proj.damage * (isCrit ? 2.0 : 1.0);

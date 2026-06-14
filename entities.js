@@ -2228,6 +2228,72 @@ class Enemy {
         this.chargeDuration = 0;
         this.chargeDirection = { x: 0, y: 0 };
         break;
+      case 'wyrm':
+        this.name = "ネオン・ワーム";
+        this.radius = 10;
+        this.speed = 2.0;
+        this.maxHp = 45 * scaleMultiplier;
+        this.damage = 8;
+        this.color = '#ff9900'; // Neon Orange
+        this.expValue = 4;
+        this.sides = 5;
+        this.segments = [];
+        break;
+      case 'drone':
+        this.name = "サイバー・ドローン";
+        this.radius = 9;
+        this.speed = 1.3;
+        this.maxHp = 16 * scaleMultiplier;
+        this.damage = 6;
+        this.color = '#00f0ff'; // Neon Cyan
+        this.expValue = 3;
+        this.sides = 4;
+        this.shootCooldown = Math.random() * 90;
+        break;
+      case 'mine':
+        this.name = "プラズマ・マイン";
+        this.radius = 8;
+        this.speed = 2.4;
+        this.maxHp = 8 * scaleMultiplier;
+        this.damage = 10;
+        this.color = '#ff0033'; // Neon Bright Red
+        this.expValue = 2;
+        this.sides = 8;
+        this.selfDestructTimer = 0;
+        this.isSelfDestructing = false;
+        break;
+      case 'defender':
+        this.name = "シールド・ディフェンダー";
+        this.radius = 16;
+        this.speed = 0.55;
+        this.maxHp = 90 * scaleMultiplier;
+        this.damage = 15;
+        this.color = '#0066ff'; // Neon Blue
+        this.expValue = 8;
+        this.sides = 6;
+        this.shieldAngle = 0;
+        break;
+      case 'spawner':
+        this.name = "ネメシス・スポーナー";
+        this.radius = 22;
+        this.speed = 0.3;
+        this.maxHp = 180 * scaleMultiplier;
+        this.damage = 12;
+        this.color = '#aa00ff'; // Neon Purple
+        this.expValue = 15;
+        this.sides = 8;
+        this.spawnCooldown = 180;
+        break;
+      case 'bit':
+        this.name = "ナノ・ビット";
+        this.radius = 5;
+        this.speed = 1.8;
+        this.maxHp = 2 * scaleMultiplier;
+        this.damage = 4;
+        this.color = '#aa00ff'; // Neon Purple
+        this.expValue = 0;
+        this.sides = 3;
+        break;
     }
     
     // Apply Elite Mutation buffs
@@ -2442,6 +2508,133 @@ class Enemy {
         const perpY = moveX;
         moveX += perpX * Math.sin(this.phantomTime) * 1.4;
         moveY += perpY * Math.sin(this.phantomTime) * 1.4;
+      } else if (this.type === 'wyrm') {
+        // Wave movement
+        this.phantomTime = (this.phantomTime || 0) + 0.12;
+        const perpX = -moveY;
+        const perpY = moveX;
+        moveX += perpX * Math.sin(this.phantomTime) * 1.5;
+        moveY += perpY * Math.sin(this.phantomTime) * 1.5;
+
+        // Segment update (trail segments follow the head)
+        if (!this.segments) this.segments = [];
+        this.segments.unshift({ x: this.x, y: this.y });
+        if (this.segments.length > 40) {
+          this.segments.pop();
+        }
+      } else if (this.type === 'drone') {
+        const targetDist = 180;
+        const buffer = 30;
+        if (dist < targetDist - buffer) {
+          // Too close, retreat
+          moveX = -(dx / dist) * currentSpeed * 0.9;
+          moveY = -(dy / dist) * currentSpeed * 0.9;
+        } else if (dist > targetDist + buffer) {
+          // Too far, approach
+          moveX = (dx / dist) * currentSpeed;
+          moveY = (dy / dist) * currentSpeed;
+        } else {
+          // Strafe/orbit player
+          const perpX = -moveY;
+          const perpY = moveX;
+          moveX = perpX * 0.6;
+          moveY = perpY * 0.6;
+        }
+
+        // Drone shooting logic (every 1.5 seconds)
+        if (this.shootCooldown === undefined) this.shootCooldown = 90;
+        this.shootCooldown--;
+        if (this.shootCooldown <= 0) {
+          this.shootCooldown = 90 + Math.random() * 30;
+          const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.1;
+          if (window.gameEngine && window.gameEngine.projectiles) {
+            window.gameEngine.projectiles.push(new Projectile(
+              this.x,
+              this.y,
+              angle,
+              3.2,
+              6,
+              3.5,
+              '#00f0ff',
+              1,
+              true
+            ));
+            gameAudio.playShoot();
+          }
+        }
+      } else if (this.type === 'mine') {
+        if (dist <= 55 && !this.isSelfDestructing) {
+          this.isSelfDestructing = true;
+          this.selfDestructTimer = 110; // ~1.8 seconds
+          this.color = '#ffffff'; // brief flash
+        }
+
+        if (this.isSelfDestructing) {
+          this.selfDestructTimer--;
+          // Decelerate significantly
+          moveX *= 0.15;
+          moveY *= 0.15;
+
+          // Rapid flash rate as countdown nears 0
+          const flashInterval = this.selfDestructTimer > 30 ? 10 : 3;
+          if (Math.floor(this.selfDestructTimer / flashInterval) % 2 === 0) {
+            this.color = '#ff0033';
+          } else {
+            this.color = '#ffffff';
+          }
+
+          if (this.selfDestructTimer <= 0) {
+            this.active = false;
+            this.hp = 0;
+            
+            // Damage player if in range (80px)
+            const pDist = getDistance(this.x, this.y, player.x, player.y);
+            if (pDist <= 85) {
+              player.takeDamage(this.damage * 4.0); // High explosion damage
+              if (window.gameEngine) window.gameEngine.triggerScreenShake(16, 7.0);
+            }
+            
+            // Splash to nearby enemies
+            if (window.gameEngine && window.gameEngine.enemies) {
+              window.gameEngine.enemies.forEach(other => {
+                if (other.id === this.id || !other.active) return;
+                const oDist = getDistance(this.x, this.y, other.x, other.y);
+                if (oDist <= 85) {
+                  other.takeDamage(15);
+                }
+              });
+            }
+            
+            // Spark blowout
+            for (let i = 0; i < 20; i++) {
+              player.spawnParticles(this.x, this.y, '#ff0033', 1.8, 1);
+              player.spawnParticles(this.x, this.y, '#ffea00', 1.2, 1);
+            }
+            gameAudio.playHit();
+          }
+        }
+      } else if (this.type === 'defender') {
+        // Shields always faces player
+        this.shieldAngle = Math.atan2(dy, dx);
+      } else if (this.type === 'spawner') {
+        if (this.spawnCooldown === undefined) this.spawnCooldown = 180;
+        this.spawnCooldown--;
+        if (this.spawnCooldown <= 0) {
+          this.spawnCooldown = 180 + Math.random() * 45;
+          const spawnCount = 2 + Math.floor(Math.random() * 2);
+          for (let i = 0; i < spawnCount; i++) {
+            const spawnAngle = (i / spawnCount) * Math.PI * 2 + Math.random();
+            const bx = this.x + Math.cos(spawnAngle) * 35;
+            const by = this.y + Math.sin(spawnAngle) * 35;
+            if (window.gameEngine && window.gameEngine.enemies) {
+              const bit = new Enemy(bx, by, 'bit', this.maxHp / 180);
+              window.gameEngine.enemies.push(bit);
+              if (player.particlesRef) {
+                player.spawnParticles(bx, by, '#aa00ff', 0.6, 4);
+              }
+            }
+          }
+        }
       }
     }
 
@@ -2615,6 +2808,153 @@ class Enemy {
           else ctx.lineTo(px, py);
         }
         ctx.closePath();
+        ctx.stroke();
+      } else if (this.type === 'wyrm') {
+        // Draw head
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.stroke();
+
+        // Draw segment trail (tail)
+        if (this.segments) {
+          const step = 8;
+          for (let i = 1; i <= 3; i++) {
+            const histIdx = i * step;
+            if (histIdx < this.segments.length) {
+              const pt = this.segments[histIdx];
+              const ox = pt.x - this.x;
+              const oy = pt.y - this.y;
+              
+              ctx.beginPath();
+              const segRadius = this.radius * (1 - i * 0.2);
+              ctx.arc(ox, oy, segRadius, 0, Math.PI * 2);
+              ctx.strokeStyle = strokeStyle;
+              ctx.lineWidth = 2;
+              ctx.stroke();
+            }
+          }
+        }
+      } else if (this.type === 'drone') {
+        ctx.beginPath();
+        const r = this.radius;
+        ctx.moveTo(-r, -r); ctx.lineTo(r, r);
+        ctx.moveTo(r, -r); ctx.lineTo(-r, r);
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.stroke();
+
+        const propRadius = r * 0.35;
+        const offsets = [
+          {x: -r, y: -r}, {x: r, y: -r},
+          {x: -r, y: r}, {x: r, y: r}
+        ];
+        offsets.forEach(off => {
+          ctx.beginPath();
+          ctx.arc(off.x, off.y, propRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#ffffff';
+        ctx.fill();
+      } else if (this.type === 'mine') {
+        ctx.beginPath();
+        const points = 10;
+        const angleStep = Math.PI / points;
+        for (let i = 0; i < points * 2; i++) {
+          const angle = i * angleStep;
+          const r = i % 2 === 0 ? this.radius * 1.35 : this.radius * 0.75;
+          const px = Math.cos(angle) * r;
+          const py = Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 2.5;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.stroke();
+      } else if (this.type === 'defender') {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI / 3);
+          const px = Math.cos(angle) * this.radius;
+          const py = Math.sin(angle) * this.radius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.rotate(this.shieldAngle);
+        
+        ctx.beginPath();
+        const shieldRadius = this.radius * 1.45;
+        ctx.arc(0, 0, shieldRadius, -Math.PI / 3, Math.PI / 3);
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00f0ff';
+        ctx.stroke();
+        
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.1)';
+        ctx.fill();
+        ctx.restore();
+      } else if (this.type === 'spawner') {
+        const time = Date.now() / 400;
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.color;
+        ctx.setLineDash([15, 10]);
+        ctx.lineDashOffset = time * 20;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius * 0.65, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 5]);
+        ctx.lineDashOffset = -time * 15;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = strokeStyle;
+        ctx.fill();
+      } else if (this.type === 'bit') {
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const angle = (i * Math.PI * 2 / 3);
+          const px = Math.cos(angle) * this.radius;
+          const py = Math.sin(angle) * this.radius;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = this.color;
         ctx.stroke();
       } else {
         ctx.beginPath();
