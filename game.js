@@ -2162,6 +2162,13 @@ class NeonGameEngine {
     this.rouletteScreen.classList.remove('hidden');
 
     let pool = this.getUpgradePool();
+    // Filter out unacquired weapons and passives for GOLDEN REWARD (only allow upgrades of owned ones)
+    pool = pool.filter(opt => {
+      if (opt.type === 'weapon_new') return false;
+      if (opt.type === 'passive' && opt.instance.level === 0) return false;
+      return true;
+    });
+
     if (pool.length === 0) {
       pool = [{
         type: 'heal',
