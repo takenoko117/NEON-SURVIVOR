@@ -1977,13 +1977,54 @@ class NeonGameEngine {
 
     let choices = [];
     if (hasThreeRelics) {
-      // Prompt upgrade for currently owned relics
-      choices = RELIC_POOL.filter(relic => this.player.relics.includes(relic.id));
+      // Prompt upgrade for currently owned relics that are not yet Lv5
+      choices = RELIC_POOL.filter(relic => this.player.relics.includes(relic.id) && (this.player.relicLevels[relic.id] || 1) < 5);
     } else {
       // Prompt discovery of new relics
       const availableRelics = RELIC_POOL.filter(relic => !this.player.relics.includes(relic.id));
       const shuffled = availableRelics.sort(() => 0.5 - Math.random());
       choices = shuffled.slice(0, Math.min(3, shuffled.length));
+    }
+
+    // すべてのレリックがLv5に達している状態
+    if (hasThreeRelics && choices.length === 0) {
+      // 所持している（レベルが1以上）かつ最大レベル未満（5未満）のパッシブスキルを抽出
+      const upgradablePassives = this.player.passives.filter(p => p.level > 0 && p.level < 5);
+      
+      if (upgradablePassives.length === 0) {
+        // パッシブを所持していない、あるいはすべて最大レベル
+        this.resumeGame();
+        return;
+      }
+      
+      // ランダムに1つ選択してレベルアップ
+      const randomPassive = upgradablePassives[Math.floor(Math.random() * upgradablePassives.length)];
+      randomPassive.upgrade(this.player);
+      
+      gameAudio.playLevelUp(); // レベルアップ効果音
+      
+      // リワード表示
+      const screen = document.getElementById('relic-choice-screen');
+      const container = document.getElementById('relic-options');
+      if (screen && container) {
+        screen.classList.remove('hidden');
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; font-family: var(--font-retro); color: var(--neon-yellow); width: 100%;">
+            <div style="font-size: 20px; margin-bottom: 15px; text-shadow: 0 0 10px var(--neon-yellow); letter-spacing: 2px;">⚡ RELIC MAX BONUS ⚡</div>
+            <div style="font-size: 13px; color: #fff; margin-bottom: 20px;">すべてのレリックがLv5に達しました！</div>
+            <div style="font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--neon-cyan));">${randomPassive.emoji}</div>
+            <div style="font-size: 22px; color: var(--neon-cyan); margin-bottom: 8px;">${randomPassive.name}</div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 15px;">Level ${randomPassive.level} にアップグレード！</div>
+            <div style="font-size: 11px; color: var(--neon-yellow); font-style: italic;">${randomPassive.getDescription()}</div>
+          </div>
+        `;
+      }
+      
+      // 1秒後に自動でゲームを再開
+      setTimeout(() => {
+        this.resumeGame();
+      }, 1000);
+      return;
     }
 
     if (choices.length === 0) {
@@ -2056,8 +2097,8 @@ class NeonGameEngine {
         }
 
         if (hasThreeRelics) {
-          // Upgrade existing relic
-          this.player.relicLevels[relic.id] = (this.player.relicLevels[relic.id] || 1) + 1;
+          // Upgrade existing relic (capped at Lv5)
+          this.player.relicLevels[relic.id] = Math.min(5, (this.player.relicLevels[relic.id] || 1) + 1);
           
           // Instant upgrade effect trigger
           if (relic.id === 'IronBulwark') {
