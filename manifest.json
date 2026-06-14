@@ -1,0 +1,22 @@
+{
+  "name": "NEON SURVIVOR",
+  "short_name": "NEON SURVIVOR",
+  "description": "5分間を生き延びろ！迫り来る敵を撃破し、ネオンの力を進化させよ。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#06070d",
+  "theme_color": "#00f0ff",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
