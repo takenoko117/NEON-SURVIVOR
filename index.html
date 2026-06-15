@@ -99,6 +99,26 @@
       <div class="menu-content glow-panel" style="max-width: 650px; width: 95%;">
         <h2 class="neon-subtitle" style="margin-bottom: 5px;">LEVEL UP!</h2>
         <p class="level-up-desc" id="level-up-desc-text">アップグレードを選択してください</p>
+        
+        <!-- Inventory loadout preview -->
+        <div id="level-up-current-inventory" style="margin: 15px auto; padding: 12px; border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 6px; background: rgba(6, 7, 13, 0.7); display: flex; flex-direction: column; gap: 8px; text-align: left; box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);">
+          <div style="font-size: 11px; color: var(--neon-cyan); font-family: var(--font-retro); letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 5px var(--neon-cyan);">現在の装備状況 (LOADOUT)</div>
+          <div style="display: flex; gap: 25px; justify-content: flex-start; flex-wrap: wrap;">
+            <div>
+              <div style="font-size: 9px; color: rgba(255,255,255,0.4); margin-bottom: 4px; font-family: var(--font-retro);">WEAPONS (MAX 4)</div>
+              <div id="level-up-inv-weapons" style="display: flex; gap: 6px; min-height: 36px; align-items: center;"></div>
+            </div>
+            <div>
+              <div style="font-size: 9px; color: rgba(255,255,255,0.4); margin-bottom: 4px; font-family: var(--font-retro);">PASSIVES (MAX 4)</div>
+              <div id="level-up-inv-passives" style="display: flex; gap: 6px; min-height: 36px; align-items: center;"></div>
+            </div>
+            <div>
+              <div style="font-size: 9px; color: rgba(255,255,255,0.4); margin-bottom: 4px; font-family: var(--font-retro);">RELICS (MAX 3)</div>
+              <div id="level-up-inv-relics" style="display: flex; gap: 6px; min-height: 36px; align-items: center;"></div>
+            </div>
+          </div>
+        </div>
+
         <div id="upgrade-options" class="options-container">
           <!-- Dynamically populated choices will go here -->
         </div>

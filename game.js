@@ -1490,9 +1490,147 @@ class NeonGameEngine {
     this.levelUpScreen.classList.remove('hidden');
   }
 
+  renderLevelUpInventory() {
+    const weaponsContainer = document.getElementById('level-up-inv-weapons');
+    const passivesContainer = document.getElementById('level-up-inv-passives');
+    const relicsContainer = document.getElementById('level-up-inv-relics');
+
+    if (!weaponsContainer || !passivesContainer || !relicsContainer) return;
+
+    // Clear containers
+    weaponsContainer.innerHTML = '';
+    passivesContainer.innerHTML = '';
+    relicsContainer.innerHTML = '';
+
+    // 1. Draw Weapons (max 4)
+    const activeWeapons = this.player.weapons || [];
+    for (let i = 0; i < 4; i++) {
+      const slotEl = document.createElement('div');
+      slotEl.className = 'hud-weapon-icon'; // Reuse hud styles
+      slotEl.style.width = '36px';
+      slotEl.style.height = '36px';
+      slotEl.style.boxShadow = '0 0 6px rgba(0, 240, 255, 0.05)';
+      slotEl.style.borderRadius = '6px';
+      
+      if (i < activeWeapons.length) {
+        const w = activeWeapons[i];
+        const iconClass = this.getItemIconClass(w, w.isEvolved);
+        const iconHtml = iconClass ? `<span class="game-icon ${iconClass}" style="width: 24px; height: 20px;"></span>` : w.emoji;
+        const levelText = w.isEvolved ? 'E' : `L${w.level}`;
+        
+        slotEl.innerHTML = `
+          <span class="hud-weapon-emoji" style="font-size: 16px; display: flex; justify-content: center; align-items: center;">${iconHtml}</span>
+          <span class="hud-weapon-level" style="font-size: 8px; bottom: 1px; right: 2px;">${levelText}</span>
+        `;
+        slotEl.title = `${w.name} (${levelText})${w.getDescription ? ': ' + w.getDescription(false) : ''}`;
+      } else {
+        slotEl.className = 'hud-slot-empty';
+        slotEl.style.width = '36px';
+        slotEl.style.height = '36px';
+        slotEl.style.borderRadius = '6px';
+        slotEl.style.fontSize = '12px';
+        slotEl.innerText = '?';
+      }
+      weaponsContainer.appendChild(slotEl);
+    }
+
+    // 2. Draw Passives (max 4)
+    const activePassives = this.player.passives.filter(p => p.level > 0) || [];
+    for (let i = 0; i < 4; i++) {
+      const slotEl = document.createElement('div');
+      slotEl.className = 'hud-weapon-icon'; // Reuse weapons icon style (has glow border)
+      slotEl.style.width = '36px';
+      slotEl.style.height = '36px';
+      slotEl.style.boxShadow = '0 0 6px rgba(176, 38, 255, 0.05)';
+      slotEl.style.borderColor = 'rgba(176, 38, 255, 0.4)';
+      slotEl.style.borderRadius = '6px';
+
+      if (i < activePassives.length) {
+        const p = activePassives[i];
+        const iconClass = this.getItemIconClass(p);
+        const iconHtml = iconClass ? `<span class="game-icon ${iconClass}" style="width: 24px; height: 20px;"></span>` : p.emoji;
+        
+        slotEl.innerHTML = `
+          <span class="hud-weapon-emoji" style="font-size: 16px; display: flex; justify-content: center; align-items: center;">${iconHtml}</span>
+          <span class="hud-weapon-level" style="font-size: 8px; bottom: 1px; right: 2px; color: var(--neon-pink);">L${p.level}</span>
+        `;
+        slotEl.title = `${p.name} (Lv${p.level})${p.getDescription ? ': ' + p.getDescription(false) : ''}`;
+      } else {
+        slotEl.className = 'hud-slot-empty';
+        slotEl.style.width = '36px';
+        slotEl.style.height = '36px';
+        slotEl.style.borderRadius = '6px';
+        slotEl.style.fontSize = '12px';
+        slotEl.style.borderColor = 'rgba(176, 38, 255, 0.15)';
+        slotEl.style.color = 'rgba(176, 38, 255, 0.08)';
+        slotEl.innerText = '?';
+      }
+      passivesContainer.appendChild(slotEl);
+    }
+
+    // 3. Draw Relics (max 3)
+    const activeRelics = this.player.relics || [];
+    for (let i = 0; i < 3; i++) {
+      const slotEl = document.createElement('div');
+      slotEl.className = 'hud-relic-icon'; // Reuse relic style
+      slotEl.style.width = '36px';
+      slotEl.style.height = '36px';
+      slotEl.style.boxShadow = '0 0 6px rgba(255, 230, 0, 0.05)';
+      slotEl.style.borderRadius = '6px';
+
+      if (i < activeRelics.length) {
+        const relicId = activeRelics[i];
+        const relicData = RELIC_POOL.find(r => r.id === relicId);
+        const lvl = this.player.relicLevels ? (this.player.relicLevels[relicId] || 1) : 1;
+        const emoji = relicData ? relicData.emoji : '❓';
+        
+        slotEl.innerHTML = `
+          <span class="hud-relic-emoji" style="font-size: 16px; display: flex; justify-content: center; align-items: center;">${emoji}</span>
+          <span class="hud-weapon-level" style="font-size: 8px; bottom: 1px; right: 2px; color: var(--neon-yellow);">L${lvl}</span>
+        `;
+        
+        if (relicData) {
+          let dynamicDesc = relicData.description;
+          switch (relicId) {
+            case 'IronBulwark':
+              dynamicDesc = `被弾時、またはHP自動回復時に最大HPの${15 + (lvl - 1) * 5}%分の「青シールド」を獲得。シールドがある間、プレイヤーの与えるダメージが${25 + (lvl - 1) * 10}%上昇する。`;
+              break;
+            case 'VolatileInk':
+              dynamicDesc = `燃焼または酸状態の敵が死亡した時、その敵が爆発して最大HPの${15 + (lvl - 1) * 5}%のダメージを周囲（半径${90 + (lvl - 1) * 20}px）に与え、デバフを周囲の敵に伝染させる。`;
+              break;
+            case 'PrismaticLens':
+              dynamicDesc = `攻撃範囲拡大の合計が30%以上の時、プレイヤーの周囲の範囲内にいる敵の被ダメージが常時${15 + (lvl - 1) * 10}%増加する。`;
+              break;
+            case 'RuinedCodex':
+              dynamicDesc = `クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に${12 + (lvl - 1) * 6}%の確率で、その攻撃が2回連続で発動する。`;
+              break;
+            case 'NeonAnchor':
+              dynamicDesc = `プレイヤーが立ち止まっている間、1秒ごとに全武器のダメージが+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。動くとリセットされる。`;
+              break;
+            case 'TacticalCoil':
+              dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
+              break;
+          }
+          slotEl.title = `${relicData.name} (Lv${lvl}): ${dynamicDesc}`;
+        }
+      } else {
+        slotEl.className = 'hud-relic-slot-empty';
+        slotEl.style.width = '36px';
+        slotEl.style.height = '36px';
+        slotEl.style.borderRadius = '6px';
+        slotEl.style.fontSize = '12px';
+        slotEl.innerText = '?';
+      }
+      relicsContainer.appendChild(slotEl);
+    }
+  }
+
   renderUpgradeChoices(pool) {
     // Choose 3 random upgrade options
     const upgrades = this.generateUpgrades(pool);
+    
+    // Render current inventory loadout
+    this.renderLevelUpInventory();
     
     const container = document.getElementById('upgrade-options');
     container.innerHTML = ''; // Clear options
