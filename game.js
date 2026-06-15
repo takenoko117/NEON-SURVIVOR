@@ -119,6 +119,11 @@ class NeonGameEngine {
     this.rerollsRemaining = 1;
     this.banishesRemaining = 1;
     this.banishedItems = new Set();
+
+    // Gold System - persistent currency
+    this.totalGold = 0;
+    this.goldUpgrades = { attack: 0, speed: 0, hp: 0 };
+    this.loadGoldData();
     
     // Bind DOM events
     this.setupDOM();
@@ -171,6 +176,21 @@ class NeonGameEngine {
       this.autoSelectToggleBtn.addEventListener('click', () => this.toggleAutoSelect());
     }
     this.updateAutoSelectButtonUI();
+
+    // Gold Shop DOM
+    this.shopScreen = document.getElementById('shop-screen');
+    this.shopBtn = document.getElementById('shop-btn');
+    this.shopCloseBtn = document.getElementById('shop-close-btn');
+    this.shopBtn.addEventListener('click', () => this.openShop());
+    this.shopCloseBtn.addEventListener('click', () => this.closeShop());
+
+    // Shop buy buttons
+    document.getElementById('shop-buy-attack').addEventListener('click', () => this.buyUpgrade('attack'));
+    document.getElementById('shop-buy-speed').addEventListener('click', () => this.buyUpgrade('speed'));
+    document.getElementById('shop-buy-hp').addEventListener('click', () => this.buyUpgrade('hp'));
+
+    // Update title screen gold display
+    this.updateTitleGoldDisplay();
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -723,8 +743,13 @@ class NeonGameEngine {
       this.devWpnFireVal.innerText = 'Lv0';
     }
     
-    // Clear entities
-    this.player = new Player(this.logicalWidth / 2, this.logicalHeight / 2);
+    // Clear entities — apply Gold shop base stat bonuses
+    const baseStatBonuses = {
+      attack: this.goldUpgrades.attack * 0.05,
+      speed: this.goldUpgrades.speed * 0.03,
+      hp: this.goldUpgrades.hp * 0.10
+    };
+    this.player = new Player(this.logicalWidth / 2, this.logicalHeight / 2, baseStatBonuses);
     this.player.particlesRef = this.particles;
     this.player.damageNumbersRef = this.damageNumbers;
 
@@ -742,6 +767,7 @@ class NeonGameEngine {
     this.startScreen.classList.add('hidden');
     this.levelUpScreen.classList.add('hidden');
     this.gameOverScreen.classList.add('hidden');
+    if (this.shopScreen) this.shopScreen.classList.add('hidden');
     if (this.reviveScreen) this.reviveScreen.classList.add('hidden');
     if (this.rouletteScreen) this.rouletteScreen.classList.add('hidden');
     this.hud.classList.remove('hidden');
@@ -2875,6 +2901,22 @@ class NeonGameEngine {
       titleEl.style.textShadow = '0 0 15px #ff007f, 0 0 30px rgba(255, 0, 127, 0.5)';
       msgEl.innerText = "ネオンの灯火が完全に消え去ってしまった...";
     }
+
+    // Gold earning calculation
+    const survivalSecs = Math.floor(this.elapsedTime / 1000);
+    const kills = this.player.kills;
+    let goldEarned = survivalSecs + kills;
+    if (this.difficulty === 'HARD') {
+      goldEarned = Math.floor(goldEarned * 1.5);
+    }
+    this.totalGold += goldEarned;
+    this.saveGoldData();
+
+    // Display earned gold on result screen
+    const resultGoldEl = document.getElementById('result-gold-earned');
+    if (resultGoldEl) {
+      resultGoldEl.innerText = `+${goldEarned} G`;
+    }
   }
 
   draw() {
@@ -2997,6 +3039,108 @@ class NeonGameEngine {
     }
     
     this.ctx.restore();
+  }
+
+  // ==========================================
+  // Gold System - Persistence & Shop Logic
+  // ==========================================
+
+  loadGoldData() {
+    try {
+      const saved = localStorage.getItem('neon_gold_data');
+      if (saved) {
+        const data = JSON.parse(saved);
+        this.totalGold = data.totalGold || 0;
+        this.goldUpgrades = data.upgrades || { attack: 0, speed: 0, hp: 0 };
+      }
+    } catch (e) {
+      console.warn('Failed to load gold data:', e);
+    }
+  }
+
+  saveGoldData() {
+    try {
+      localStorage.setItem('neon_gold_data', JSON.stringify({
+        totalGold: this.totalGold,
+        upgrades: this.goldUpgrades
+      }));
+    } catch (e) {
+      console.warn('Failed to save gold data:', e);
+    }
+  }
+
+  getUpgradeCost(level) {
+    return Math.floor(100 * Math.pow(1.5, level));
+  }
+
+  openShop() {
+    this.startScreen.classList.add('hidden');
+    this.shopScreen.classList.remove('hidden');
+    this.updateShopUI();
+  }
+
+  closeShop() {
+    this.shopScreen.classList.add('hidden');
+    this.startScreen.classList.remove('hidden');
+    this.updateTitleGoldDisplay();
+  }
+
+  updateTitleGoldDisplay() {
+    const el = document.getElementById('title-gold-amount');
+    if (el) el.innerText = this.totalGold;
+  }
+
+  updateShopUI() {
+    // Update gold display
+    const shopGold = document.getElementById('shop-gold-amount');
+    if (shopGold) shopGold.innerText = this.totalGold;
+
+    const stats = [
+      { key: 'attack', perLevel: 5, unit: 'ダメージ' },
+      { key: 'speed',  perLevel: 3, unit: '速度' },
+      { key: 'hp',     perLevel: 10, unit: '体力' }
+    ];
+
+    stats.forEach(stat => {
+      const level = this.goldUpgrades[stat.key];
+      const cost = this.getUpgradeCost(level);
+      const currentBonus = level * stat.perLevel;
+      const nextBonus = (level + 1) * stat.perLevel;
+
+      const levelEl = document.getElementById(`shop-${stat.key}-level`);
+      const effectEl = document.getElementById(`shop-${stat.key}-effect`);
+      const nextEl = document.getElementById(`shop-${stat.key}-next`);
+      const costEl = document.getElementById(`shop-${stat.key}-cost`);
+      const buyBtn = document.getElementById(`shop-buy-${stat.key}`);
+
+      if (levelEl) levelEl.innerText = level;
+      if (effectEl) effectEl.innerText = `${stat.unit} +${currentBonus}%`;
+      if (nextEl) nextEl.innerText = `次: +${nextBonus}%`;
+      if (costEl) costEl.innerText = cost;
+
+      if (buyBtn) {
+        if (this.totalGold >= cost) {
+          buyBtn.classList.remove('disabled');
+        } else {
+          buyBtn.classList.add('disabled');
+        }
+      }
+    });
+  }
+
+  buyUpgrade(statKey) {
+    const level = this.goldUpgrades[statKey];
+    const cost = this.getUpgradeCost(level);
+
+    if (this.totalGold < cost) return;
+
+    this.totalGold -= cost;
+    this.goldUpgrades[statKey]++;
+    this.saveGoldData();
+    this.updateShopUI();
+
+    // Play a feedback sound
+    gameAudio.playCollect();
   }
 }
 

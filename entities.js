@@ -1686,13 +1686,19 @@ class PassiveItem {
 
 // PLAYER CHARACTER CLASS
 class Player {
-  constructor(x, y) {
+  constructor(x, y, baseStatBonuses = {}) {
     this.x = x;
     this.y = y;
     this.radius = 12;
-    this.speed = 2.5;
-    this.maxHp = 100;
-    this.hp = 100;
+
+    // Gold shop base stat bonuses (persistent upgrades)
+    this.baseAttackBonus = baseStatBonuses.attack || 0;
+    this.baseSpeedBonus = baseStatBonuses.speed || 0;
+    this.baseHpBonus = baseStatBonuses.hp || 0;
+
+    this.speed = 2.5 * (1 + this.baseSpeedBonus);
+    this.maxHp = Math.round(100 * (1 + this.baseHpBonus));
+    this.hp = this.maxHp;
     this.level = 1;
     this.exp = 0;
     this.nextLevelExp = 10;
@@ -1890,10 +1896,16 @@ class Player {
 
   recalculatePassiveStats() {
     const oldMaxHp = this.maxHp;
-    this.maxHp = 100;
-    this.speed = 2.5;
+
+    // Apply Gold shop base bonuses first
+    const baseHp = 100 * (1 + this.baseHpBonus);
+    const baseSpeed = 2.5 * (1 + this.baseSpeedBonus);
+    const baseDmg = 1.0 + this.baseAttackBonus;
+
+    this.maxHp = Math.round(baseHp);
+    this.speed = baseSpeed;
     this.stats.magnet = 60;
-    this.stats.damageMultiplier = 1.0;
+    this.stats.damageMultiplier = baseDmg;
     this.stats.hpRegen = 0.0;
     this.stats.cooldownMultiplier = 1.0;
     this.stats.areaMultiplier = 1.0;
@@ -1901,13 +1913,13 @@ class Player {
     this.passives.forEach(p => {
       if (p.level > 0) {
         if (p.statName === 'maxHp') {
-          this.maxHp = Math.round(100 * (1 + p.level * p.modifierPerLevel));
+          this.maxHp = Math.round(baseHp * (1 + p.level * p.modifierPerLevel));
         } else if (p.statName === 'speed') {
-          this.speed = 2.5 * (1 + p.level * p.modifierPerLevel);
+          this.speed = baseSpeed * (1 + p.level * p.modifierPerLevel);
         } else if (p.statName === 'magnet') {
           this.stats.magnet = 60 * (1 + p.level * p.modifierPerLevel);
         } else if (p.statName === 'damage') {
-          this.stats.damageMultiplier = 1 + p.level * p.modifierPerLevel;
+          this.stats.damageMultiplier = baseDmg + p.level * p.modifierPerLevel;
         } else if (p.statName === 'regen') {
           this.stats.hpRegen = p.level * p.modifierPerLevel;
         } else if (p.statName === 'cooldown') {

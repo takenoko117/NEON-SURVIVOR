@@ -91,6 +91,64 @@
           <button id="start-normal-btn" class="neon-button">NORMAL START</button>
           <button id="start-hard-btn" class="neon-button hard-mode">HARD START</button>
         </div>
+
+        <div class="title-gold-row">
+          <div class="gold-display">
+            <span class="gold-icon">🪙</span>
+            <span id="title-gold-amount">0</span> G
+          </div>
+          <button id="shop-btn" class="neon-button shop-btn">⚙ SHOP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gold Shop Overlay -->
+    <div id="shop-screen" class="overlay menu-screen hidden">
+      <div class="menu-content glow-panel shop-panel">
+        <h2 class="neon-subtitle shop-title">🪙 GOLD SHOP</h2>
+        <div class="shop-gold-display">
+          所持Gold: <span class="gold-icon">🪙</span> <span id="shop-gold-amount" class="shop-gold-val">0</span> G
+        </div>
+
+        <div class="shop-cards-container">
+          <!-- Attack upgrade card -->
+          <div class="shop-upgrade-card" data-stat="attack">
+            <div class="shop-card-icon">⚔️</div>
+            <div class="shop-card-title">基礎攻撃力</div>
+            <div class="shop-card-level">Lv. <span id="shop-attack-level">0</span></div>
+            <div class="shop-card-effect" id="shop-attack-effect">ダメージ +0%</div>
+            <div class="shop-card-next" id="shop-attack-next">次: +5%</div>
+            <button id="shop-buy-attack" class="neon-button shop-buy-btn" data-stat="attack">
+              <span id="shop-attack-cost">100</span> G
+            </button>
+          </div>
+
+          <!-- Speed upgrade card -->
+          <div class="shop-upgrade-card" data-stat="speed">
+            <div class="shop-card-icon">🪶</div>
+            <div class="shop-card-title">基礎移動速度</div>
+            <div class="shop-card-level">Lv. <span id="shop-speed-level">0</span></div>
+            <div class="shop-card-effect" id="shop-speed-effect">速度 +0%</div>
+            <div class="shop-card-next" id="shop-speed-next">次: +3%</div>
+            <button id="shop-buy-speed" class="neon-button shop-buy-btn" data-stat="speed">
+              <span id="shop-speed-cost">100</span> G
+            </button>
+          </div>
+
+          <!-- HP upgrade card -->
+          <div class="shop-upgrade-card" data-stat="hp">
+            <div class="shop-card-icon">❤️</div>
+            <div class="shop-card-title">基礎体力</div>
+            <div class="shop-card-level">Lv. <span id="shop-hp-level">0</span></div>
+            <div class="shop-card-effect" id="shop-hp-effect">体力 +0%</div>
+            <div class="shop-card-next" id="shop-hp-next">次: +10%</div>
+            <button id="shop-buy-hp" class="neon-button shop-buy-btn" data-stat="hp">
+              <span id="shop-hp-cost">100</span> G
+            </button>
+          </div>
+        </div>
+
+        <button id="shop-close-btn" class="neon-button">戻る</button>
       </div>
     </div>
 
@@ -208,6 +266,10 @@
           <div class="result-row">
             <span>蘇生回数:</span>
             <span id="result-revives" class="result-val">0回</span>
+          </div>
+          <div class="result-row result-gold-row">
+            <span>🪙 獲得Gold:</span>
+            <span id="result-gold-earned" class="result-val result-gold-val">0</span>
           </div>
         </div>
 
