@@ -42,6 +42,13 @@ const RELIC_POOL = [
     emoji: '🌀',
     description: '敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも80%のダメージを与える（ビリヤード連鎖）。',
     synergy: '⚡ サンダーウェーブ / 🗡️ ビッグソード と相性抜群'
+  },
+  {
+    id: 'VitalityOfPower',
+    name: 'バイタリティ・オブ・パワー (Vitality of Power)',
+    emoji: '💪',
+    description: '現在のHP割合が多いほど、与えるすべてのダメージが上昇する。HPが最大のとき、ダメージが最大+30%上昇する。',
+    synergy: '❤️ ホロウ・ハート / 🥓 プマローラ と相性抜群'
   }
 ];
 
@@ -1756,6 +1763,9 @@ class NeonGameEngine {
             case 'TacticalCoil':
               dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
               break;
+            case 'VitalityOfPower':
+              dynamicDesc = `現在のHP割合が多いほど、与えるすべてのダメージが上昇する。HPが最大のとき、ダメージが最大+${30 + (lvl - 1) * 15}%上昇する。`;
+              break;
           }
           slotEl.title = `${relicData.name} (Lv${lvl}): ${dynamicDesc}`;
         }
@@ -2414,6 +2424,9 @@ class NeonGameEngine {
           case 'TacticalCoil':
             upgradeText = `衝突ダメージ伝達: ${Math.min(100, 80 + (nextLvl - 1) * 10)}%`;
             break;
+          case 'VitalityOfPower':
+            upgradeText = `最大ダメージ上昇: +${30 + (nextLvl - 1) * 15}%`;
+            break;
         }
         if (upgradeText) {
           upgradeDescHtml = `<div class="relic-card-upgrade-info" style="font-size: 10px; color: var(--neon-yellow); margin-top: 6px; border-top: 1px dashed rgba(255,230,0,0.3); padding-top: 4px;">UPGRADE ➜ ${upgradeText}</div>`;
@@ -3004,6 +3017,9 @@ class NeonGameEngine {
                 break;
               case 'TacticalCoil':
                 dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
+                break;
+              case 'VitalityOfPower':
+                dynamicDesc = `現在のHP割合が多いほど、与えるすべてのダメージが上昇する。HPが最大のとき、ダメージが最大+${30 + (lvl - 1) * 15}%上昇する。`;
                 break;
             }
             rEl.title = `${relicData.name} (Lv${lvl}): ${dynamicDesc}`;

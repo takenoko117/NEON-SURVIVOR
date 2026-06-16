@@ -1728,6 +1728,14 @@ class Player {
           mult *= (1.0 + addedMult);
         }
 
+        // Relic: Vitality of Power (damage increases based on current HP ratio, up to +30% at max HP, +15% per level)
+        if (self.relics && self.relics.includes('VitalityOfPower') && self.hp > 0) {
+          const lvl = self.relicLevels ? (self.relicLevels['VitalityOfPower'] || 1) : 1;
+          const maxBoost = 0.30 + (lvl - 1) * 0.15;
+          const hpRatio = self.hp / self.maxHp;
+          mult *= (1.0 + hpRatio * maxBoost);
+        }
+
         return mult;
       },
       set damageMultiplier(val) {
