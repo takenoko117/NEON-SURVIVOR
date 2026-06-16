@@ -2012,6 +2012,12 @@ class Player {
   }
 
   spawnParticles(x, y, color, speed, count) {
+    if (window.gameEngine && window.gameEngine.lowEffectEnabled) {
+      if (count < 20) {
+        return;
+      }
+      count = Math.floor(count * 0.15);
+    }
     if (this.particlesRef) {
       for (let i = 0; i < count; i++) {
         this.particlesRef.push(new Particle(x, y, color, speed));

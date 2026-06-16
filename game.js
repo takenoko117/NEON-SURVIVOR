@@ -114,6 +114,7 @@ class NeonGameEngine {
     this.rouletteTimer = null;
     this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') === 'true');
     this.lastMagnetTriggerSecond = 0;
+    this.lowEffectEnabled = (localStorage.getItem('neon_low_effect') === 'true');
 
     // Rerolls and Banishes
     this.rerollsRemaining = 1;
@@ -191,6 +192,16 @@ class NeonGameEngine {
 
     // Update title screen gold display
     this.updateTitleGoldDisplay();
+
+    // Setup Low Effect Switch
+    const effectCheckbox = document.getElementById('effect-toggle-checkbox');
+    if (effectCheckbox) {
+      effectCheckbox.checked = this.lowEffectEnabled;
+      effectCheckbox.addEventListener('change', (e) => {
+        this.lowEffectEnabled = e.target.checked;
+        localStorage.setItem('neon_low_effect', this.lowEffectEnabled ? 'true' : 'false');
+      });
+    }
 
     // Setup Dev UI elements
     this.setupDevPanel();
@@ -764,6 +775,41 @@ class NeonGameEngine {
     this.relicChests = [];
     this.particles = [];
     this.damageNumbers = [];
+
+    // Override push method to filter output when lowEffectEnabled is true
+    const self = this;
+    const originalParticlesPush = this.particles.push;
+    this.particles.push = function(...args) {
+      if (self.lowEffectEnabled) {
+        const filtered = args.filter(() => Math.random() < 0.15);
+        if (filtered.length > 0) {
+          return originalParticlesPush.apply(this, filtered);
+        }
+        return this.length;
+      }
+      return originalParticlesPush.apply(this, args);
+    };
+
+    const originalDamagePush = this.damageNumbers.push;
+    this.damageNumbers.push = function(...args) {
+      if (self.lowEffectEnabled) {
+        const filtered = args.filter(arg => {
+          if (arg && arg.constructor.name === 'DamageNumber') {
+            const isNumeric = !isNaN(arg.text) || /^\d+$/.test(arg.text);
+            const isCrit = arg.color === '#fffb00';
+            if (isNumeric && !isCrit) {
+              return false;
+            }
+          }
+          return true;
+        });
+        if (filtered.length > 0) {
+          return originalDamagePush.apply(this, filtered);
+        }
+        return this.length;
+      }
+      return originalDamagePush.apply(this, args);
+    };
 
     // Hide screens, show HUD
     this.startScreen.classList.add('hidden');
@@ -3008,9 +3054,12 @@ class NeonGameEngine {
     
     // Apply screen shake
     if (this.shakeDuration > 0) {
-      const dx = (Math.random() - 0.5) * this.shakeIntensity;
-      const dy = (Math.random() - 0.5) * this.shakeIntensity;
-      this.ctx.translate(dx, dy);
+      const intensity = this.lowEffectEnabled ? 0 : this.shakeIntensity;
+      if (intensity > 0) {
+        const dx = (Math.random() - 0.5) * intensity;
+        const dy = (Math.random() - 0.5) * intensity;
+        this.ctx.translate(dx, dy);
+      }
       this.shakeDuration--;
     }
 
@@ -3108,7 +3157,7 @@ class NeonGameEngine {
     }
 
     // Draw Shockwave
-    if (this.shockwaveRadius > 0 && this.shockwaveRadius < this.shockwaveMaxRadius) {
+    if (this.shockwaveRadius > 0 && this.shockwaveRadius < this.shockwaveMaxRadius && !this.lowEffectEnabled) {
       this.ctx.save();
       this.ctx.beginPath();
       this.ctx.arc(this.player.x, this.player.y, this.shockwaveRadius, 0, Math.PI * 2);
@@ -3122,7 +3171,7 @@ class NeonGameEngine {
     }
 
     // Draw Screen Flash
-    if (this.flashOpacity > 0) {
+    if (this.flashOpacity > 0 && !this.lowEffectEnabled) {
       this.ctx.save();
       const color = this.flashColorOverride ? `${this.flashColorOverride}${this.flashOpacity})` : `rgba(255, 255, 255, ${this.flashOpacity})`;
       this.ctx.fillStyle = color;
