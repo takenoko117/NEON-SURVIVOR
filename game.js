@@ -2325,6 +2325,49 @@ class NeonGameEngine {
     this.syncDevPanel();
   }
 
+  resumeGame() {
+    if (this.levelUpTimer) {
+      clearInterval(this.levelUpTimer);
+      this.levelUpTimer = null;
+    }
+    this.currentUpgrades = null;
+    this.levelUpScreen.classList.add('hidden');
+    const relicScreen = document.getElementById('relic-choice-screen');
+    if (relicScreen) relicScreen.classList.add('hidden');
+    this.state = 'PLAYING';
+    gameAudio.setBGMVolume(this.getBGMPlayVolume());
+    this.lastTime = performance.now();
+    requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
+  triggerScreenWideMagnet() {
+    // 1. Attract all experience gems, jewels, and chests
+    if (this.gems) {
+      this.gems.forEach(gem => gem.isAttracted = true);
+    }
+    if (this.jewels) {
+      this.jewels.forEach(jewel => jewel.isAttracted = true);
+    }
+    if (this.relicChests) {
+      this.relicChests.forEach(chest => chest.isAttracted = true);
+    }
+
+    // 2. Play SE for magnet trigger
+    gameAudio.playCollect();
+
+    // 3. Screen-wide flash (cyan neon color glow)
+    this.flashOpacity = 0.6;
+    this.flashColorOverride = 'rgba(0, 240, 255, 0.4)'; // Neon Cyan flash
+
+    // 4. Spawn floaty text (ALL MAGNET!) and particles
+    if (this.player) {
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 40, "ALL MAGNET!", true, '#00f0ff', 15));
+      for (let i = 0; i < 30; i++) {
+        this.player.spawnParticles(this.player.x, this.player.y, '#00f0ff', 1.2, 2);
+      }
+    }
+  }
+
   enqueueFloatingWindow(triggerFn) {
     if (!this.floatingQueue) {
       this.floatingQueue = [];
