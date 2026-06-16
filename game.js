@@ -683,6 +683,7 @@ class NeonGameEngine {
 
     this.state = 'PLAYING';
     this.elapsedTime = 0;
+    this.goldEarnedDuringRun = 0;
     this.lastMagnetTriggerSecond = 0;
     this.spawnTimer = 0;
     this.enemyScaleMultiplier = 1.0;
@@ -1501,6 +1502,27 @@ class NeonGameEngine {
   }
 
   triggerLevelUp() {
+    const currentSecs = Math.floor(this.elapsedTime / 1000);
+    if (currentSecs >= this.totalGameDuration) {
+      let goldAmount = 50;
+      if (this.difficulty === 'HARD') {
+        goldAmount = Math.floor(goldAmount * 1.5);
+      }
+      this.goldEarnedDuringRun = (this.goldEarnedDuringRun || 0) + goldAmount;
+      
+      gameAudio.playCollect();
+      
+      if (this.player) {
+        this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `+${goldAmount} GOLD`, true, '#ffd700', 18));
+        for (let i = 0; i < 15; i++) {
+          const speed = Math.random() * 4 + 2;
+          const p = new Particle(this.player.x, this.player.y, '#ffd700', speed);
+          this.particles.push(p);
+        }
+      }
+      return;
+    }
+
     const pool = this.getUpgradePool();
     if (pool.length === 0) {
       this.triggerMaxExpBlast();
@@ -2163,6 +2185,27 @@ class NeonGameEngine {
   }
 
   triggerRelicChoice() {
+    const currentSecs = Math.floor(this.elapsedTime / 1000);
+    if (currentSecs >= this.totalGameDuration) {
+      let goldAmount = 100;
+      if (this.difficulty === 'HARD') {
+        goldAmount = Math.floor(goldAmount * 1.5);
+      }
+      this.goldEarnedDuringRun = (this.goldEarnedDuringRun || 0) + goldAmount;
+      
+      gameAudio.playCollect();
+      
+      if (this.player) {
+        this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `+${goldAmount} GOLD (CHEST)`, true, '#ffd700', 18));
+        for (let i = 0; i < 25; i++) {
+          const speed = Math.random() * 5 + 3;
+          const p = new Particle(this.player.x, this.player.y, '#ffd700', speed);
+          this.particles.push(p);
+        }
+      }
+      return;
+    }
+
     this.state = 'RELIC_CHOICE';
     gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     gameAudio.playLevelUp(); // Play safe chime
@@ -2908,6 +2951,9 @@ class NeonGameEngine {
     let goldEarned = survivalSecs + kills;
     if (this.difficulty === 'HARD') {
       goldEarned = Math.floor(goldEarned * 1.5);
+    }
+    if (this.goldEarnedDuringRun) {
+      goldEarned += this.goldEarnedDuringRun;
     }
     this.totalGold += goldEarned;
     this.saveGoldData();
