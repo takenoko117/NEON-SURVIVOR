@@ -119,8 +119,9 @@ class NeonGameEngine {
     // Countdown Timers for Auto-Close
     this.levelUpTimer = null;
     this.rouletteTimer = null;
-    this.rouletteRunning = false;
-    this.pendingRoulettes = 0;
+    this.relicFloatTimer = null;
+    this.floatingActive = false;
+    this.floatingQueue = [];
     this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') === 'true');
     this.lastMagnetTriggerSecond = 0;
     this.lowEffectEnabled = (localStorage.getItem('neon_low_effect') === 'true');
@@ -187,6 +188,18 @@ class NeonGameEngine {
       const preventProp = (e) => e.stopPropagation();
       ['click', 'mousedown', 'mouseup', 'mousemove', 'touchstart', 'touchmove', 'touchend'].forEach(evt => {
         this.rouletteScreen.addEventListener(evt, preventProp);
+      });
+    }
+
+    this.relicFloatingWindow = document.getElementById('relic-floating-window');
+    this.relicFloatCloseBtn = document.getElementById('relic-float-close-btn');
+    if (this.relicFloatCloseBtn) {
+      this.relicFloatCloseBtn.addEventListener('click', () => this.resumeFloatingRelicUpgrade());
+    }
+    if (this.relicFloatingWindow) {
+      const preventProp = (e) => e.stopPropagation();
+      ['click', 'mousedown', 'mouseup', 'mousemove', 'touchstart', 'touchmove', 'touchend'].forEach(evt => {
+        this.relicFloatingWindow.addEventListener(evt, preventProp);
       });
     }
 
@@ -759,8 +772,15 @@ class NeonGameEngine {
       clearInterval(this.rouletteTimer);
       this.rouletteTimer = null;
     }
-    this.rouletteRunning = false;
-    this.pendingRoulettes = 0;
+    if (this.relicFloatTimer) {
+      clearInterval(this.relicFloatTimer);
+      this.relicFloatTimer = null;
+    }
+    if (this.relicFloatingWindow) {
+      this.relicFloatingWindow.classList.add('hidden');
+    }
+    this.floatingActive = false;
+    this.floatingQueue = [];
 
     // Reset Developer Mode State
     this.godMode = false;
@@ -2262,90 +2282,107 @@ class NeonGameEngine {
         name: 'HP全回復',
         emoji: '🧪',
         badge: '消耗品',
-        cardClass: 'stat-buff',
-        description: '体力を最大まで回復し、戦闘態勢を立て直します。',
-        levelText: 'MAX HEAL'
-      });
+        cardClass: 'stat-buf  enqueueFloatingWindow(triggerFn) {
+    if (!this.floatingQueue) {
+      this.floatingQueue = [];
     }
-    return choices;
+    if (this.floatingActive) {
+      this.floatingQueue.push(triggerFn);
+      return;
+    }
+    this.floatingActive = true;
+    gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
+    triggerFn();
   }
 
-  applyUpgrade(opt) {
-    if (opt.type === 'weapon_new') {
-      this.player.weapons.push(opt.instance);
-    } else if (opt.type === 'weapon_upgrade') {
-      opt.instance.upgrade();
-    } else if (opt.type === 'passive') {
-      opt.instance.upgrade(this.player);
-    } else if (opt.type === 'heal') {
-      this.player.hp = this.player.maxHp;
-    } else if (opt.type === 'weapon_evolution') {
-      opt.instance.isEvolved = true;
-      opt.instance.level = 7;
-      opt.instance.name = opt.evolvedName;
-      opt.instance.emoji = opt.evolvedEmoji;
-      
-      // Special evolution effects
-      this.triggerScreenShake(30, 15.0);
-      this.flashOpacity = 1.0;
-      this.flashColorOverride = 'rgba(255, 230, 0, 0.8)'; // Golden flash
-      gameAudio.playCollect();
-      
-      // Spawn flashy golden particles
-      const particleColors = ['#fffb00', '#ffffff', '#00f0ff', '#b026ff'];
-      for (let i = 0; i < 60; i++) {
-        const speed = Math.random() * 5 + 2;
-        const p = new Particle(this.player.x, this.player.y, particleColors[i % particleColors.length], speed);
-        this.particles.push(p);
-      }
-      
-      // Floaty text
-      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `+${opt.name} EVOLVED+`, true, '#fffb00', 16));
-    }
-    this.syncDevPanel();
-  }
-
-  resumeGame() {
-    if (this.levelUpTimer) {
-      clearInterval(this.levelUpTimer);
-      this.levelUpTimer = null;
-    }
-    this.currentUpgrades = null;
-    this.levelUpScreen.classList.add('hidden');
-    const relicScreen = document.getElementById('relic-choice-screen');
-    if (relicScreen) relicScreen.classList.add('hidden');
-    this.state = 'PLAYING';
+  closeFloatingWindow() {
+    this.floatingActive = false;
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
-    this.lastTime = performance.now();
-    requestAnimationFrame((timestamp) => this.loop(timestamp));
+    if (this.floatingQueue && this.floatingQueue.length > 0) {
+      const nextFn = this.floatingQueue.shift();
+      setTimeout(() => {
+        this.floatingActive = true;
+        gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
+        nextFn();
+      }, 300);
+    }
   }
 
-  triggerScreenWideMagnet() {
-    // 1. Attract all experience gems, jewels, and chests
-    if (this.gems) {
-      this.gems.forEach(gem => gem.isAttracted = true);
-    }
-    if (this.jewels) {
-      this.jewels.forEach(jewel => jewel.isAttracted = true);
-    }
-    if (this.relicChests) {
-      this.relicChests.forEach(chest => chest.isAttracted = true);
-    }
+  startFloatingRelicUpgrade(relic, randomPassive) {
+    const emojiEl = document.getElementById('relic-float-emoji');
+    const nameEl = document.getElementById('relic-float-name');
+    const levelEl = document.getElementById('relic-float-level');
+    const descEl = document.getElementById('relic-float-desc');
+    const closeBtn = document.getElementById('relic-float-close-btn');
+    const windowTitle = this.relicFloatingWindow ? this.relicFloatingWindow.querySelector('.neon-title') : null;
+    const windowTagline = this.relicFloatingWindow ? this.relicFloatingWindow.querySelector('.tagline') : null;
 
-    // 2. Play SE for magnet trigger
-    gameAudio.playCollect();
-
-    // 3. Screen-wide flash (cyan neon color glow)
-    this.flashOpacity = 0.6;
-    this.flashColorOverride = 'rgba(0, 240, 255, 0.4)'; // Neon Cyan flash
-
-    // 4. Spawn floaty text (ALL MAGNET!) and particles
-    if (this.player) {
-      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 40, "ALL MAGNET!", true, '#00f0ff', 15));
-      for (let i = 0; i < 30; i++) {
-        this.player.spawnParticles(this.player.x, this.player.y, '#00f0ff', 1.2, 2);
+    if (relic) {
+      if (windowTitle) {
+        windowTitle.innerText = "RELIC UPGRADED!";
+        windowTitle.style.color = "var(--neon-cyan)";
+        windowTitle.style.textShadow = "0 0 12px var(--neon-cyan), 0 0 24px rgba(0, 240, 255, 0.4)";
       }
+      if (windowTagline) {
+        windowTagline.innerText = "所持している遺物が自動過給されました";
+      }
+      
+      const currentLvl = this.player.relicLevels ? (this.player.relicLevels[relic.id] || 1) : 1;
+      
+      if (emojiEl) emojiEl.innerText = relic.emoji;
+      if (nameEl) nameEl.innerText = relic.name;
+      if (levelEl) levelEl.innerText = `Lv ${currentLvl - 1} ➜ Lv ${currentLvl}`;
+      if (descEl) descEl.innerText = this.getRelicDynamicDescription(relic.id, currentLvl);
+    } else if (randomPassive) {
+      if (windowTitle) {
+        windowTitle.innerText = "RELIC MAX BONUS";
+        windowTitle.style.color = "var(--neon-yellow)";
+        windowTitle.style.textShadow = "0 0 12px var(--neon-yellow), 0 0 24px rgba(255, 251, 0, 0.4)";
+      }
+      if (windowTagline) {
+        windowTagline.innerText = "すべての遺物が最大のためパッシブが過給されました";
+      }
+      
+      if (emojiEl) emojiEl.innerText = randomPassive.emoji;
+      if (nameEl) nameEl.innerText = randomPassive.name;
+      if (levelEl) levelEl.innerText = `Lv ${randomPassive.level - 1} ➜ Lv ${randomPassive.level}`;
+      if (descEl) descEl.innerText = randomPassive.getDescription();
     }
+
+    gameAudio.playLevelUp();
+
+    if (this.relicFloatingWindow) {
+      this.relicFloatingWindow.classList.remove('hidden');
+    }
+
+    let timeLeft = 3;
+    if (closeBtn) {
+      closeBtn.innerText = `閉じる (自動クローズまで ${timeLeft}秒)`;
+    }
+
+    if (this.relicFloatTimer) clearInterval(this.relicFloatTimer);
+    this.relicFloatTimer = setInterval(() => {
+      timeLeft--;
+      if (closeBtn) {
+        closeBtn.innerText = `閉じる (自動クローズまで ${timeLeft}秒)`;
+      }
+      if (timeLeft <= 0) {
+        clearInterval(this.relicFloatTimer);
+        this.relicFloatTimer = null;
+        this.resumeFloatingRelicUpgrade();
+      }
+    }, 1000);
+  }
+
+  resumeFloatingRelicUpgrade() {
+    if (this.relicFloatTimer) {
+      clearInterval(this.relicFloatTimer);
+      this.relicFloatTimer = null;
+    }
+    if (this.relicFloatingWindow) {
+      this.relicFloatingWindow.classList.add('hidden');
+    }
+    this.closeFloatingWindow();
   }
 
   triggerRelicChoice() {
@@ -2371,132 +2408,81 @@ class NeonGameEngine {
       return;
     }
 
+    const hasThreeRelics = (this.player.relics && this.player.relics.length >= 3);
+
+    if (hasThreeRelics) {
+      const choices = RELIC_POOL.filter(relic => this.player.relics.includes(relic.id) && (this.player.relicLevels[relic.id] || 1) < 5);
+
+      if (choices.length === 0) {
+        const upgradablePassives = this.player.passives.filter(p => p.level > 0 && p.level < 5);
+        if (upgradablePassives.length === 0) {
+          return;
+        }
+        
+        const randomPassive = upgradablePassives[Math.floor(Math.random() * upgradablePassives.length)];
+        randomPassive.upgrade(this.player);
+        
+        for (let i = 0; i < 20; i++) {
+          this.player.spawnParticles(this.player.x, this.player.y, '#ffe600', 1.0, 1);
+        }
+        this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${randomPassive.emoji} PASSIVE UPGRADED!`, true, '#ffe600', 13));
+
+        this.enqueueFloatingWindow(() => this.startFloatingRelicUpgrade(null, randomPassive));
+        return;
+      }
+
+      const randomRelic = choices[Math.floor(Math.random() * choices.length)];
+      if (!this.player.relicLevels) {
+        this.player.relicLevels = {};
+      }
+      this.player.relicLevels[randomRelic.id] = Math.min(5, (this.player.relicLevels[randomRelic.id] || 1) + 1);
+
+      if (randomRelic.id === 'IronBulwark') {
+        const lvl = this.player.relicLevels['IronBulwark'];
+        const shieldCap = this.player.maxHp * (0.15 + (lvl - 1) * 0.05);
+        this.player.shield = shieldCap;
+      }
+
+      for (let i = 0; i < 20; i++) {
+        this.player.spawnParticles(this.player.x, this.player.y, '#ffe600', 1.0, 1);
+      }
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${randomRelic.emoji} RELIC UPGRADED!`, true, '#ffe600', 13));
+
+      this.enqueueFloatingWindow(() => this.startFloatingRelicUpgrade(randomRelic, null));
+      return;
+    }
+
     this.state = 'RELIC_CHOICE';
     gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     gameAudio.playLevelUp(); // Play safe chime
 
-    // Show Relic Screen Modal
     const screen = document.getElementById('relic-choice-screen');
     const container = document.getElementById('relic-options');
     container.innerHTML = '';
 
-    // Check if player already has 3 relics
-    const hasThreeRelics = (this.player.relics && this.player.relics.length >= 3);
-
-    let choices = [];
-    if (hasThreeRelics) {
-      // Prompt upgrade for currently owned relics that are not yet Lv5
-      choices = RELIC_POOL.filter(relic => this.player.relics.includes(relic.id) && (this.player.relicLevels[relic.id] || 1) < 5);
-    } else {
-      // Prompt discovery of new relics
-      const availableRelics = RELIC_POOL.filter(relic => !this.player.relics.includes(relic.id));
-      const shuffled = availableRelics.sort(() => 0.5 - Math.random());
-      choices = shuffled.slice(0, Math.min(3, shuffled.length));
-    }
-
-    // すべてのレリックがLv5に達している状態
-    if (hasThreeRelics && choices.length === 0) {
-      // 所持している（レベルが1以上）かつ最大レベル未満（5未満）のパッシブスキルを抽出
-      const upgradablePassives = this.player.passives.filter(p => p.level > 0 && p.level < 5);
-      
-      if (upgradablePassives.length === 0) {
-        // パッシブを所持していない、あるいはすべて最大レベル
-        this.resumeGame();
-        return;
-      }
-      
-      // ランダムに1つ選択してレベルアップ
-      const randomPassive = upgradablePassives[Math.floor(Math.random() * upgradablePassives.length)];
-      randomPassive.upgrade(this.player);
-      
-      gameAudio.playLevelUp(); // レベルアップ効果音
-      
-      // リワード表示
-      const screen = document.getElementById('relic-choice-screen');
-      const container = document.getElementById('relic-options');
-      if (screen && container) {
-        screen.classList.remove('hidden');
-        container.innerHTML = `
-          <div style="text-align: center; padding: 30px; font-family: var(--font-retro); color: var(--neon-yellow); width: 100%;">
-            <div style="font-size: 20px; margin-bottom: 15px; text-shadow: 0 0 10px var(--neon-yellow); letter-spacing: 2px;">⚡ RELIC MAX BONUS ⚡</div>
-            <div style="font-size: 13px; color: #fff; margin-bottom: 20px;">すべてのレリックがLv5に達しました！</div>
-            <div style="font-size: 48px; margin-bottom: 15px; filter: drop-shadow(0 0 10px var(--neon-cyan));">${randomPassive.emoji}</div>
-            <div style="font-size: 22px; color: var(--neon-cyan); margin-bottom: 8px;">${randomPassive.name}</div>
-            <div style="font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 15px;">Level ${randomPassive.level} にアップグレード！</div>
-            <div style="font-size: 11px; color: var(--neon-yellow); font-style: italic;">${randomPassive.getDescription()}</div>
-          </div>
-        `;
-      }
-      
-      // 1秒後に自動でゲームを再開
-      setTimeout(() => {
-        this.resumeGame();
-      }, 1000);
-      return;
-    }
+    const availableRelics = RELIC_POOL.filter(relic => !this.player.relics.includes(relic.id));
+    const shuffled = availableRelics.sort(() => 0.5 - Math.random());
+    const choices = shuffled.slice(0, Math.min(3, shuffled.length));
 
     if (choices.length === 0) {
       this.resumeGame();
       return;
     }
 
-    // Update description text based on state
     const descText = screen.querySelector('.level-up-desc');
     if (descText) {
-      if (hasThreeRelics) {
-        descText.innerText = '装備済みの遺物のエネルギーが高まっている。1つを過給（レベルアップ）せよ。';
-      } else {
-        descText.innerText = 'エリートを打ち破り、未知の遺物を手に入れた。1つを選択せよ（最大3個）';
-      }
+      descText.innerText = 'エリートを打ち破り、未知の遺物を手に入れた。1つを選択せよ（最大3個）';
     }
 
     choices.forEach(relic => {
       const card = document.createElement('div');
       card.className = 'relic-card';
       
-      const currentLvl = this.player.relicLevels ? (this.player.relicLevels[relic.id] || 1) : 1;
-      const nextLvl = currentLvl + 1;
-      let levelBadgeHtml = '';
-      let upgradeDescHtml = '';
-      
-      if (hasThreeRelics) {
-        levelBadgeHtml = `<div class="card-level-indicator" style="position: absolute; bottom: 8px; right: 12px; font-family: var(--font-retro); font-size: 9px; color: var(--neon-cyan);">L${currentLvl} ➜ L${nextLvl}</div>`;
-        let upgradeText = '';
-        switch (relic.id) {
-          case 'IronBulwark':
-            upgradeText = `シールド上限: ${15 + (nextLvl - 1) * 5}% / ダメージ: +${25 + (nextLvl - 1) * 10}%`;
-            break;
-          case 'VolatileInk':
-            upgradeText = `爆発ダメ: ${15 + (nextLvl - 1) * 5}% / 半径: ${90 + (nextLvl - 1) * 20}px`;
-            break;
-          case 'PrismaticLens':
-            upgradeText = `敵被ダメージ: +${15 + (nextLvl - 1) * 10}%`;
-            break;
-          case 'RuinedCodex':
-            upgradeText = `2回連続発動確率: ${12 + (nextLvl - 1) * 6}%`;
-            break;
-          case 'NeonAnchor':
-            upgradeText = `蓄積: 秒間+${20 + (nextLvl - 1) * 5}% (最大+${100 + (nextLvl - 1) * 25}%)`;
-            break;
-          case 'TacticalCoil':
-            upgradeText = `衝突ダメージ伝達: ${Math.min(100, 80 + (nextLvl - 1) * 10)}%`;
-            break;
-          case 'VitalityOfPower':
-            upgradeText = `最大ダメージ上昇: +${30 + (nextLvl - 1) * 15}%`;
-            break;
-        }
-        if (upgradeText) {
-          upgradeDescHtml = `<div class="relic-card-upgrade-info" style="font-size: 10px; color: var(--neon-yellow); margin-top: 6px; border-top: 1px dashed rgba(255,230,0,0.3); padding-top: 4px;">UPGRADE ➜ ${upgradeText}</div>`;
-        }
-      }
-
       card.innerHTML = `
         <div class="relic-card-icon">${relic.emoji}</div>
         <div class="relic-card-name">${relic.name}</div>
         <p class="relic-card-desc">${relic.description}</p>
         <div class="relic-card-synergy">${relic.synergy}</div>
-        ${upgradeDescHtml}
-        ${levelBadgeHtml}
       `;
 
       card.addEventListener('click', () => {
@@ -2507,30 +2493,14 @@ class NeonGameEngine {
           this.player.relicLevels = {};
         }
 
-        if (hasThreeRelics) {
-          // Upgrade existing relic (capped at Lv5)
-          this.player.relicLevels[relic.id] = Math.min(5, (this.player.relicLevels[relic.id] || 1) + 1);
-          
-          // Instant upgrade effect trigger
-          if (relic.id === 'IronBulwark') {
-            const lvl = this.player.relicLevels['IronBulwark'];
-            const shieldCap = this.player.maxHp * (0.15 + (lvl - 1) * 0.05);
-            this.player.shield = shieldCap; // Refill up to new cap
-          }
-          
-          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${relic.emoji} RELIC UPGRADED!`, true, '#ffe600', 13));
-        } else {
-          // Obtain new relic
-          this.player.relics.push(relic.id);
-          this.player.relicLevels[relic.id] = 1;
-          
-          if (relic.id === 'IronBulwark') {
-            this.player.shield = this.player.maxHp * 0.15;
-          }
-          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${relic.emoji} RELIC ACQUIRED!`, true, '#ffe600', 13));
+        this.player.relics.push(relic.id);
+        this.player.relicLevels[relic.id] = 1;
+        
+        if (relic.id === 'IronBulwark') {
+          this.player.shield = this.player.maxHp * 0.15;
         }
+        this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 25, `${relic.emoji} RELIC ACQUIRED!`, true, '#ffe600', 13));
 
-        // Particle burst
         for (let i = 0; i < 20; i++) {
           this.player.spawnParticles(this.player.x, this.player.y, '#ffe600', 1.0, 1);
         }
@@ -2544,14 +2514,11 @@ class NeonGameEngine {
     screen.classList.remove('hidden');
   }
 
-  async triggerJewelLottery(isQueued = false) {
-    if (!isQueued && this.rouletteRunning) {
-      this.pendingRoulettes = (this.pendingRoulettes || 0) + 1;
-      return;
-    }
-    this.rouletteRunning = true;
-    gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
-    
+  triggerJewelLottery() {
+    this.enqueueFloatingWindow(() => this.startJewelLottery());
+  }
+
+  async startJewelLottery() {
     // Reset UI
     const spinner = document.getElementById('roulette-spinner');
     const itemName = document.getElementById('roulette-item-name');
@@ -2748,19 +2715,11 @@ class NeonGameEngine {
       clearInterval(this.rouletteTimer);
       this.rouletteTimer = null;
     }
-    if (this.pendingRoulettes && this.pendingRoulettes > 0) {
-      this.pendingRoulettes--;
-      this.rouletteScreen.classList.add('hidden');
-      setTimeout(() => {
-        this.triggerJewelLottery(true);
-      }, 300);
-      return;
-    }
     this.rouletteScreen.classList.add('hidden');
-    this.rouletteRunning = false;
     this.state = 'PLAYING';
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
+    this.closeFloatingWindow();
   }
 
   toggleTheme() {
@@ -2794,7 +2753,7 @@ class NeonGameEngine {
       gameAudio.muted = false;
       this.lastNonZeroVolume = val;
       if (this.bgmVolumeLabel) this.bgmVolumeLabel.innerText = '🔊 BGM';
-      const isDimmedState = this.state === 'LEVEL_UP' || this.state === 'REVIVING' || this.rouletteRunning;
+      const isDimmedState = this.state === 'LEVEL_UP' || this.state === 'REVIVING' || this.floatingActive;
       const volume = isDimmedState ? Math.min(0.05, val / 100) : (val / 100);
       gameAudio.setBGMVolume(volume);
     }
@@ -3107,12 +3066,19 @@ class NeonGameEngine {
     if (this.rouletteScreen) {
       this.rouletteScreen.classList.add('hidden');
     }
+    if (this.relicFloatingWindow) {
+      this.relicFloatingWindow.classList.add('hidden');
+    }
     if (this.rouletteTimer) {
       clearInterval(this.rouletteTimer);
       this.rouletteTimer = null;
     }
-    this.rouletteRunning = false;
-    this.pendingRoulettes = 0;
+    if (this.relicFloatTimer) {
+      clearInterval(this.relicFloatTimer);
+      this.relicFloatTimer = null;
+    }
+    this.floatingActive = false;
+    this.floatingQueue = [];
     this.gameOverScreen.classList.remove('hidden');
 
     const mins = Math.floor(this.elapsedTime / 60000);

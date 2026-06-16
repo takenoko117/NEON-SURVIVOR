@@ -241,6 +241,26 @@
 
       <button id="roulette-claim-btn" class="neon-button disabled" style="margin-top: 10px; width: 100%; border-color: var(--text-muted); color: var(--text-muted); box-shadow: none; pointer-events: none; padding: 6px 12px; font-size: 11px;">抽選中...</button>
     </div>
+ 
+    <!-- Relic Upgrade Floating Window (doesn't pause game, bottom-right) -->
+    <div id="relic-floating-window" class="glow-panel hidden" style="position: absolute; bottom: 20px; right: 20px; width: 280px; z-index: 8; text-align: center; padding: 15px; border-color: var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1); display: flex; flex-direction: column; align-items: center; box-sizing: border-box;">
+      <h2 class="neon-title" style="color: var(--neon-cyan); text-shadow: 0 0 12px var(--neon-cyan), 0 0 24px rgba(0, 240, 255, 0.4); font-size: 18px; margin: 0 0 2px 0;">RELIC UPGRADED!</h2>
+      <p class="tagline" style="font-size: 10px; margin: 0 0 10px 0; opacity: 0.8; color: var(--text-muted);">遺物が自動過給されました</p>
+      
+      <!-- Relic Display Box -->
+      <div style="margin: 5px 0; padding: 15px; background: rgba(6, 7, 13, 0.95); border: 2px solid var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 110px; width: 100%; box-sizing: border-box;">
+        <div id="relic-float-emoji" style="font-size: 36px; margin-bottom: 8px; height: 44px; line-height: 44px;">❓</div>
+        <div id="relic-float-name" style="font-family: var(--font-retro); font-size: 12px; color: var(--neon-yellow); text-shadow: 0 0 6px var(--neon-yellow); min-height: 16px;">READY...</div>
+        <div id="relic-float-level" style="font-family: var(--font-retro); font-size: 10px; color: var(--neon-pink); margin-top: 4px;">Lv 1 ➜ Lv 2</div>
+      </div>
+
+      <!-- Relic Description / Details -->
+      <div id="relic-float-desc-box" style="margin-top: 10px; width: 100%; text-align: left; background: rgba(13, 15, 30, 0.6); padding: 10px; border-radius: 6px; border: 1px solid var(--text-muted); box-sizing: border-box;">
+        <div id="relic-float-desc" style="font-family: var(--font-ui); font-size: 11px; color: #fff; line-height: 1.4;"></div>
+      </div>
+
+      <button id="relic-float-close-btn" class="neon-button" style="margin-top: 10px; width: 100%; border-color: var(--neon-green); color: var(--neon-green); box-shadow: 0 0 15px rgba(57, 255, 20, 0.3); padding: 6px 12px; font-size: 11px;">閉じる (自動クローズまで 3秒)</button>
+    </div>
 
     <!-- Game Over / Victory Overlay -->
     <div id="game-over-screen" class="overlay menu-screen hidden">
