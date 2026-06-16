@@ -2147,7 +2147,7 @@ class Enemy {
     this.lastHitDamage = 0;
     
     // 20% chance to spawn with custom image for minor enemies (non-bosses)
-    this.useImage = (type !== 'boss' && type !== 'boss2') && (Math.random() < 0.20) && !isElite;
+    this.useImage = (type !== 'boss' && type !== 'boss2' && type !== 'big_boss') && (Math.random() < 0.20) && !isElite;
 
     // Configure properties based on enemy type
     switch (type) {
@@ -2246,6 +2246,16 @@ class Enemy {
         this.chargeAlertFrames = 0;
         this.chargeDuration = 0;
         this.chargeDirection = { x: 0, y: 0 };
+        break;
+      case 'big_boss':
+        this.name = "オメガ・デストロイヤー (BIG BOSS)";
+        this.radius = 80;
+        this.speed = 0.55;
+        this.maxHp = 100000000; // 100 million HP flat
+        this.damage = 100;
+        this.color = '#ff0033'; // neon crimson
+        this.expValue = 9999;
+        this.sides = 10;
         break;
       case 'wyrm':
         this.name = "ネオン・ワーム";
@@ -2782,6 +2792,10 @@ class Enemy {
       const hue = (this.animationTimer * 20) % 360;
       strokeStyle = `hsl(${hue}, 100%, 50%)`;
       this.color = strokeStyle;
+    } else if (this.type === 'big_boss' && this.hitTimer <= 0) {
+      const intensity = 65 + Math.sin(this.animationTimer * 8) * 25;
+      strokeStyle = `hsl(350, 100%, ${intensity}%)`;
+      this.color = strokeStyle;
     }
     
     // Draw custom image for minor enemies if active, otherwise fallback to polygon shapes
@@ -2990,8 +3004,8 @@ class Enemy {
         }
         ctx.closePath();
         ctx.strokeStyle = strokeStyle;
-        ctx.lineWidth = this.type === 'boss' ? 4 : 2;
-        ctx.shadowBlur = this.type === 'boss' ? 18 : 8;
+        ctx.lineWidth = (this.type === 'boss' || this.type === 'big_boss') ? 4 : 2;
+        ctx.shadowBlur = (this.type === 'boss' || this.type === 'big_boss') ? 18 : 8;
         ctx.shadowColor = this.color;
         ctx.stroke();
       }

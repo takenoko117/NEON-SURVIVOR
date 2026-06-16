@@ -386,6 +386,17 @@ class NeonGameEngine {
       }
     });
 
+    // Skip to 10m (9m 59s)
+    this.devSkip10mBtn = document.getElementById('dev-skip-10m-btn');
+    if (this.devSkip10mBtn) {
+      this.devSkip10mBtn.addEventListener('click', () => {
+        if (this.state === 'PLAYING') {
+          this.elapsedTime = 599000;
+          this.updateHUD(Math.floor(this.elapsedTime / 1000));
+        }
+      });
+    }
+
     // Freeze spawn
     this.devFreezeSpawn = document.getElementById('dev-freeze-spawn');
     this.devFreezeSpawn.addEventListener('change', () => {
@@ -726,6 +737,7 @@ class NeonGameEngine {
     this.shakeDuration = 0;
     this.shakeIntensity = 0;
     this.bossSpawned = false;
+    this.bigBossSpawned = false;
     this.flashOpacity = 0;
     this.flashColorOverride = null;
     this.shockwaveRadius = 0;
@@ -945,6 +957,12 @@ class NeonGameEngine {
     if (currentSecs >= this.totalGameDuration && !this.bossSpawned) {
       this.bossSpawned = true;
       this.spawnBoss();
+    }
+
+    // 10 minutes Big Boss spawn
+    if (currentSecs >= 600 && !this.bigBossSpawned) {
+      this.bigBossSpawned = true;
+      this.spawnBigBoss();
     }
 
     // Process inputs and move player
@@ -1384,6 +1402,23 @@ class NeonGameEngine {
     return boss2;
   }
 
+  spawnBigBoss() {
+    this.triggerScreenShake(60, 15);
+    
+    // Clear all normal enemies so player can face the BIG BOSS in a clean field
+    this.enemies = this.enemies.filter(e => e.type === 'boss' || e.type === 'boss2' || e.type === 'big_boss');
+    
+    const angle = Math.random() * Math.PI * 2;
+    const x = this.player.x + Math.cos(angle) * 200; // spawn closer (200px) so it's instantly visible
+    const y = this.player.y + Math.sin(angle) * 200;
+    const bigBoss = new Enemy(x, y, 'big_boss', 1.0);
+    this.enemies.push(bigBoss);
+    
+    gameAudio.playHellMode();
+    this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 60, "★ OMEGA DESTROYER (BIG BOSS) ENTERS! ★", true, "#ff0033", 22));
+    this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 35, "HP: 100,000,000", false, "#ff5555", 14));
+  }
+
   spawnEliteEnemy() {
     this.triggerScreenShake(10, 4.0);
     const angle = Math.random() * Math.PI * 2;
@@ -1570,7 +1605,7 @@ class NeonGameEngine {
         this.gems.push(new Gem(enemy.x, enemy.y, enemy.expValue));
 
         // Configurable chance to drop a special upgrade jewel (chest), or guaranteed for bosses
-        const isBoss = enemy.type === 'boss' || enemy.type === 'boss2';
+        const isBoss = enemy.type === 'boss' || enemy.type === 'boss2' || enemy.type === 'big_boss';
         if (isBoss || Math.random() < this.chestDropChance) {
           this.jewels.push(new Jewel(enemy.x, enemy.y));
         }
@@ -1590,6 +1625,11 @@ class NeonGameEngine {
           if (!this.hellMode) {
             this.enterHellMode();
           }
+        }
+        // Check if big_boss defeated -> Victory!
+        if (enemy.type === 'big_boss') {
+          this.state = 'VICTORY';
+          gameAudio.stopBGM();
         }
         return false;
       }
@@ -3097,7 +3137,7 @@ class NeonGameEngine {
       titleEl.innerText = "VICTORY!";
       titleEl.style.color = '#fffb00';
       titleEl.style.textShadow = '0 0 15px #fffb00, 0 0 30px rgba(255, 251, 0, 0.5)';
-      msgEl.innerText = "ネオ・ネメシスを撃破した！世界はまばゆい光に満たされた！";
+      msgEl.innerText = "オメガ・デストロイヤー (BIG BOSS) を撃破した！ネオンの世界に真の平和が訪れた！";
     } else if (this.hellMode) {
       titleEl.innerText = "HELL VANQUISHED";
       titleEl.style.color = '#ff3300';
