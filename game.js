@@ -684,6 +684,7 @@ class NeonGameEngine {
     this.state = 'PLAYING';
     this.elapsedTime = 0;
     this.goldEarnedDuringRun = 0;
+    this.reviveChargeTimer = 0;
     this.lastMagnetTriggerSecond = 0;
     this.spawnTimer = 0;
     this.enemyScaleMultiplier = 1.0;
@@ -814,6 +815,27 @@ class NeonGameEngine {
   update(dt) {
     this.elapsedTime += dt;
     const currentSecs = Math.floor(this.elapsedTime / 1000);
+
+    // Update revive charge timer
+    if (this.player && this.player.revivesRemaining < 1) {
+      this.reviveChargeTimer = (this.reviveChargeTimer || 0) + dt;
+      if (this.reviveChargeTimer >= 120000) { // 2 minutes
+        this.player.revivesRemaining = 1;
+        this.reviveChargeTimer = 0;
+        
+        gameAudio.playLevelUp();
+        if (this.damageNumbers) {
+          this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, "REVIVE CHARGED!", true, '#39ff14', 16));
+        }
+        for (let i = 0; i < 20; i++) {
+          const speed = Math.random() * 4 + 2;
+          const p = new Particle(this.player.x, this.player.y, '#39ff14', speed);
+          this.particles.push(p);
+        }
+      }
+    } else {
+      this.reviveChargeTimer = 0;
+    }
 
     // Trigger screen-wide magnet attraction every 60 seconds (1 minute)
     if (currentSecs > 0 && currentSecs >= this.lastMagnetTriggerSecond + 60) {
@@ -2790,6 +2812,22 @@ class NeonGameEngine {
 
     // Kills value
     document.getElementById('hud-kills').innerText = this.player.kills;
+
+    // Revive Status value
+    const reviveStatusEl = document.getElementById('hud-revive-status');
+    if (reviveStatusEl) {
+      if (this.player.revivesRemaining >= 1) {
+        reviveStatusEl.innerText = "READY";
+        reviveStatusEl.style.color = "var(--neon-green)";
+      } else {
+        const remainingMs = Math.max(0, 120000 - (this.reviveChargeTimer || 0));
+        const remSecsTotal = Math.ceil(remainingMs / 1000);
+        const remMins = Math.floor(remSecsTotal / 60);
+        const remSecs = remSecsTotal % 60;
+        reviveStatusEl.innerText = `CHARGE: ${remMins.toString().padStart(2, '0')}:${remSecs.toString().padStart(2, '0')}`;
+        reviveStatusEl.style.color = "var(--neon-cyan)";
+      }
+    }
 
     // Draw weapons in slots (max 4)
     const wSlotsContainer = document.getElementById('hud-weapon-slots');
