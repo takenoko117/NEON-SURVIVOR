@@ -1722,9 +1722,8 @@ class Player {
     this.relics = [];
     this.relicLevels = {};
     this.shield = 0;
-    this.stationaryFrames = 0;
-    this.lastX = x;
-    this.lastY = y;
+    this.anchorFrames = 0;
+    this.anchorCircle = null;
 
     // Core stats modifiable by passives
     const self = this;
@@ -1752,12 +1751,12 @@ class Player {
           mult *= (1.25 + (lvl - 1) * 0.10);
         }
         
-        // Relic: Neon Anchor synergy (up to +100% damage when standing still, +25% max, +5% speed per level)
-        if (self.relics && self.relics.includes('NeonAnchor') && self.stationaryFrames > 0) {
+        // Relic: Neon Anchor synergy (up to +100% damage when staying in anchor circle, +25% max, +5% speed per level)
+        if (self.relics && self.relics.includes('NeonAnchor') && self.anchorFrames > 0) {
           const lvl = self.relicLevels ? (self.relicLevels['NeonAnchor'] || 1) : 1;
           const speed = 0.20 + (lvl - 1) * 0.05;
           const maxBuff = 1.00 + (lvl - 1) * 0.25;
-          const anchorSeconds = self.stationaryFrames / 60;
+          const anchorSeconds = self.anchorFrames / 60;
           const addedMult = Math.min(maxBuff, anchorSeconds * speed);
           mult *= (1.0 + addedMult);
         }
@@ -1938,15 +1937,32 @@ class Player {
   update(dt, enemies) {
     if (this.hitTimer > 0) this.hitTimer--;
 
-    // Update stationary timer for Neon Anchor
+    // Update anchor circle timer and check if player is inside for Neon Anchor
     if (this.relics && this.relics.includes('NeonAnchor')) {
-      if (this.lastX !== undefined && Math.abs(this.x - this.lastX) < 0.05 && Math.abs(this.y - this.lastY) < 0.05) {
-        this.stationaryFrames++;
-      } else {
-        this.stationaryFrames = 0;
+      if (!this.anchorCircle) {
+        this.anchorCircle = { x: this.x, y: this.y, radius: 60, timer: 0, duration: 5000 };
+        this.anchorFrames = 0;
       }
-      this.lastX = this.x;
-      this.lastY = this.y;
+      
+      this.anchorCircle.timer += dt;
+      if (this.anchorCircle.timer >= this.anchorCircle.duration) {
+        this.anchorCircle.timer = 0;
+        this.anchorCircle.x = this.x;
+        this.anchorCircle.y = this.y;
+      }
+      
+      const dx = this.x - this.anchorCircle.x;
+      const dy = this.y - this.anchorCircle.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      
+      if (dist <= this.anchorCircle.radius) {
+        this.anchorFrames++;
+      } else {
+        this.anchorFrames = 0;
+      }
+    } else {
+      this.anchorCircle = null;
+      this.anchorFrames = 0;
     }
 
     // HP regeneration tick (every 1 second)

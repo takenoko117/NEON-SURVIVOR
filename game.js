@@ -33,7 +33,7 @@ const RELIC_POOL = [
     id: 'NeonAnchor',
     name: 'ネオン・アンカー (Neon Anchor)',
     emoji: '⚓',
-    description: 'プレイヤーが立ち止まっている間、1秒ごとに全武器のダメージが+20%（最大+100%）累積する。動くとリセットされる。',
+    description: '5秒ごとに現在位置にサークル（自機5個分）が発生。サークル内にとどまる間、1秒ごとに全武器ダメージ+20%（最大+100%）累積する。',
     synergy: '🧄 ガーリックオーラ / 🔥 ファイアーロード と相性抜群'
   },
   {
@@ -1653,7 +1653,7 @@ class NeonGameEngine {
               dynamicDesc = `クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に${12 + (lvl - 1) * 6}%の確率で、その攻撃が2回連続で発動する。`;
               break;
             case 'NeonAnchor':
-              dynamicDesc = `プレイヤーが立ち止まっている間、1秒ごとに全武器のダメージが+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。動くとリセットされる。`;
+              dynamicDesc = `5秒ごとに現在位置にサークル（自機5個分）が発生。サークル内にとどまる間、1秒ごとに全武器ダメージ+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。`;
               break;
             case 'TacticalCoil':
               dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
@@ -2886,7 +2886,7 @@ class NeonGameEngine {
                 dynamicDesc = `クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に${12 + (lvl - 1) * 6}%の確率で、その攻撃が2回連続で発動する。`;
                 break;
               case 'NeonAnchor':
-                dynamicDesc = `プレイヤーが立ち止まっている間、1秒ごとに全武器のダメージが+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。動くとリセットされる。`;
+                dynamicDesc = `5秒ごとに現在位置にサークル（自機5個分）が発生。サークル内にとどまる間、1秒ごとに全武器ダメージ+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。`;
                 break;
               case 'TacticalCoil':
                 dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
@@ -2982,6 +2982,39 @@ class NeonGameEngine {
 
     // Draw background grid lines for techno/retro aesthetic
     this.drawGrid();
+
+    // Draw Neon Anchor Circle
+    if (this.player && this.player.relics && this.player.relics.includes('NeonAnchor') && this.player.anchorCircle) {
+      const circle = this.player.anchorCircle;
+      const isPlayerInside = this.player.anchorFrames > 0;
+      const baseColor = isPlayerInside ? '#00f0ff' : '#ff5e00';
+      const fillAlpha = isPlayerInside ? 0.08 : 0.03;
+      const strokeAlpha = isPlayerInside ? 0.4 : 0.15;
+      const pulse = 1.0 + Math.sin(performance.now() * 0.004) * 0.03;
+      
+      let drawCircle = true;
+      const timeLeft = circle.duration - circle.timer;
+      if (timeLeft < 1200) {
+        drawCircle = Math.floor(timeLeft / 150) % 2 === 0;
+      }
+      
+      if (drawCircle) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(circle.x, circle.y, circle.radius * pulse, 0, Math.PI * 2);
+        this.ctx.fillStyle = baseColor;
+        this.ctx.globalAlpha = fillAlpha;
+        this.ctx.fill();
+        
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = baseColor;
+        this.ctx.globalAlpha = strokeAlpha;
+        this.ctx.shadowColor = baseColor;
+        this.ctx.shadowBlur = 8;
+        this.ctx.stroke();
+        this.ctx.restore();
+      }
+    }
 
     // 1. Draw Experience Gems
     this.gems.forEach(gem => gem.draw(this.ctx));
