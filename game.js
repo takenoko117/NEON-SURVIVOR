@@ -2290,6 +2290,41 @@ class NeonGameEngine {
     return choices;
   }
 
+  applyUpgrade(opt) {
+    if (opt.type === 'weapon_new') {
+      this.player.weapons.push(opt.instance);
+    } else if (opt.type === 'weapon_upgrade') {
+      opt.instance.upgrade();
+    } else if (opt.type === 'passive') {
+      opt.instance.upgrade(this.player);
+    } else if (opt.type === 'heal') {
+      this.player.hp = this.player.maxHp;
+    } else if (opt.type === 'weapon_evolution') {
+      opt.instance.isEvolved = true;
+      opt.instance.level = 7;
+      opt.instance.name = opt.evolvedName;
+      opt.instance.emoji = opt.evolvedEmoji;
+      
+      // Special evolution effects
+      this.triggerScreenShake(30, 15.0);
+      this.flashOpacity = 1.0;
+      this.flashColorOverride = 'rgba(255, 230, 0, 0.8)'; // Golden flash
+      gameAudio.playCollect();
+      
+      // Spawn flashy golden particles
+      const particleColors = ['#fffb00', '#ffffff', '#00f0ff', '#b026ff'];
+      for (let i = 0; i < 60; i++) {
+        const speed = Math.random() * 5 + 2;
+        const p = new Particle(this.player.x, this.player.y, particleColors[i % particleColors.length], speed);
+        this.particles.push(p);
+      }
+      
+      // Floaty text
+      this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 30, `+${opt.name} EVOLVED+`, true, '#fffb00', 16));
+    }
+    this.syncDevPanel();
+  }
+
   enqueueFloatingWindow(triggerFn) {
     if (!this.floatingQueue) {
       this.floatingQueue = [];
