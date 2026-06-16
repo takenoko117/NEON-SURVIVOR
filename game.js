@@ -2282,7 +2282,15 @@ class NeonGameEngine {
         name: 'HP全回復',
         emoji: '🧪',
         badge: '消耗品',
-        cardClass: 'stat-buf  enqueueFloatingWindow(triggerFn) {
+        cardClass: 'stat-buff',
+        description: '体力を最大まで回復し、戦闘態勢を立て直します。',
+        levelText: 'MAX HEAL'
+      });
+    }
+    return choices;
+  }
+
+  enqueueFloatingWindow(triggerFn) {
     if (!this.floatingQueue) {
       this.floatingQueue = [];
     }
