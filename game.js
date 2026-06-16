@@ -1445,7 +1445,7 @@ class NeonGameEngine {
     
     gameAudio.playHellMode();
     this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 60, "★ OMEGA DESTROYER (BIG BOSS) ENTERS! ★", true, "#ff0033", 22));
-    this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 35, "HP: 100,000,000", false, "#ff5555", 14));
+    this.damageNumbers.push(new DamageNumber(this.player.x, this.player.y - 35, "HP: 1,000,000,000,000", false, "#ff5555", 14));
   }
 
   spawnEliteEnemy() {

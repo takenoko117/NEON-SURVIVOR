@@ -2249,9 +2249,9 @@ class Enemy {
         break;
       case 'big_boss':
         this.name = "オメガ・デストロイヤー (BIG BOSS)";
-        this.radius = 80;
+        this.radius = 800; // 10x size
         this.speed = 0.55;
-        this.maxHp = 100000000; // 100 million HP flat
+        this.maxHp = 1000000000000; // 1 trillion HP flat
         this.damage = 100;
         this.color = '#ff0033'; // neon crimson
         this.expValue = 9999;
