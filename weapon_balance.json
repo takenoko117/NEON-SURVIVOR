@@ -5,66 +5,13 @@
     "baseCooldown": 910,
     "cooldownGrowth": -0.078,
     "levels": [
-      {
-        "cooldownMult": 1,
-        "count": 1,
-        "pierce": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 2,
-        "pierce": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 3,
-        "pierce": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 3,
-        "pierce": 2,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.6,
-        "count": 5,
-        "pierce": 2,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.57,
-        "count": 6,
-        "pierce": 2,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.62,
-        "count": 7,
-        "pierce": 3,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.69,
-        "count": 8,
-        "pierce": 3,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.7,
-        "count": 8,
-        "pierce": 3,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.73,
-        "count": 18,
-        "pierce": 4,
-        "damageMult": 1
-      }
+      { "cooldownMult": 1, "count": 1, "pierce": 1, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 2, "pierce": 1, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 3, "pierce": 1, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 3, "pierce": 2, "damageMult": 1 },
+      { "cooldownMult": 0.6, "count": 5, "pierce": 2, "damageMult": 1 },
+      { "cooldownMult": 0.57, "count": 6, "pierce": 2, "damageMult": 1 },
+      { "cooldownMult": 0.73, "count": 18, "pierce": 4, "damageMult": 1 }
     ]
   },
   "GarlicAura": {
@@ -75,66 +22,13 @@
     "baseRadius": 88,
     "radiusGrowth": 0.27,
     "levels": [
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0
-      },
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0
-      },
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0
-      },
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0
-      },
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0.65
-      },
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0.65
-      },
-      {
-        "cooldownMult": 0.99,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0.65
-      },
-      {
-        "cooldownMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0.65
-      },
-      {
-        "cooldownMult": 1.01,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0.55
-      },
-      {
-        "cooldownMult": 0.98,
-        "radiusMult": 1,
-        "damageMult": 1,
-        "slowRatio": 0.4
-      }
+      { "cooldownMult": 1, "radiusMult": 1, "damageMult": 1, "slowRatio": 0 },
+      { "cooldownMult": 1, "radiusMult": 1, "damageMult": 1, "slowRatio": 0 },
+      { "cooldownMult": 1, "radiusMult": 1, "damageMult": 1, "slowRatio": 0 },
+      { "cooldownMult": 1, "radiusMult": 1, "damageMult": 1, "slowRatio": 0 },
+      { "cooldownMult": 1, "radiusMult": 1, "damageMult": 1, "slowRatio": 0.65 },
+      { "cooldownMult": 1, "radiusMult": 1, "damageMult": 1, "slowRatio": 0.65 },
+      { "cooldownMult": 0.98, "radiusMult": 1, "damageMult": 1, "slowRatio": 0.4 }
     ]
   },
   "SpinningScythe": {
@@ -147,80 +41,17 @@
     "baseSpeed": 0.081,
     "speedGrowth": 0.166,
     "levels": [
-      {
-        "cooldownMult": 1,
-        "count": 2,
-        "distanceMult": 1,
-        "speedMult": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 2,
-        "distanceMult": 1,
-        "speedMult": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 3,
-        "distanceMult": 1.06,
-        "speedMult": 1.05,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 3,
-        "distanceMult": 1,
-        "speedMult": 0.9,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 4,
-        "distanceMult": 0.94,
-        "speedMult": 0.81,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 5,
-        "distanceMult": 0.89,
-        "speedMult": 0.74,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 6,
-        "distanceMult": 0.88,
-        "speedMult": 0.9,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 6,
-        "distanceMult": 0.84,
-        "speedMult": 0.82,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 7,
-        "distanceMult": 0.8,
-        "speedMult": 0.76,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "count": 9,
-        "distanceMult": 0.82,
-        "speedMult": 0.79,
-        "damageMult": 1
-      }
+      { "cooldownMult": 1, "count": 1, "distanceMult": 1, "speedMult": 1, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 2, "distanceMult": 1, "speedMult": 1, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 3, "distanceMult": 1.06, "speedMult": 1.05, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 3, "distanceMult": 1, "speedMult": 0.9, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 4, "distanceMult": 0.94, "speedMult": 0.81, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 5, "distanceMult": 0.89, "speedMult": 0.74, "damageMult": 1 },
+      { "cooldownMult": 1, "count": 9, "distanceMult": 0.82, "speedMult": 0.79, "damageMult": 1 }
     ]
   },
   "BigSword": {
-    "baseDamage": 15,
+    "baseDamage": 25,
     "damageGrowth": 0.61,
     "baseCooldown": 450,
     "cooldownGrowth": -0.024,
@@ -229,76 +60,13 @@
     "baseWidth": 12,
     "widthGrowth": 0.22,
     "levels": [
-      {
-        "cooldownMult": 1,
-        "count": 1,
-        "lengthMult": 1,
-        "widthMult": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.01,
-        "count": 2,
-        "lengthMult": 0.91,
-        "widthMult": 0.96,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.02,
-        "count": 2,
-        "lengthMult": 0.98,
-        "widthMult": 1.04,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.04,
-        "count": 3,
-        "lengthMult": 0.92,
-        "widthMult": 0.99,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.05,
-        "count": 4,
-        "lengthMult": 1.01,
-        "widthMult": 1.06,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.07,
-        "count": 5,
-        "lengthMult": 1,
-        "widthMult": 1.01,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.88,
-        "count": 5,
-        "lengthMult": 0.99,
-        "widthMult": 0.99,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.92,
-        "count": 6,
-        "lengthMult": 0.99,
-        "widthMult": 0.99,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.94,
-        "count": 6,
-        "lengthMult": 0.99,
-        "widthMult": 0.99,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 0.97,
-        "count": 8,
-        "lengthMult": 1,
-        "widthMult": 1,
-        "damageMult": 1
-      }
+      { "cooldownMult": 1, "count": 1, "lengthMult": 1, "widthMult": 1, "damageMult": 1 },
+      { "cooldownMult": 1.01, "count": 2, "lengthMult": 0.91, "widthMult": 0.96, "damageMult": 1 },
+      { "cooldownMult": 1.02, "count": 2, "lengthMult": 0.98, "widthMult": 1.04, "damageMult": 1 },
+      { "cooldownMult": 1.04, "count": 3, "lengthMult": 0.92, "widthMult": 0.99, "damageMult": 1 },
+      { "cooldownMult": 1.05, "count": 4, "lengthMult": 1.01, "widthMult": 1.06, "damageMult": 1 },
+      { "cooldownMult": 1.07, "count": 5, "lengthMult": 1.0, "widthMult": 1.01, "damageMult": 1 },
+      { "cooldownMult": 0.97, "count": 8, "lengthMult": 1.00, "widthMult": 1.00, "damageMult": 1 }
     ]
   },
   "ThunderWave": {
@@ -309,76 +77,13 @@
     "baseRange": 650,
     "rangeGrowth": 0.018,
     "levels": [
-      {
-        "cooldownMult": 1,
-        "rangeMult": 1,
-        "damageMult": 1,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.99,
-        "rangeMult": 1,
-        "damageMult": 1.1,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.98,
-        "rangeMult": 1,
-        "damageMult": 1.2,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.96,
-        "rangeMult": 1,
-        "damageMult": 1.3,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.94,
-        "rangeMult": 1,
-        "damageMult": 1.4,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.92,
-        "rangeMult": 1,
-        "damageMult": 1.5,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.9,
-        "rangeMult": 1,
-        "damageMult": 1.6,
-        "waveCount": 1,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.81,
-        "rangeMult": 1,
-        "damageMult": 1.7,
-        "waveCount": 2,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.74,
-        "rangeMult": 1,
-        "damageMult": 1.8,
-        "waveCount": 2,
-        "maxAge": 75
-      },
-      {
-        "cooldownMult": 0.66,
-        "rangeMult": 1,
-        "damageMult": 2,
-        "waveCount": 3,
-        "maxAge": 75
-      }
+      { "cooldownMult": 1, "rangeMult": 1, "damageMult": 1, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.99, "rangeMult": 1, "damageMult": 1.1, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.98, "rangeMult": 1, "damageMult": 1.2, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.96, "rangeMult": 1, "damageMult": 1.3, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.94, "rangeMult": 1, "damageMult": 1.4, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.92, "rangeMult": 1, "damageMult": 1.5, "waveCount": 1, "maxAge": 75 },
+      { "cooldownMult": 0.66, "rangeMult": 1, "damageMult": 2.0, "waveCount": 3, "maxAge": 75 }
     ]
   },
   "FireRoad": {
@@ -391,66 +96,13 @@
     "baseRadius": 10,
     "radiusGrowth": 0.355,
     "levels": [
-      {
-        "cooldownMult": 1,
-        "lifetimeMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "lifetimeMult": 0.95,
-        "radiusMult": 0.96,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "lifetimeMult": 0.93,
-        "radiusMult": 0.94,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "lifetimeMult": 0.9,
-        "radiusMult": 0.97,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "lifetimeMult": 0.96,
-        "radiusMult": 1.07,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1,
-        "lifetimeMult": 0.97,
-        "radiusMult": 1.04,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.12,
-        "lifetimeMult": 0.96,
-        "radiusMult": 1.02,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.22,
-        "lifetimeMult": 0.96,
-        "radiusMult": 1,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.32,
-        "lifetimeMult": 0.96,
-        "radiusMult": 0.99,
-        "damageMult": 1
-      },
-      {
-        "cooldownMult": 1.1,
-        "lifetimeMult": 1,
-        "radiusMult": 1,
-        "damageMult": 1
-      }
+      { "cooldownMult": 1, "lifetimeMult": 1, "radiusMult": 1, "damageMult": 1 },
+      { "cooldownMult": 1, "lifetimeMult": 0.95, "radiusMult": 0.96, "damageMult": 1 },
+      { "cooldownMult": 1, "lifetimeMult": 0.93, "radiusMult": 0.94, "damageMult": 1 },
+      { "cooldownMult": 1, "lifetimeMult": 0.9, "radiusMult": 0.97, "damageMult": 1 },
+      { "cooldownMult": 1, "lifetimeMult": 0.96, "radiusMult": 1.07, "damageMult": 1 },
+      { "cooldownMult": 1, "lifetimeMult": 0.97, "radiusMult": 1.04, "damageMult": 1 },
+      { "cooldownMult": 1.10, "lifetimeMult": 1.00, "radiusMult": 1.00, "damageMult": 1 }
     ]
   }
 }

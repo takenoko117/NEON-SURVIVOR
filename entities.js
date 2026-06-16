@@ -13,9 +13,6 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 1.00, "count": 3, "pierce": 2, "damageMult": 1.00 },
       { "cooldownMult": 0.60, "count": 5, "pierce": 2, "damageMult": 1.00 },
       { "cooldownMult": 0.57, "count": 6, "pierce": 2, "damageMult": 1.00 },
-      { "cooldownMult": 0.62, "count": 7, "pierce": 3, "damageMult": 1.00 },
-      { "cooldownMult": 0.69, "count": 8, "pierce": 3, "damageMult": 1.00 },
-      { "cooldownMult": 0.70, "count": 8, "pierce": 3, "damageMult": 1.00 },
       { "cooldownMult": 0.73, "count": 18, "pierce": 4, "damageMult": 1.00 }
     ]
   },
@@ -33,9 +30,6 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.00 },
       { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
       { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
-      { "cooldownMult": 0.99, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
-      { "cooldownMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.65 },
-      { "cooldownMult": 1.01, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.55 },
       { "cooldownMult": 0.98, "radiusMult": 1.00, "damageMult": 1.00, "slowRatio": 0.40 }
     ]
   },
@@ -55,9 +49,6 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 1.00, "count": 3, "distanceMult": 1.00, "speedMult": 0.90, "damageMult": 1.00 },
       { "cooldownMult": 1.00, "count": 4, "distanceMult": 0.94, "speedMult": 0.81, "damageMult": 1.00 },
       { "cooldownMult": 1.00, "count": 5, "distanceMult": 0.89, "speedMult": 0.74, "damageMult": 1.00 },
-      { "cooldownMult": 1.00, "count": 6, "distanceMult": 0.88, "speedMult": 0.90, "damageMult": 1.00 },
-      { "cooldownMult": 1.00, "count": 6, "distanceMult": 0.84, "speedMult": 0.82, "damageMult": 1.00 },
-      { "cooldownMult": 1.00, "count": 7, "distanceMult": 0.80, "speedMult": 0.76, "damageMult": 1.00 },
       { "cooldownMult": 1.00, "count": 9, "distanceMult": 0.82, "speedMult": 0.79, "damageMult": 1.00 }
     ]
   },
@@ -77,9 +68,6 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 1.04, "count": 3, "lengthMult": 0.92, "widthMult": 0.99, "damageMult": 1.00 },
       { "cooldownMult": 1.05, "count": 4, "lengthMult": 1.01, "widthMult": 1.06, "damageMult": 1.00 },
       { "cooldownMult": 1.07, "count": 5, "lengthMult": 1.00, "widthMult": 1.01, "damageMult": 1.00 },
-      { "cooldownMult": 0.88, "count": 5, "lengthMult": 0.99, "widthMult": 0.99, "damageMult": 1.00 },
-      { "cooldownMult": 0.92, "count": 6, "lengthMult": 0.99, "widthMult": 0.99, "damageMult": 1.00 },
-      { "cooldownMult": 0.94, "count": 6, "lengthMult": 0.99, "widthMult": 0.99, "damageMult": 1.00 },
       { "cooldownMult": 0.97, "count": 8, "lengthMult": 1.00, "widthMult": 1.00, "damageMult": 1.00 }
     ]
   },
@@ -97,9 +85,6 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 0.96, "rangeMult": 1.00, "damageMult": 1.30, "waveCount": 1, "maxAge": 75 },
       { "cooldownMult": 0.94, "rangeMult": 1.00, "damageMult": 1.40, "waveCount": 1, "maxAge": 75 },
       { "cooldownMult": 0.92, "rangeMult": 1.00, "damageMult": 1.50, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.90, "rangeMult": 1.00, "damageMult": 1.60, "waveCount": 1, "maxAge": 75 },
-      { "cooldownMult": 0.81, "rangeMult": 1.00, "damageMult": 1.70, "waveCount": 2, "maxAge": 75 },
-      { "cooldownMult": 0.74, "rangeMult": 1.00, "damageMult": 1.80, "waveCount": 2, "maxAge": 75 },
       { "cooldownMult": 0.66, "rangeMult": 1.00, "damageMult": 2.00, "waveCount": 3, "maxAge": 75 }
     ]
   },
@@ -119,9 +104,6 @@ const DEFAULT_WEAPON_BALANCE = {
       { "cooldownMult": 1.00, "lifetimeMult": 0.90, "radiusMult": 0.97, "damageMult": 1.00 },
       { "cooldownMult": 1.00, "lifetimeMult": 0.96, "radiusMult": 1.07, "damageMult": 1.00 },
       { "cooldownMult": 1.00, "lifetimeMult": 0.97, "radiusMult": 1.04, "damageMult": 1.00 },
-      { "cooldownMult": 1.12, "lifetimeMult": 0.96, "radiusMult": 1.02, "damageMult": 1.00 },
-      { "cooldownMult": 1.22, "lifetimeMult": 0.96, "radiusMult": 1.00, "damageMult": 1.00 },
-      { "cooldownMult": 1.32, "lifetimeMult": 0.96, "radiusMult": 0.99, "damageMult": 1.00 },
       { "cooldownMult": 1.10, "lifetimeMult": 1.00, "radiusMult": 1.00, "damageMult": 1.00 }
     ]
   }
@@ -524,7 +506,7 @@ class Weapon {
   }
 
   upgrade() {
-    if (this.level < 10) {
+    if (this.level < 7) {
       this.level++;
       return true;
     }
@@ -613,7 +595,7 @@ class MagicWand extends Weapon {
       let angle;
       if (this.isEvolved) {
         angle = baseAngle + (Math.random() - 0.5) * 0.05; // slight spread
-      } else if (this.level === 10) {
+      } else if (this.level === 7) {
         angle = (i / 18) * Math.PI * 2;
       } else {
         angle = baseAngle + (i - (projectileCount - 1) / 2) * 0.15;
@@ -635,7 +617,7 @@ class MagicWand extends Weapon {
 
   getDescription(nextLevel = false) {
     const lvl = nextLevel ? this.level + 1 : this.level;
-    if (lvl > 10) return "最大レベルです";
+    if (lvl > 7) return "最大レベルです";
     
     const desc = [
       "最寄りの敵にマナ・ボルトを1発放ちます。",
@@ -644,9 +626,6 @@ class MagicWand extends Weapon {
       "貫通力が向上し、ボルトが敵を1体貫通するようになります。",
       "超高速連射モード！発射数が5発になり、貫通力が2に増加します。",
       "発射数が6発に増加し、再装填速度がさらに上がります。",
-      "発射数が7発に増加し、貫通力が3に増加します。",
-      "発射数が8発に増加し、拡散範囲が広がります。",
-      "限界連射！発射数が9発になり、再装填速度が極限まで上がります。",
       "【究極】全方位ネオン・バースト！全方位（18発）に貫通力4のボルトを一斉発射します！"
     ];
     return desc[lvl - 1];
@@ -694,7 +673,7 @@ class GarlicAura extends Weapon {
     const damage = this.getDamage(player);
     const config = window.weaponBalance.GarlicAura.levels[this.level - 1];
     const slowEffect = config.slowRatio > 0.0 || this.isEvolved;
-    const isUltimate = this.level >= 10 || this.isEvolved;
+    const isUltimate = this.level >= 7 || this.isEvolved;
     
     let hitAny = false;
 
@@ -721,7 +700,7 @@ class GarlicAura extends Weapon {
           const dy = enemy.y - player.y;
           const len = Math.sqrt(dx * dx + dy * dy);
           if (len > 0) {
-            const pushForce = this.level >= 8 ? 24 : 12;
+            const pushForce = this.level >= 7 ? 24 : 12;
             const kbMult = enemy.getKnockbackMultiplier();
             enemy.x += (dx / len) * pushForce * kbMult; // Knockback push
             enemy.y += (dy / len) * pushForce * kbMult;
@@ -825,7 +804,7 @@ class GarlicAura extends Weapon {
 
   getDescription(nextLevel = false) {
     const lvl = nextLevel ? this.level + 1 : this.level;
-    if (lvl > 10) return "最大レベルです";
+    if (lvl > 7) return "最大レベルです";
     
     const desc = [
       "プレイヤーの周囲に緑色の毒性ネオンフィールドを展開し、敵に微小な持続ダメージを与えます。",
@@ -834,9 +813,6 @@ class GarlicAura extends Weapon {
       "範囲がさらに拡大し、ダメージが大幅に上昇します。",
       "極大展開！範囲内の敵の移動速度を30%低下させ、ダメージが倍増します。",
       "フィールドの範囲がさらに広がり（2.1倍）、ダメージが大幅に上昇します。",
-      "フィールドが共鳴！ダメージを与える間隔が300msに短縮されます。",
-      "衝撃波が強化！敵へのノックバック距離が2倍になります。",
-      "フィールドが濃縮！範囲内の敵の移動速度を45%低下させます。",
       "【究極】イベント・ホライズン！範囲3.5倍、200ms間隔で超ダメージを与え、敵を徐々に吸い寄せ、速度を60%低下させます！"
     ];
     return desc[lvl - 1];
@@ -901,7 +877,7 @@ class SpinningScythe extends Weapon {
              
              // Level 5 extra: spawn spark particles
              if (this.level >= 5 || this.isEvolved) {
-               const sparkCount = this.isEvolved ? 5 : (this.level >= 10 ? 7 : 3);
+               const sparkCount = this.isEvolved ? 5 : (this.level >= 7 ? 7 : 3);
                player.spawnParticles(blade.x, blade.y, this.isEvolved ? '#00f0ff' : '#b026ff', 0.5, sparkCount);
              }
            }
@@ -921,7 +897,7 @@ class SpinningScythe extends Weapon {
 
   getDescription(nextLevel = false) {
     const lvl = nextLevel ? this.level + 1 : this.level;
-    if (lvl > 10) return "最大レベルです";
+    if (lvl > 7) return "最大レベルです";
     
     const desc = [
       "プレイヤーの周囲を公転する紫色のサイバーブレードを1枚召喚し、敵を切り裂きます。",
@@ -930,10 +906,7 @@ class SpinningScythe extends Weapon {
       "ブレードの枚数が3枚に増加します。",
       "極限展開！ブレードが4枚になり、衝突時にネオン火花を散らして周囲の敵を巻き込みます。",
       "ブレードの枚数が5枚に増加します。",
-      "回転軌道が広がり、さらに高速で公転するようになります。",
-      "ブレードの枚数が6枚に増加します。",
-      "ブレードの枚数が7枚になり、威力が25%上昇します。",
-      "【究極】終末のオービット！極大サイズかつ最高速で公転する9枚のブレードが、敵を蹂躙します！"
+      "【究極】終末のオービット！極大サイズかつ最高速で公転する9枚のブレードが、敵を蹂日します！"
     ];
     return desc[lvl - 1];
   }
@@ -996,9 +969,9 @@ class BigSword extends Weapon {
           
           const hitKey = `${enemy.id}_${i}`;
           if (!this.hitCooldowns.has(hitKey)) {
-            const critChance = this.level >= 10 ? 0.25 : 0.12;
+            const critChance = this.level >= 7 ? 0.25 : 0.12;
             const isCrit = Math.random() < critChance;
-            const critMultiplier = this.level >= 10 ? 3.0 : 2.5;
+            const critMultiplier = this.level >= 7 ? 3.0 : 2.5;
             const finalDamage = damage * (isCrit ? critMultiplier : 1.0);
             
             enemy.takeDamage(finalDamage, true);
@@ -1010,9 +983,9 @@ class BigSword extends Weapon {
             if (player.particlesRef) {
               const contactX = player.x + Math.cos(swordAngle) * parDist;
               const contactY = player.y + Math.sin(swordAngle) * parDist;
-              player.spawnParticles(contactX, contactY, '#fffb00', 1.0, isCrit ? (this.level >= 10 ? 24 : 12) : 5);
+              player.spawnParticles(contactX, contactY, '#fffb00', 1.0, isCrit ? (this.level >= 7 ? 24 : 12) : 5);
               if (this.level >= 5) {
-                player.spawnParticles(contactX, contactY, '#ff5e00', 1.4, this.level >= 10 ? 8 : 3);
+                player.spawnParticles(contactX, contactY, '#ff5e00', 1.4, this.level >= 7 ? 8 : 3);
               }
             }
 
@@ -1095,14 +1068,14 @@ class BigSword extends Weapon {
       ctx.closePath();
 
       // Premium golden neon style rendering, red/pink for evolved
-      const color = this.isEvolved ? '#ff0055' : (this.level >= 10 ? '#ffe600' : '#ffb700');
-      const strokeColor = this.isEvolved ? '#ffffff' : (this.level >= 10 ? '#ffffff' : '#ffd700');
-      const fillStyle = this.isEvolved ? 'rgba(255, 0, 85, 0.25)' : `rgba(${this.level >= 10 ? '255, 230, 0' : '255, 183, 0'}, 0.25)`;
+      const color = this.isEvolved ? '#ff0055' : (this.level >= 7 ? '#ffe600' : '#ffb700');
+      const strokeColor = this.isEvolved ? '#ffffff' : (this.level >= 7 ? '#ffffff' : '#ffd700');
+      const fillStyle = this.isEvolved ? 'rgba(255, 0, 85, 0.25)' : `rgba(${this.level >= 7 ? '255, 230, 0' : '255, 183, 0'}, 0.25)`;
 
       ctx.fillStyle = fillStyle;
       ctx.strokeStyle = strokeColor;
       ctx.lineWidth = 2.5;
-      ctx.shadowBlur = this.isEvolved ? 24 : (this.level >= 10 ? 20 : 10);
+      ctx.shadowBlur = this.isEvolved ? 24 : (this.level >= 7 ? 20 : 10);
       ctx.shadowColor = color;
       
       ctx.fill();
@@ -1125,7 +1098,7 @@ class BigSword extends Weapon {
 
   getDescription(nextLevel = false) {
     const lvl = nextLevel ? this.level + 1 : this.level;
-    if (lvl > 10) return "最大レベルです";
+    if (lvl > 7) return "最大レベルです";
     
     const desc = [
       "プレイヤーの周囲を薙ぎ払うように公転する巨大な黄金の剣を1本召喚します。",
@@ -1134,9 +1107,6 @@ class BigSword extends Weapon {
       "剣の本数が3本に増え、基本威力がさらに高まります。",
       "極限の剣！剣が4本になり、サイズが大きく（長さ120px / 太さ25px）向上します。",
       "剣の本数が5本に増え、サイズが長さ135px / 太さ27pxに拡張されます。",
-      "威力が大幅に上昇し、さらにサイズが長さ150px / 太さ29pxに拡張されます。",
-      "剣の本数が6本に増え、サイズが長さ165px / 太さ31pxに拡張されます。",
-      "威力が30%上昇し、サイズが長さ180px / 太さ33pxに拡張されます。",
       "【究極】ラグナロク・ブレード！8本の超巨大金剛剣（長さ200px / 太さ36px）が画面全体を薙ぎ払い、クリティカル率が25%に急増します！"
     ];
     return desc[lvl - 1];
@@ -1172,7 +1142,7 @@ class ThunderWave extends Weapon {
   }
 
   getKnockback() {
-    return this.level >= 9 ? 30 : (this.level >= 3 ? 18 : 10);
+    return this.level >= 7 ? 30 : (this.level >= 3 ? 18 : 10);
   }
 
   fire(player, enemies, projectiles) {
@@ -1267,7 +1237,7 @@ class ThunderWave extends Weapon {
 
           if (player.particlesRef) {
             player.spawnParticles(enemy.x, enemy.y, '#00f0ff', 1.0, isCrit ? 9 : 3);
-            if (this.level >= 10) {
+            if (this.level >= 7) {
               // Spawn vertical lightning strikes (visual particle beams)
               for (let ly = enemy.y - 120; ly < enemy.y; ly += 15) {
                 player.spawnParticles(enemy.x, ly, '#ffffff', 0.2, 1);
@@ -1446,7 +1416,7 @@ class FireRoad extends Weapon {
       flame.life -= dt;
 
       // Level 10 Ultimate / Evolved expiration explosion triggers once
-      if ((this.level >= 10 || this.isEvolved) && oldLife > 0 && flame.life <= 0) {
+      if ((this.level >= 7 || this.isEvolved) && oldLife > 0 && flame.life <= 0) {
         player.spawnParticles(flame.x, flame.y, this.isEvolved ? '#00f0ff' : '#ff007f', 1.2, 5);
         player.spawnParticles(flame.x, flame.y, this.isEvolved ? '#005eff' : '#ff5e00', 1.0, 3);
         // Deal damage to enemies around it on explosion
@@ -1489,7 +1459,7 @@ class FireRoad extends Weapon {
           // Slow effect (Level 3+)
           if (this.level >= 3 || this.isEvolved) {
             enemy.slowTimer = 35; // slow for 35 frames (approx 600ms)
-            if (this.level >= 10 || this.isEvolved) {
+            if (this.level >= 7 || this.isEvolved) {
               enemy.slowRatio = this.isEvolved ? 0.60 : 0.50; // 60% slow for evolved fire
             }
           }
@@ -1522,7 +1492,7 @@ class FireRoad extends Weapon {
 
   getDescription(nextLevel = false) {
     const lvl = nextLevel ? this.level + 1 : this.level;
-    if (lvl > 10) return "最大レベルです";
+    if (lvl > 7) return "最大レベルです";
     
     const desc = [
       "自機の移動軌跡にプラズマ炎を発生させ、それに触れた敵にダメージを与えます。",
@@ -1531,9 +1501,6 @@ class FireRoad extends Weapon {
       "プラズマ炎の残存時間が3.0秒に延長され、範囲が20pxに広がります。",
       "火炎放射！範囲が26pxに拡大し、速度低下中の敵に与えるダメージが2倍になります。",
       "プラズマ炎の残存時間が4.4秒に延長され、範囲が29pxに広がります。",
-      "炎の密度が上昇！移動時に炎をドロップする間隔が180msに短縮されます。",
-      "プラズマ炎の残存時間が5.6秒に延長され、範囲が35pxに広がります。",
-      "威力が25%上昇し、範囲が38pxに広がります。",
       "【究極】インフェルノ・デヴァステーション！範囲42px・7秒持続の炎を残し、消滅時に爆発して周囲の敵を焼き尽くします！"
     ];
     return desc[lvl - 1];

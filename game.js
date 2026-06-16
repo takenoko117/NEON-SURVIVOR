@@ -99,7 +99,7 @@ class NeonGameEngine {
     this.spawnIntervalOverride = null;
     this.enemySpeedMultiplierOverride = 1.0;
     this.enemyHpMultiplierOverride = 1.0;
-    this.chestDropChance = 0.01;
+    this.chestDropChance = 0.005;
     this.expGrowthRate = 1.3;
 
     // Theme state
@@ -435,7 +435,7 @@ class NeonGameEngine {
     this.devChestDropVal = document.getElementById('dev-chest-drop-val');
     if (this.devChestDrop) {
       this.devChestDrop.addEventListener('input', () => {
-        const val = parseInt(this.devChestDrop.value);
+        const val = parseFloat(this.devChestDrop.value);
         this.chestDropChance = val / 100;
         this.devChestDropVal.innerText = `${val}%`;
       });
@@ -573,7 +573,7 @@ class NeonGameEngine {
       }
       if (evoCheck) {
         evoCheck.checked = isEvolved;
-        evoCheck.disabled = lvl < 10;
+        evoCheck.disabled = lvl < 7;
       }
     };
 
@@ -608,8 +608,8 @@ class NeonGameEngine {
     }
 
     if (this.devChestDrop && this.devChestDropVal) {
-      this.devChestDrop.value = Math.round(this.chestDropChance * 100);
-      this.devChestDropVal.innerText = `${Math.round(this.chestDropChance * 100)}%`;
+      this.devChestDrop.value = (this.chestDropChance * 100).toFixed(1);
+      this.devChestDropVal.innerText = `${(this.chestDropChance * 100).toFixed(1)}%`;
     }
     if (this.devExpGrowth && this.devExpGrowthVal) {
       this.devExpGrowth.value = this.expGrowthRate;
@@ -625,7 +625,7 @@ class NeonGameEngine {
     if (evolveState) {
       if (!w.isEvolved) {
         w.isEvolved = true;
-        w.level = 10;
+        w.level = 7;
         
         const EVOLUTION_PAIRS = {
           MagicWand: { name: 'ネオン・ストリーム', emoji: '⚡' },
@@ -1553,8 +1553,8 @@ class NeonGameEngine {
           this.jewels.push(new Jewel(enemy.x, enemy.y));
         }
 
-        // Spawn Relic Chest for bosses or elite enemies
-        if (isBoss || enemy.isElite) {
+        // Spawn Relic Chest for bosses or elite enemies (50% chance for elites)
+        if (isBoss || (enemy.isElite && Math.random() < 0.5)) {
           this.relicChests.push(new RelicChest(enemy.x, enemy.y));
         }
 
@@ -2096,7 +2096,7 @@ class NeonGameEngine {
       // Exclude if banished
       if (this.banishedItems && this.banishedItems.has(w.constructor.name)) return;
 
-      if (w.level === 10 && !w.isEvolved) {
+      if (w.level === 7 && !w.isEvolved) {
         const pair = EVOLUTION_PAIRS[w.constructor.name];
         if (pair) {
           const passive = this.player.passives.find(p => p.statName === pair.passive);
@@ -2123,7 +2123,7 @@ class NeonGameEngine {
       // Exclude if banished
       if (this.banishedItems && this.banishedItems.has(w.constructor.name)) return;
 
-      if (w.level < 10) {
+      if (w.level < 7) {
         pool.push({
           type: 'weapon_upgrade',
           instance: w,
@@ -2215,7 +2215,7 @@ class NeonGameEngine {
       this.player.hp = this.player.maxHp;
     } else if (opt.type === 'weapon_evolution') {
       opt.instance.isEvolved = true;
-      opt.instance.level = 10;
+      opt.instance.level = 7;
       opt.instance.name = opt.evolvedName;
       opt.instance.emoji = opt.evolvedEmoji;
       
