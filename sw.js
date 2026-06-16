@@ -1,4 +1,4 @@
-const CACHE_NAME = 'neon-survivor-cache-v2';
+const CACHE_NAME = 'neon-survivor-cache-v3';
 const ASSETS = [
   './',
   './index.html',

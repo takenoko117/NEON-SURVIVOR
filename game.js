@@ -175,7 +175,16 @@ class NeonGameEngine {
         this.updateVolumeFromSlider(val);
       });
     }
-    this.restartBtn.addEventListener('click', () => this.startGame(this.difficulty || 'NORMAL'));
+    this.restartBtn.addEventListener('click', () => this.returnToMenu());
+
+    this.retireBtn = document.getElementById('retire-btn');
+    if (this.retireBtn) {
+      this.retireBtn.addEventListener('click', () => {
+        if (confirm("ゲームをリタイアしてメニューに戻りますか？\n(獲得したゴールドは保存されません)")) {
+          this.returnToMenu();
+        }
+      });
+    }
 
     this.reviveScreen = document.getElementById('revive-screen');
     this.reviveConfirmBtn = document.getElementById('revive-confirm-btn');
@@ -2338,6 +2347,48 @@ class NeonGameEngine {
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
     requestAnimationFrame((timestamp) => this.loop(timestamp));
+  }
+
+  returnToMenu() {
+    // Stop synth context and BGM
+    gameAudio.stopBGM();
+
+    // Reset game state
+    this.state = 'START';
+    this.elapsedTime = 0;
+    
+    // Hide game HUD, show start screen
+    this.hud.classList.add('hidden');
+    this.startScreen.classList.remove('hidden');
+    
+    // Hide other overlay screens
+    this.gameOverScreen.classList.add('hidden');
+    this.levelUpScreen.classList.add('hidden');
+    if (this.shopScreen) this.shopScreen.classList.add('hidden');
+    if (this.reviveScreen) this.reviveScreen.classList.add('hidden');
+    if (this.rouletteScreen) this.rouletteScreen.classList.add('hidden');
+    if (this.relicFloatingWindow) this.relicFloatingWindow.classList.add('hidden');
+
+    // Reset development modes if active
+    this.godMode = false;
+    this.freezeSpawns = false;
+    this.syncDevPanel();
+
+    // Clear active menu intervals
+    if (this.levelUpTimer) {
+      clearInterval(this.levelUpTimer);
+      this.levelUpTimer = null;
+    }
+    if (this.rouletteTimer) {
+      clearInterval(this.rouletteTimer);
+      this.rouletteTimer = null;
+    }
+    if (this.relicFloatTimer) {
+      clearInterval(this.relicFloatTimer);
+      this.relicFloatTimer = null;
+    }
+
+    this.updateTitleGoldDisplay();
   }
 
   triggerScreenWideMagnet() {
