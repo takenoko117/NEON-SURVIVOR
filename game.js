@@ -119,6 +119,8 @@ class NeonGameEngine {
     // Countdown Timers for Auto-Close
     this.levelUpTimer = null;
     this.rouletteTimer = null;
+    this.rouletteRunning = false;
+    this.pendingRoulettes = 0;
     this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') === 'true');
     this.lastMagnetTriggerSecond = 0;
     this.lowEffectEnabled = (localStorage.getItem('neon_low_effect') === 'true');
@@ -135,6 +137,11 @@ class NeonGameEngine {
     this.goldUpgrades = { attack: 0, speed: 0, hp: 0 };
     this.loadGoldData();
     
+    // HUD Tooltip cache states
+    this._lastWeaponsState = null;
+    this._lastPassivesState = null;
+    this._lastRelicsState = null;
+    
     // Bind DOM events
     this.setupDOM();
     this.setupInput();
@@ -148,6 +155,7 @@ class NeonGameEngine {
     this.hudAutoRun = document.getElementById('hud-auto-run');
     this.levelUpScreen = document.getElementById('level-up-screen');
     this.gameOverScreen = document.getElementById('game-over-screen');
+    this.hudTooltipEl = document.getElementById('hud-tooltip');
     
     this.startNormalBtn = document.getElementById('start-normal-btn');
     this.startHardBtn = document.getElementById('start-hard-btn');
@@ -175,6 +183,12 @@ class NeonGameEngine {
     this.rouletteScreen = document.getElementById('roulette-screen');
     this.rouletteClaimBtn = document.getElementById('roulette-claim-btn');
     this.rouletteClaimBtn.addEventListener('click', () => this.resumeRoulette());
+    if (this.rouletteScreen) {
+      const preventProp = (e) => e.stopPropagation();
+      ['click', 'mousedown', 'mouseup', 'mousemove', 'touchstart', 'touchmove', 'touchend'].forEach(evt => {
+        this.rouletteScreen.addEventListener(evt, preventProp);
+      });
+    }
 
     // Setup Level Up buttons
     this.rerollBtn = document.getElementById('reroll-btn');
@@ -718,6 +732,12 @@ class NeonGameEngine {
     this.hellMode = false;
     this.hellModeStartTime = 0;
 
+    // Reset HUD tooltip cache states
+    this._lastWeaponsState = null;
+    this._lastPassivesState = null;
+    this._lastRelicsState = null;
+    this.hideHUDTooltip();
+
     // Clear active menu intervals
     if (this.levelUpTimer) {
       clearInterval(this.levelUpTimer);
@@ -727,6 +747,8 @@ class NeonGameEngine {
       clearInterval(this.rouletteTimer);
       this.rouletteTimer = null;
     }
+    this.rouletteRunning = false;
+    this.pendingRoulettes = 0;
 
     // Reset Developer Mode State
     this.godMode = false;
@@ -882,15 +904,8 @@ class NeonGameEngine {
     // Cap dt to prevent huge skips during background tab freeze
     const cappedDt = Math.min(dt, 100);
 
-    if (this.state === 'ROULETTE') {
-      // Update only time and HUD during roulette!
-      this.elapsedTime += cappedDt;
-      this.updateHUD(Math.floor(this.elapsedTime / 1000));
-      this.draw();
-    } else {
-      this.update(cappedDt);
-      this.draw();
-    }
+    this.update(cappedDt);
+    this.draw();
 
     requestAnimationFrame((timestamp) => this.loop(timestamp));
   }
@@ -1607,6 +1622,7 @@ class NeonGameEngine {
   }
 
   triggerLevelUp() {
+    this.hideHUDTooltip();
     const currentSecs = Math.floor(this.elapsedTime / 1000);
     if (currentSecs >= this.totalGameDuration) {
       let goldAmount = 50;
@@ -2293,6 +2309,7 @@ class NeonGameEngine {
   }
 
   triggerRelicChoice() {
+    this.hideHUDTooltip();
     const currentSecs = Math.floor(this.elapsedTime / 1000);
     if (currentSecs >= this.totalGameDuration) {
       let goldAmount = 100;
@@ -2487,8 +2504,12 @@ class NeonGameEngine {
     screen.classList.remove('hidden');
   }
 
-  async triggerJewelLottery() {
-    this.state = 'ROULETTE';
+  async triggerJewelLottery(isQueued = false) {
+    if (!isQueued && this.rouletteRunning) {
+      this.pendingRoulettes = (this.pendingRoulettes || 0) + 1;
+      return;
+    }
+    this.rouletteRunning = true;
     gameAudio.setBGMVolume(Math.min(0.05, this.getBGMPlayVolume()));
     
     // Reset UI
@@ -2510,9 +2531,6 @@ class NeonGameEngine {
     claimBtn.style.boxShadow = 'none';
     claimBtn.innerText = '抽選中...';
     
-    if (this.reviveScreen) this.reviveScreen.classList.add('hidden');
-    if (this.levelUpScreen) this.levelUpScreen.classList.add('hidden');
-    if (this.gameOverScreen) this.gameOverScreen.classList.add('hidden');
     this.rouletteScreen.classList.remove('hidden');
 
     let pool = this.getUpgradePool();
@@ -2616,7 +2634,7 @@ class NeonGameEngine {
       this.rouletteScreen.style.backgroundColor = 'rgba(0, 240, 255, 0.35)'; // cyan flash
       this.rouletteScreen.offsetHeight; // force reflow
       this.rouletteScreen.style.transition = 'background-color 0.8s ease';
-      this.rouletteScreen.style.backgroundColor = 'rgba(6, 7, 13, 0.9)';
+      this.rouletteScreen.style.backgroundColor = 'var(--bg-panel)';
 
       // 2. Explode HTML particles from center of the roulette spinner
       const box = document.getElementById('roulette-box');
@@ -2690,7 +2708,16 @@ class NeonGameEngine {
       clearInterval(this.rouletteTimer);
       this.rouletteTimer = null;
     }
+    if (this.pendingRoulettes && this.pendingRoulettes > 0) {
+      this.pendingRoulettes--;
+      this.rouletteScreen.classList.add('hidden');
+      setTimeout(() => {
+        this.triggerJewelLottery(true);
+      }, 300);
+      return;
+    }
     this.rouletteScreen.classList.add('hidden');
+    this.rouletteRunning = false;
     this.state = 'PLAYING';
     gameAudio.setBGMVolume(this.getBGMPlayVolume());
     this.lastTime = performance.now();
@@ -2727,7 +2754,7 @@ class NeonGameEngine {
       gameAudio.muted = false;
       this.lastNonZeroVolume = val;
       if (this.bgmVolumeLabel) this.bgmVolumeLabel.innerText = '🔊 BGM';
-      const isDimmedState = this.state === 'LEVEL_UP' || this.state === 'ROULETTE' || this.state === 'REVIVING';
+      const isDimmedState = this.state === 'LEVEL_UP' || this.state === 'REVIVING' || this.rouletteRunning;
       const volume = isDimmedState ? Math.min(0.05, val / 100) : (val / 100);
       gameAudio.setBGMVolume(volume);
     }
@@ -2920,55 +2947,69 @@ class NeonGameEngine {
 
     // Draw weapons in slots (max 4)
     const wSlotsContainer = document.getElementById('hud-weapon-slots');
-    wSlotsContainer.innerHTML = '';
-    
     const activeWeapons = this.player.weapons;
-    for (let i = 0; i < 4; i++) {
-      if (i < activeWeapons.length) {
-        const w = activeWeapons[i];
-        const wEl = document.createElement('div');
-        wEl.className = 'hud-weapon-icon';
-        const iconClass = this.getItemIconClass(w);
-        const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : w.emoji;
-        wEl.innerHTML = `
-          <span class="hud-weapon-emoji">${iconHtml}</span>
-          <span class="hud-weapon-level">L${w.level}</span>
-        `;
-        wSlotsContainer.appendChild(wEl);
-      } else {
-        const emptyEl = document.createElement('div');
-        emptyEl.className = 'hud-slot-empty';
-        emptyEl.innerText = '?';
-        wSlotsContainer.appendChild(emptyEl);
+    const wState = activeWeapons.map(w => `${w.constructor.name}:${w.level}:${w.isEvolved}`).join(',');
+
+    if (wState !== this._lastWeaponsState) {
+      wSlotsContainer.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        if (i < activeWeapons.length) {
+          const w = activeWeapons[i];
+          const wEl = document.createElement('div');
+          wEl.className = 'hud-weapon-icon';
+          const iconClass = this.getItemIconClass(w);
+          const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : w.emoji;
+          wEl.innerHTML = `
+            <span class="hud-weapon-emoji">${iconHtml}</span>
+            <span class="hud-weapon-level">L${w.level}</span>
+          `;
+          wEl.addEventListener('mouseenter', (e) => this.showHUDTooltip(e, 'weapon', w));
+          wEl.addEventListener('mousemove', (e) => this.moveHUDTooltip(e));
+          wEl.addEventListener('mouseleave', () => this.hideHUDTooltip());
+          wSlotsContainer.appendChild(wEl);
+        } else {
+          const emptyEl = document.createElement('div');
+          emptyEl.className = 'hud-slot-empty';
+          emptyEl.innerText = '?';
+          wSlotsContainer.appendChild(emptyEl);
+        }
       }
+      this._lastWeaponsState = wState;
     }
 
     // Draw passives in slots (max 4)
     const pSlotsContainer = document.getElementById('hud-passive-slots');
-    pSlotsContainer.innerHTML = '';
-    
     const activePassives = this.player.passives.filter(p => p.level > 0);
-    for (let i = 0; i < 4; i++) {
-      if (i < activePassives.length) {
-        const p = activePassives[i];
-        const pEl = document.createElement('div');
-        pEl.className = 'hud-weapon-icon';
-        pEl.style.borderColor = 'rgba(176, 38, 255, 0.4)';
-        const iconClass = this.getItemIconClass(p);
-        const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : p.emoji;
-        pEl.innerHTML = `
-          <span class="hud-weapon-emoji">${iconHtml}</span>
-          <span class="hud-weapon-level">L${p.level}</span>
-        `;
-        pSlotsContainer.appendChild(pEl);
-      } else {
-        const emptyEl = document.createElement('div');
-        emptyEl.className = 'hud-slot-empty';
-        emptyEl.style.borderColor = 'rgba(176, 38, 255, 0.15)';
-        emptyEl.style.color = 'rgba(176, 38, 255, 0.08)';
-        emptyEl.innerText = '?';
-        pSlotsContainer.appendChild(emptyEl);
+    const pState = activePassives.map(p => `${p.statName}:${p.level}`).join(',');
+
+    if (pState !== this._lastPassivesState) {
+      pSlotsContainer.innerHTML = '';
+      for (let i = 0; i < 4; i++) {
+        if (i < activePassives.length) {
+          const p = activePassives[i];
+          const pEl = document.createElement('div');
+          pEl.className = 'hud-weapon-icon';
+          pEl.style.borderColor = 'rgba(176, 38, 255, 0.4)';
+          const iconClass = this.getItemIconClass(p);
+          const iconHtml = iconClass ? `<span class="game-icon ${iconClass}"></span>` : p.emoji;
+          pEl.innerHTML = `
+            <span class="hud-weapon-emoji">${iconHtml}</span>
+            <span class="hud-weapon-level">L${p.level}</span>
+          `;
+          pEl.addEventListener('mouseenter', (e) => this.showHUDTooltip(e, 'passive', p));
+          pEl.addEventListener('mousemove', (e) => this.moveHUDTooltip(e));
+          pEl.addEventListener('mouseleave', () => this.hideHUDTooltip());
+          pSlotsContainer.appendChild(pEl);
+        } else {
+          const emptyEl = document.createElement('div');
+          emptyEl.className = 'hud-slot-empty';
+          emptyEl.style.borderColor = 'rgba(176, 38, 255, 0.15)';
+          emptyEl.style.color = 'rgba(176, 38, 255, 0.08)';
+          emptyEl.innerText = '?';
+          pSlotsContainer.appendChild(emptyEl);
+        }
       }
+      this._lastPassivesState = pState;
     }
 
     // Toggle HUD Hell Badge visibility
@@ -2984,60 +3025,54 @@ class NeonGameEngine {
     // Draw relics in slots (max 3)
     const rSlotsContainer = document.getElementById('hud-relic-slots');
     if (rSlotsContainer) {
-      rSlotsContainer.innerHTML = '';
       const activeRelics = this.player.relics || [];
-      for (let i = 0; i < 3; i++) {
-        if (i < activeRelics.length) {
-          const relicId = activeRelics[i];
-          const relicData = RELIC_POOL.find(r => r.id === relicId);
-          const rEl = document.createElement('div');
-          rEl.className = 'hud-relic-icon';
-          const lvl = this.player.relicLevels ? (this.player.relicLevels[relicId] || 1) : 1;
-          rEl.innerHTML = `
-            <span class="hud-relic-emoji">${relicData ? relicData.emoji : '❓'}</span>
-            <span class="hud-weapon-level" style="color: var(--neon-yellow);">L${lvl}</span>
-          `;
-          if (relicData) {
-            let dynamicDesc = relicData.description;
-            switch (relicId) {
-              case 'IronBulwark':
-                dynamicDesc = `被弾時、またはHP自動回復時に最大HPの${15 + (lvl - 1) * 5}%分の「青シールド」を獲得。シールドがある間、プレイヤーの与えるダメージが${25 + (lvl - 1) * 10}%上昇する。`;
-                break;
-              case 'VolatileInk':
-                dynamicDesc = `燃焼または酸状態の敵が死亡した時、その敵が爆発して最大HPの${15 + (lvl - 1) * 5}%のダメージを周囲（半径${90 + (lvl - 1) * 20}px）に与え、デバフを周囲の敵に伝染させる。`;
-                break;
-              case 'PrismaticLens':
-                dynamicDesc = `攻撃範囲拡大の合計が30%以上の時、プレイヤーの周囲の範囲内にいる敵の被ダメージが常時${15 + (lvl - 1) * 10}%増加する。`;
-                break;
-              case 'RuinedCodex':
-                dynamicDesc = `クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に${12 + (lvl - 1) * 6}%の確率で、その攻撃が2回連続で発動する。`;
-                break;
-              case 'NeonAnchor':
-                dynamicDesc = `5秒ごとに現在位置にサークル（自機5個分）が発生。サークル内にとどまる間、1秒ごとに全武器ダメージ+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。`;
-                break;
-              case 'TacticalCoil':
-                dynamicDesc = `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
-                break;
-              case 'VitalityOfPower':
-                dynamicDesc = `現在のHP割合が多いほど、与えるすべてのダメージが上昇する。HPが最大のとき、ダメージが最大+${30 + (lvl - 1) * 15}%上昇する。`;
-                break;
-            }
-            rEl.title = `${relicData.name} (Lv${lvl}): ${dynamicDesc}`;
+      const rState = activeRelics.map(relicId => {
+        const lvl = this.player.relicLevels ? (this.player.relicLevels[relicId] || 1) : 1;
+        return `${relicId}:${lvl}`;
+      }).join(',');
+
+      if (rState !== this._lastRelicsState) {
+        rSlotsContainer.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+          if (i < activeRelics.length) {
+            const relicId = activeRelics[i];
+            const relicData = RELIC_POOL.find(r => r.id === relicId);
+            const rEl = document.createElement('div');
+            rEl.className = 'hud-relic-icon';
+            const lvl = this.player.relicLevels ? (this.player.relicLevels[relicId] || 1) : 1;
+            rEl.innerHTML = `
+              <span class="hud-relic-emoji">${relicData ? relicData.emoji : '❓'}</span>
+              <span class="hud-weapon-level" style="color: var(--neon-yellow);">L${lvl}</span>
+            `;
+            rEl.addEventListener('mouseenter', (e) => this.showHUDTooltip(e, 'relic', relicId));
+            rEl.addEventListener('mousemove', (e) => this.moveHUDTooltip(e));
+            rEl.addEventListener('mouseleave', () => this.hideHUDTooltip());
+            rSlotsContainer.appendChild(rEl);
+          } else {
+            const emptyEl = document.createElement('div');
+            emptyEl.className = 'hud-relic-slot-empty';
+            emptyEl.innerText = '?';
+            rSlotsContainer.appendChild(emptyEl);
           }
-          rSlotsContainer.appendChild(rEl);
-        } else {
-          const emptyEl = document.createElement('div');
-          emptyEl.className = 'hud-relic-slot-empty';
-          emptyEl.innerText = '?';
-          rSlotsContainer.appendChild(emptyEl);
         }
+        this._lastRelicsState = rState;
       }
     }
   }
 
   showEndScreen() {
+    this.hideHUDTooltip();
     gameAudio.stopBGM();
     this.hud.classList.add('hidden');
+    if (this.rouletteScreen) {
+      this.rouletteScreen.classList.add('hidden');
+    }
+    if (this.rouletteTimer) {
+      clearInterval(this.rouletteTimer);
+      this.rouletteTimer = null;
+    }
+    this.rouletteRunning = false;
+    this.pendingRoulettes = 0;
     this.gameOverScreen.classList.remove('hidden');
 
     const mins = Math.floor(this.elapsedTime / 60000);
@@ -3398,6 +3433,171 @@ class NeonGameEngine {
 
     // Play a feedback sound
     gameAudio.playCollect();
+  }
+
+  showHUDTooltip(e, type, itemData) {
+    if (!this.hudTooltipEl) {
+      this.hudTooltipEl = document.getElementById('hud-tooltip');
+    }
+    if (!this.hudTooltipEl) return;
+
+    let details = null;
+    if (type === 'weapon') {
+      details = this.getWeaponTooltipDetails(itemData);
+    } else if (type === 'passive') {
+      details = this.getPassiveTooltipDetails(itemData);
+    } else if (type === 'relic') {
+      details = this.getRelicTooltipDetails(itemData);
+    }
+
+    if (!details) return;
+
+    const synergyHtml = details.synergy 
+      ? `<div class="hud-tooltip-synergy">${details.synergy}</div>` 
+      : '';
+
+    this.hudTooltipEl.innerHTML = `
+      <div class="hud-tooltip-title">
+        <span class="hud-tooltip-emoji">${details.emoji}</span>
+        <span>${details.name}</span>
+        <span class="hud-tooltip-level">${details.level}</span>
+      </div>
+      <div class="hud-tooltip-desc">${details.description}</div>
+      ${synergyHtml}
+    `;
+
+    this.hudTooltipEl.classList.remove('hidden');
+    this.moveHUDTooltip(e);
+  }
+
+  moveHUDTooltip(e) {
+    if (!this.hudTooltipEl) {
+      this.hudTooltipEl = document.getElementById('hud-tooltip');
+    }
+    if (!this.hudTooltipEl || this.hudTooltipEl.classList.contains('hidden')) return;
+
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const tooltipWidth = this.hudTooltipEl.offsetWidth || 280;
+    const tooltipHeight = this.hudTooltipEl.offsetHeight || 150;
+
+    let posX = e.clientX + 15;
+    let posY = e.clientY + 15;
+
+    // Boundary check
+    if (posX + tooltipWidth > windowWidth) {
+      posX = e.clientX - tooltipWidth - 15;
+    }
+    if (posY + tooltipHeight > windowHeight) {
+      posY = e.clientY - tooltipHeight - 15;
+    }
+
+    if (posX < 10) posX = 10;
+    if (posY < 10) posY = 10;
+
+    this.hudTooltipEl.style.left = `${posX}px`;
+    this.hudTooltipEl.style.top = `${posY}px`;
+  }
+
+  hideHUDTooltip() {
+    if (!this.hudTooltipEl) {
+      this.hudTooltipEl = document.getElementById('hud-tooltip');
+    }
+    if (this.hudTooltipEl) {
+      this.hudTooltipEl.classList.add('hidden');
+    }
+  }
+
+  getRelicDynamicDescription(relicId, lvl) {
+    const relicData = RELIC_POOL.find(r => r.id === relicId);
+    if (!relicData) return "";
+    switch (relicId) {
+      case 'IronBulwark':
+        return `被弾時、またはHP自動回復時に最大HPの${15 + (lvl - 1) * 5}%分の「青シールド」を獲得。シールドがある間、プレイヤーの与えるダメージが${25 + (lvl - 1) * 10}%上昇する。`;
+      case 'VolatileInk':
+        return `燃焼または酸状態の敵が死亡した時、その敵が爆発して最大HPの${15 + (lvl - 1) * 5}%のダメージを周囲（半径${90 + (lvl - 1) * 20}px）に与え、デバフを周囲の敵に伝染させる。`;
+      case 'PrismaticLens':
+        return `攻撃範囲拡大の合計が30%以上の時、プレイヤーの周囲の範囲内にいる敵の被ダメージが常時${15 + (lvl - 1) * 10}%増加する。`;
+      case 'RuinedCodex':
+        return `クールダウン短縮の合計が30%以上の時、すべての武器攻撃のヒット時に${12 + (lvl - 1) * 6}%の確率で、その攻撃が2回連続で発動する。`;
+      case 'NeonAnchor':
+        return `5秒ごとに現在位置にサークル（自機5個分）が発生。サークル内にとどまる間、1秒ごとに全武器ダメージ+${20 + (lvl - 1) * 5}%（最大+${100 + (lvl - 1) * 25}%）累積する。`;
+      case 'TacticalCoil':
+        return `敵をノックバックさせた時、弾かれた敵が他の敵に衝突すると、衝突された敵にも${Math.min(100, 80 + (lvl - 1) * 10)}%のダメージを与える（ビリヤード連鎖）。`;
+      case 'VitalityOfPower':
+        return `現在のHP割合が多いほど、与えるすべてのダメージが上昇する。HPが最大のとき、ダメージが最大+${30 + (lvl - 1) * 15}%上昇する。`;
+      default:
+        return relicData.description;
+    }
+  }
+
+  getWeaponTooltipDetails(weapon) {
+    const className = weapon.constructor.name;
+    let name = weapon.name;
+    let emoji = weapon.emoji;
+    let description = weapon.getDescription();
+    let synergy = "";
+
+    const EVOLUTION_PAIRS = {
+      MagicWand: { passive: 'cooldown', passiveName: '📖 空白の書', evolvedName: 'ネオン・ストリーム', evolvedEmoji: '⚡', desc: '超高速貫通レーザービームを掃射する' },
+      GarlicAura: { passive: 'area', passiveName: '🕯️ ロウソク', evolvedName: 'コズミック・ネビュラ', evolvedEmoji: '🌌', desc: '超巨大な重力場オーラで敵を引き寄せる' },
+      SpinningScythe: { passive: 'speed', passiveName: '🪶 ウィング', evolvedName: 'ヘリカル・ウィンド', evolvedEmoji: '🌪️', desc: 'プレイヤーの周囲を8枚の防壁鎌が超高速旋回する' },
+      BigSword: { passive: 'maxHp', passiveName: '❤️ ホロウ・ハート', evolvedName: 'ジャッジメント・デイ', evolvedEmoji: '⚔️', desc: '周囲8方向にHP減少割合で威力が上がる大剣を突き刺す' },
+      ThunderWave: { passive: 'damage', passiveName: '🥬 ホウレンソウ', evolvedName: 'ライトニング・テンペスト', evolvedEmoji: '🌩️', desc: '波が当たった敵から連鎖する稲妻を発生させる' },
+      FireRoad: { passive: 'regen', passiveName: '🥓 プマローラ', evolvedName: 'フェニックス・アッシュ', evolvedEmoji: '🐦', desc: 'プレイヤーを回復し敵を焼く青い炎を残す' }
+    };
+
+    const pair = EVOLUTION_PAIRS[className];
+    if (weapon.isEvolved) {
+      if (pair) {
+        name = pair.evolvedName;
+        emoji = pair.evolvedEmoji;
+        description = `【究極進化】${pair.desc}`;
+      }
+      synergy = `⚡ 究極進化形態 (最大強化済)`;
+    } else {
+      if (pair) {
+        const hasPassive = this.player.passives.some(p => p.statName === pair.passive && p.level > 0);
+        const status = hasPassive ? " (所持中)" : " (未所持)";
+        synergy = `🧬 進化シナジー: ${pair.passiveName}${status}`;
+      }
+    }
+
+    return { name, emoji, level: weapon.isEvolved ? "MAX" : `Lv${weapon.level}`, description, synergy };
+  }
+
+  getPassiveTooltipDetails(passive) {
+    const name = passive.name;
+    const emoji = passive.emoji;
+    const description = passive.getDescription();
+    
+    const PASSIVE_SYNERGY = {
+      cooldown: '🔮 マナ・ボルト',
+      area: '🧄 ネオン・ハロー',
+      speed: '🪓 旋回カッター',
+      maxHp: '🗡️ ビッグソード',
+      damage: '⚡ サンダーウェーブ',
+      regen: '🔥 ファイアーロード'
+    };
+
+    const weaponName = PASSIVE_SYNERGY[passive.statName];
+    const synergy = weaponName ? `🧬 進化対象: ${weaponName}` : "";
+
+    return { name, emoji, level: `Lv${passive.level}`, description, synergy };
+  }
+
+  getRelicTooltipDetails(relicId) {
+    const relicData = RELIC_POOL.find(r => r.id === relicId);
+    if (!relicData) return null;
+    const lvl = this.player.relicLevels ? (this.player.relicLevels[relicId] || 1) : 1;
+    const description = this.getRelicDynamicDescription(relicId, lvl);
+    return {
+      name: relicData.name,
+      emoji: relicData.emoji,
+      level: `Lv${lvl}`,
+      description: description,
+      synergy: relicData.synergy ? `🤝 シナジー: ${relicData.synergy}` : ""
+    };
   }
 }
 

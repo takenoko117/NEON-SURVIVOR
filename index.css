@@ -214,6 +214,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  pointer-events: auto;
 }
 
 .hud-slot-header {
@@ -1634,3 +1635,60 @@ body.light-mode .shop-gold-display {
   margin-top: auto;
   width: calc(100% - 16px);
 }
+
+/* --- HUD custom neon tooltips --- */
+.hud-tooltip {
+  position: fixed;
+  z-index: 99999;
+  background: rgba(10, 11, 22, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid var(--neon-cyan);
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 280px;
+  max-width: calc(100vw - 40px);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+  font-family: var(--font-ui), sans-serif;
+  color: #fff;
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.5;
+  transition: opacity 0.1s ease, transform 0.1s ease;
+}
+.hud-tooltip.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95);
+}
+.hud-tooltip-title {
+  font-family: var(--font-ui), sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hud-tooltip-level {
+  font-family: var(--font-retro), monospace;
+  font-size: 9px;
+  color: var(--neon-pink);
+  text-shadow: 0 0 5px rgba(255, 0, 127, 0.5);
+  margin-left: auto;
+}
+.hud-tooltip-desc {
+  color: #e0e6ff;
+  margin-bottom: 4px;
+}
+.hud-tooltip-synergy {
+  font-size: 11px;
+  color: var(--neon-yellow);
+  text-shadow: 0 0 3px rgba(255, 251, 0, 0.3);
+  border-top: 1px dashed rgba(255, 230, 0, 0.25);
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
