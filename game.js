@@ -115,6 +115,8 @@ class NeonGameEngine {
     this.autoSelectEnabled = (localStorage.getItem('neon_auto_select') === 'true');
     this.lastMagnetTriggerSecond = 0;
     this.lowEffectEnabled = (localStorage.getItem('neon_low_effect') === 'true');
+    this.particlePool = [];
+    this.damageNumberPool = [];
 
     // Rerolls and Banishes
     this.rerollsRemaining = 1;
@@ -776,24 +778,52 @@ class NeonGameEngine {
     this.particles = [];
     this.damageNumbers = [];
 
-    // Override push method to filter output when lowEffectEnabled is true
+    // Override push method to filter output and apply Object Pooling
     const self = this;
     const originalParticlesPush = this.particles.push;
     this.particles.push = function(...args) {
+      const processedArgs = args.map(arg => {
+        if (arg && arg.constructor.name === 'Particle' && arg.isNewInstance) {
+          const p = self.getParticle(arg.x, arg.y, arg.color, 1);
+          p.vx = arg.vx;
+          p.vy = arg.vy;
+          p.radius = arg.radius;
+          p.maxLife = arg.maxLife;
+          p.life = arg.life;
+          p.alpha = arg.alpha;
+          return p;
+        }
+        return arg;
+      });
+
       if (self.lowEffectEnabled) {
-        const filtered = args.filter(() => Math.random() < 0.15);
+        const filtered = processedArgs.filter(() => Math.random() < 0.15);
         if (filtered.length > 0) {
           return originalParticlesPush.apply(this, filtered);
         }
         return this.length;
       }
-      return originalParticlesPush.apply(this, args);
+      return originalParticlesPush.apply(this, processedArgs);
     };
 
     const originalDamagePush = this.damageNumbers.push;
     this.damageNumbers.push = function(...args) {
+      const processedArgs = args.map(arg => {
+        if (arg && arg.constructor.name === 'DamageNumber' && arg.isNewInstance) {
+          const isCrit = arg.color === '#fffb00';
+          const dn = self.getDamageNumber(arg.x, arg.y, arg.text, isCrit, arg.color, arg.fontSize);
+          dn.vx = arg.vx;
+          dn.vy = arg.vy;
+          dn.maxLife = arg.maxLife;
+          dn.life = arg.life;
+          dn.alpha = arg.alpha;
+          return dn;
+        }
+        return arg;
+      });
+
       if (self.lowEffectEnabled) {
-        const filtered = args.filter(arg => {
+        const filtered = processedArgs.filter(arg => {
           if (arg && arg.constructor.name === 'DamageNumber') {
             const isNumeric = !isNaN(arg.text) || /^\d+$/.test(arg.text);
             const isCrit = arg.color === '#fffb00';
@@ -808,7 +838,7 @@ class NeonGameEngine {
         }
         return this.length;
       }
-      return originalDamagePush.apply(this, args);
+      return originalDamagePush.apply(this, processedArgs);
     };
 
     // Hide screens, show HUD
@@ -3205,6 +3235,51 @@ class NeonGameEngine {
     }
     
     this.ctx.restore();
+  }
+
+  getParticle(x, y, color, speedMultiplier = 1) {
+    let p = this.particlePool.find(item => item.life <= 0);
+    if (p) {
+      p.x = x;
+      p.y = y;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = (Math.random() * 3 + 1) * speedMultiplier;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed;
+      p.radius = Math.random() * 3 + 1;
+      p.color = color;
+      p.alpha = 1.0;
+      p.maxLife = Math.random() * 30 + 20;
+      p.life = p.maxLife;
+      p.isNewInstance = false;
+    } else {
+      p = new Particle(x, y, color, speedMultiplier);
+      p.isNewInstance = false;
+      this.particlePool.push(p);
+    }
+    return p;
+  }
+
+  getDamageNumber(x, y, amount, isCrit = false, customColor = null, customFontSize = null) {
+    let dn = this.damageNumberPool.find(item => item.life <= 0);
+    if (dn) {
+      dn.x = x + (Math.random() * 20 - 10);
+      dn.y = y - 10;
+      dn.text = typeof amount === 'string' ? amount : Math.round(amount).toString();
+      dn.vy = -1.5 - Math.random() * 1.5;
+      dn.vx = Math.random() * 1 - 0.5;
+      dn.color = customColor || (isCrit ? '#fffb00' : '#ff007f');
+      dn.fontSize = customFontSize || (isCrit ? 16 : 11);
+      dn.alpha = 1.0;
+      dn.maxLife = 40;
+      dn.life = dn.maxLife;
+      dn.isNewInstance = false;
+    } else {
+      dn = new DamageNumber(x, y, amount, isCrit, customColor, customFontSize);
+      dn.isNewInstance = false;
+      this.damageNumberPool.push(dn);
+    }
+    return dn;
   }
 
   // ==========================================

@@ -151,6 +151,7 @@ class Particle {
     this.alpha = 1.0;
     this.maxLife = Math.random() * 30 + 20; // frames
     this.life = this.maxLife;
+    this.isNewInstance = true;
   }
 
   update() {
@@ -165,11 +166,9 @@ class Particle {
   draw(ctx) {
     ctx.save();
     ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = this.color;
     ctx.fill();
     ctx.restore();
   }
@@ -188,6 +187,7 @@ class DamageNumber {
     this.alpha = 1.0;
     this.maxLife = 40;
     this.life = this.maxLife;
+    this.isNewInstance = true;
   }
 
   update() {
