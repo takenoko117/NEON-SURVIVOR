@@ -57,9 +57,9 @@ class NeonGameEngine {
     this.canvas = document.getElementById('game-canvas');
     this.ctx = this.canvas.getContext('2d');
     
-    // Set fixed logical game resolution (3:2 aspect ratio)
-    this.logicalWidth = 900;
-    this.logicalHeight = 600;
+    // Set logical game resolution dynamically to match window size
+    this.logicalWidth = window.innerWidth;
+    this.logicalHeight = window.innerHeight;
     this.canvas.width = this.logicalWidth;
     this.canvas.height = this.logicalHeight;
 
@@ -326,6 +326,15 @@ class NeonGameEngine {
       onPointerMove(e);
     }, { passive: true });
     window.addEventListener('touchend', onPointerUp);
+
+    window.addEventListener('resize', () => this.resize());
+  }
+
+  resize() {
+    this.logicalWidth = window.innerWidth;
+    this.logicalHeight = window.innerHeight;
+    this.canvas.width = this.logicalWidth;
+    this.canvas.height = this.logicalHeight;
   }
 
   loadWeaponBalance() {

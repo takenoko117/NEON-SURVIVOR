@@ -44,14 +44,8 @@ body {
 
 #game-container {
   position: relative;
-  width: min(100vw, calc(100vh * 1.5));
-  height: min(100vh, calc(100vw * 2 / 3));
-  max-width: 1200px;
-  max-height: 800px;
-  aspect-ratio: 3 / 2;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(176, 38, 255, 0.2);
-  border: 2px solid rgba(176, 38, 255, 0.3);
-  border-radius: 12px;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background-color: #000;
 }
