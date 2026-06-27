@@ -843,7 +843,7 @@ class NeonGameEngine {
       speed: this.goldUpgrades.speed * 0.03,
       hp: this.goldUpgrades.hp * 0.10
     };
-    this.player = new Player(this.logicalWidth / 2, this.logicalHeight / 2, baseStatBonuses);
+    this.player = new Player(this.logicalWidth / 2, this.logicalHeight / 2, baseStatBonuses, this.initialWeapon || 'MagicWand');
     this.player.particlesRef = this.particles;
     this.player.damageNumbersRef = this.damageNumbers;
 
@@ -3496,9 +3496,16 @@ class NeonGameEngine {
         const data = JSON.parse(saved);
         this.totalGold = data.totalGold || 0;
         this.goldUpgrades = data.upgrades || { attack: 0, speed: 0, hp: 0 };
+        this.unlockedWeapons = data.unlockedWeapons || ['MagicWand'];
+        this.initialWeapon = data.initialWeapon || 'MagicWand';
+      } else {
+        this.unlockedWeapons = ['MagicWand'];
+        this.initialWeapon = 'MagicWand';
       }
     } catch (e) {
       console.warn('Failed to load gold data:', e);
+      this.unlockedWeapons = ['MagicWand'];
+      this.initialWeapon = 'MagicWand';
     }
   }
 
@@ -3506,7 +3513,9 @@ class NeonGameEngine {
     try {
       localStorage.setItem('neon_gold_data', JSON.stringify({
         totalGold: this.totalGold,
-        upgrades: this.goldUpgrades
+        upgrades: this.goldUpgrades,
+        unlockedWeapons: this.unlockedWeapons,
+        initialWeapon: this.initialWeapon
       }));
     } catch (e) {
       console.warn('Failed to save gold data:', e);
@@ -3570,6 +3579,63 @@ class NeonGameEngine {
         }
       }
     });
+
+    const weaponsContainer = document.getElementById('shop-weapons-container');
+    if (weaponsContainer) {
+      weaponsContainer.innerHTML = '';
+      const shopWeapons = [
+        { key: 'MagicWand', name: 'マナボルト', icon: '🔮' },
+        { key: 'GarlicAura', name: 'ガーリックオーラ', icon: '🧄' },
+        { key: 'SpinningScythe', name: 'スピニングサイズ', icon: '🌪️' },
+        { key: 'BigSword', name: 'ビッグソード', icon: '🗡️' },
+        { key: 'ThunderWave', name: 'サンダーウェーブ', icon: '⚡' },
+        { key: 'FireRoad', name: 'ファイアーロード', icon: '🔥' }
+      ];
+
+      shopWeapons.forEach(w => {
+        const isUnlocked = this.unlockedWeapons.includes(w.key);
+        const isSelected = this.initialWeapon === w.key;
+        
+        const card = document.createElement('div');
+        card.className = `shop-weapon-card ${isSelected ? 'selected' : ''}`;
+        
+        let actionHtml = '';
+        if (isSelected) {
+          actionHtml = `<button class="neon-button shop-buy-btn disabled">選択中</button>`;
+        } else if (isUnlocked) {
+          actionHtml = `<button class="neon-button shop-buy-btn" onclick="gameEngine.selectWeapon('${w.key}')">選択</button>`;
+        } else {
+          const canAfford = this.totalGold >= 1500;
+          actionHtml = `<button class="neon-button shop-buy-btn ${canAfford ? '' : 'disabled'}" onclick="gameEngine.buyWeapon('${w.key}')">1500 G</button>`;
+        }
+
+        card.innerHTML = `
+          <div class="shop-card-icon">${w.icon}</div>
+          <div class="shop-card-title" style="font-size: 13px;">${w.name}</div>
+          ${actionHtml}
+        `;
+        weaponsContainer.appendChild(card);
+      });
+    }
+  }
+
+  buyWeapon(weaponKey) {
+    if (this.totalGold >= 1500 && !this.unlockedWeapons.includes(weaponKey)) {
+      this.totalGold -= 1500;
+      this.unlockedWeapons.push(weaponKey);
+      this.saveGoldData();
+      this.updateShopUI();
+      gameAudio.playCollect();
+    }
+  }
+
+  selectWeapon(weaponKey) {
+    if (this.unlockedWeapons.includes(weaponKey)) {
+      this.initialWeapon = weaponKey;
+      this.saveGoldData();
+      this.updateShopUI();
+      gameAudio.playCollect();
+    }
   }
 
   buyUpgrade(statKey) {

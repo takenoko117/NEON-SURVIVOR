@@ -1653,7 +1653,7 @@ class PassiveItem {
 
 // PLAYER CHARACTER CLASS
 class Player {
-  constructor(x, y, baseStatBonuses = {}) {
+  constructor(x, y, baseStatBonuses = {}, initialWeaponKey = 'MagicWand') {
     this.x = x;
     this.y = y;
     this.radius = 12;
@@ -1673,7 +1673,18 @@ class Player {
     this.reviveCount = 0;
     
     // Active weapons
-    this.weapons = [new MagicWand()]; // Start with Magic Wand
+    let initialWeapon;
+    switch (initialWeaponKey) {
+      case 'GarlicAura': initialWeapon = new GarlicAura(); break;
+      case 'SpinningScythe': initialWeapon = new SpinningScythe(); break;
+      case 'BigSword': initialWeapon = new BigSword(); break;
+      case 'ThunderWave': initialWeapon = new ThunderWave(); break;
+      case 'FireRoad': initialWeapon = new FireRoad(); break;
+      case 'MagicWand': 
+      default:
+        initialWeapon = new MagicWand(); break;
+    }
+    this.weapons = [initialWeapon];
     // Inactive inventory tracking for passives
     this.passives = [
       new PassiveItem("ホロウ・ハート", "❤️", "maxHp", 0.2, "最大HP増加"),
